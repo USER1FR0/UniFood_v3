@@ -19,7 +19,6 @@ La solución está compuesta por varios módulos distribuidos bajo una arquitect
 - **Microservicios**  
   - **Pagos** → Maneja las transacciones (tarjeta, efectivo, diferido).  
   - **Notificaciones** → Envía avisos automáticos vía SMS o WhatsApp API.  
-  - **Reportes** → Genera métricas y reportes de ventas por fecha, método y área.
 
 - **Base de Datos (PostgreSQL)**  
   Base relacional principal, optimizada para integridad y consultas analíticas.  
@@ -30,6 +29,11 @@ La solución está compuesta por varios módulos distribuidos bajo una arquitect
 
 - **Comunicación en Tiempo Real (WebSockets)**  
   Utilizada entre cliente y vendedor para el flujo de pedidos en vivo.
+
+-**Puertos Servidores**
+  Api BackEnd: Puerto 3000
+  MicroServicio Notificaciones: Puerto 4000
+  MicroServicio Pagos: Puerto 5000
 
 ---
 
