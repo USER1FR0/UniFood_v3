@@ -30,10 +30,13 @@ La solución está compuesta por varios módulos distribuidos bajo una arquitect
 - **Comunicación en Tiempo Real (WebSockets)**  
   Utilizada entre cliente y vendedor para el flujo de pedidos en vivo.
 
--**Puertos Servidores**
-  Api BackEnd: Puerto 3000
-  MicroServicio Notificaciones: Puerto 4000
-  MicroServicio Pagos: Puerto 5000
+- **Puertos Servidores**
+  
+  ***Api BackEnd:*** Puerto 3000.
+  
+  ***MicroServicio Notificaciones:*** Puerto 4000.
+  
+  ***MicroServicio Pagos:*** Puerto 5000.
 
 ---
 
