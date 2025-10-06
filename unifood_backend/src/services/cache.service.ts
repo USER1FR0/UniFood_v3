@@ -1,0 +1,1 @@
+// Aqui va la logica para el manejo de cache de servidor o redis

@@ -15,7 +15,6 @@ export class AppService implements OnApplicationBootstrap{
         this.logger.error('Error al conectar a la Base de Datos', error);
       }
 
-      this.logger.log('Servicio de Api Backend Iniciado Puerto 3000');
   }
 
   getHello(): string {
