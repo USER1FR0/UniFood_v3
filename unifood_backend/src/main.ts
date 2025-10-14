@@ -39,7 +39,7 @@ async function bootstrap() {
   console.log('CORS habilitado para ' + configService.get<string>('CORS_ORIGIN'));
 
   //solo para pruebas
-  await generarHashes();
+  //await generarHashes();
 
 }
 bootstrap();

@@ -11,22 +11,19 @@ import Swal from 'sweetalert2';
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './login.component.html',
-  styleUrl: './login.component.scss'
+  styleUrl: './login.component.scss',
 })
 export class LoginComponent {
   loginData: LoginRequest = {
     correo_electronico: '',
-    contrasena: ''
+    contrasena: '',
   };
-  
+
   cargando = false;
 
-  constructor(
-    private authService: AuthService,
-    private router: Router
-  ) {
+  constructor(private authService: AuthService, private router: Router) {
     if (this.authService.estaAutenticado()) {
-      this.router.navigate(['/borrar']);// si ya esta autenticado redirige (cambiar ruta)
+      this.router.navigate(['/borrar']); // si ya esta autenticado redirige (cambiar ruta)
     }
   }
 
@@ -37,7 +34,7 @@ export class LoginComponent {
         icon: 'warning',
         title: 'Campos incompletos',
         text: 'Por favor completa todos los campos',
-        confirmButtonColor: '#667eea'
+        confirmButtonColor: '#667eea',
       });
       return;
     }
@@ -49,7 +46,7 @@ export class LoginComponent {
         icon: 'warning',
         title: 'Correo inválido',
         text: 'Por favor ingresa un correo electrónico válido',
-        confirmButtonColor: '#667eea'
+        confirmButtonColor: '#667eea',
       });
       return;
     }
@@ -59,22 +56,36 @@ export class LoginComponent {
     this.authService.login(this.loginData).subscribe({
       next: (response) => {
         this.cargando = false;
-        
+
         Swal.fire({
           icon: 'success',
           title: '¡Bienvenido!',
           text: `sesion iniciada como ${response.usuario.rol}`,
           timer: 1500,
-          showConfirmButton: false
+          showConfirmButton: false,
         }).then(() => {
-          this.router.navigate(['/borrar']);
+          if (this.authService.estaAutenticado()) {
+            if (this.authService.esSupervisor()) {
+              //this.router.navigate(['/supervisor']); // Ruta de Ejemplo Supervisor
+              console.log('es supervisor');
+            } else if (this.authService.esVendedor()) {
+              //this.router.navigate(['/vendedor']); // Ruta de Ejemplo Vendedor
+              console.log('es vendedor');
+            } else if (this.authService.esCliente()) {
+              //this.router.navigate(['/cliente']); // Ruta de Ejemplo Cliente
+              console.log('es cliente');
+            }
+
+            //Ejemplo, quitar cuando las rutas esten listas
+            this.router.navigate(['/borrar']); // si ya esta autenticado redirige (cambiar ruta)
+          }
         });
       },
       error: (err) => {
         this.cargando = false;
-        
+
         let mensaje = 'Error al iniciar sesión. Intenta de nuevo.';
-        
+
         if (err.status === 401) {
           mensaje = 'Correo o contraseña incorrectos';
         } else if (err.status === 0) {
@@ -85,9 +96,9 @@ export class LoginComponent {
           icon: 'error',
           title: 'Error',
           text: mensaje,
-          confirmButtonColor: '#667eea'
+          confirmButtonColor: '#667eea',
         });
-      }
+      },
     });
   }
 }
