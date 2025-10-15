@@ -10,6 +10,7 @@ export interface LoginResponse {
 
 export interface Usuario {
   id: number;
+  id_rol: number | null;  // ← Agregar esta línea
   correo: string;
   rol: 'supervisor' | 'vendedor' | 'cliente';
 }

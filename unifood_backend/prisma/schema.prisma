@@ -1,5 +1,3 @@
-// Prisma Schema corregido y alineado con la BD PostgreSQL + diagrama ER
-
 generator client {
   provider   = "prisma-client-js"
   engineType = "binary"
@@ -10,9 +8,171 @@ datasource db {
   url      = env("DB_URI")
 }
 
-// =====================================================
-// ENUMS
-// =====================================================
+model usuario {
+  id                 Int        @id @default(autoincrement())
+  correo_electronico String     @unique @db.VarChar(255)
+  contrasena         String
+  rol                rol_enum
+  clientes           cliente[]
+  vendedores         vendedor[]
+}
+
+model cliente {
+  id              Int      @id @default(autoincrement())
+  nombre_completo String   @db.VarChar(255)
+  telefono        String   @db.VarChar(20)
+  usuario_id      Int?
+  usuario         usuario? @relation(fields: [usuario_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  pedidos         pedido[]
+}
+
+model vendedor {
+  id             Int             @id @default(autoincrement())
+  nombre         String          @db.VarChar(255)
+  telefono       String          @db.VarChar(20)
+  usuario_id     Int?
+  fecha_registro DateTime?       @default(now()) @db.Timestamp(6)
+  num_empleado   Int
+  genero         String          @db.VarChar(255)
+  edad           Int
+  email          String          @db.VarChar(255)
+  estatus        String          @db.VarChar(255)
+  productos      producto[]
+  usuario        usuario?        @relation(fields: [usuario_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  vendedor_areas vendedor_area[]
+}
+
+model area_venta {
+  id               Int             @id @default(autoincrement())
+  area_venta       String          @db.VarChar(255)
+  descripcion      String?
+  status           Boolean?        @default(true)
+  horario_apertura DateTime?       @db.Time(6)
+  horario_cierre   DateTime?       @db.Time(6)
+  fecha_registro   DateTime?       @default(now()) @db.Timestamp(6)
+  pedidos          pedido[]
+  productos        producto[]
+  vendedor_areas   vendedor_area[]
+}
+
+model vendedor_area {
+  id               Int         @id @default(autoincrement())
+  area_id          Int?
+  vendedor_id      Int?
+  fecha_asignacion DateTime?   @default(now()) @db.Timestamp(6)
+  estatus          Boolean?    @default(true)
+  fecha_baja       DateTime?   @db.Timestamp(6)
+  area_venta       area_venta? @relation(fields: [area_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  vendedor         vendedor?   @relation(fields: [vendedor_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model categoria {
+  id             Int        @id @default(autoincrement())
+  nombre         String     @db.VarChar(255)
+  descripcion    String?
+  status         Boolean?   @default(true)
+  fecha_registro DateTime?  @default(now()) @db.Timestamp(6)
+  productos      producto[]
+}
+
+model producto {
+  id                      Int                     @id @default(autoincrement())
+  nombre                  String                  @db.VarChar(255)
+  descripcion             String?
+  precio                  Decimal                 @db.Decimal(10, 2)
+  imagen_url              String?
+  categoria_id            Int?
+  area_venta_id           Int?
+  estado                  Boolean?                @default(true)
+  tiempo_preparacion      Int
+  fecha_registro          DateTime?               @default(now()) @db.Timestamp(6)
+  ingredientes            Json?
+  calorias                Decimal?                @db.Decimal(10, 0)
+  vendedorFK              Int
+  pedido_productos        pedido_producto[]
+  area_venta              area_venta?             @relation(fields: [area_venta_id], references: [id], onUpdate: NoAction)
+  categoria               categoria?              @relation(fields: [categoria_id], references: [id], onUpdate: NoAction)
+  vendedor                vendedor                @relation(fields: [vendedorFK], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  producto_calificaciones producto_calificacion[]
+}
+
+model pedido_estado {
+  id      Int      @id @default(autoincrement())
+  estado  String   @db.VarChar(50)
+  pedidos pedido[]
+}
+
+model pedido {
+  id                      Int                     @id @default(autoincrement())
+  codigo                  String                  @unique @db.VarChar(255)
+  detalles_pedido         String?
+  area_venta_id           Int?
+  cliente_id              Int?
+  fecha_registro          DateTime?               @default(now()) @db.Timestamp(6)
+  fecha_entrega           DateTime?               @db.Timestamp(6)
+  total_pedido            Decimal?                @default(0.00) @db.Decimal(10, 2)
+  pedido_estado_id        Int?
+  pagos                   pago[]
+  pedido_estado           pedido_estado?          @relation(fields: [pedido_estado_id], references: [id], onUpdate: NoAction, map: "fk_pedido_estado")
+  area_venta              area_venta?             @relation(fields: [area_venta_id], references: [id], onUpdate: NoAction)
+  cliente                 cliente?                @relation(fields: [cliente_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  pedido_productos        pedido_producto[]
+  producto_calificaciones producto_calificacion[]
+}
+
+model pedido_producto {
+  id              Int       @id @default(autoincrement())
+  pedido_id       Int?
+  producto_id     Int?
+  cantidad        Int
+  precio_unitario Decimal   @db.Decimal(10, 2)
+  pedido          pedido?   @relation(fields: [pedido_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  producto        producto? @relation(fields: [producto_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model producto_calificacion {
+  id          Int       @id @default(autoincrement())
+  resena      Decimal?  @db.Decimal(3, 2)
+  comentario  String?
+  producto_id Int?
+  pedido_id   Int?
+  pedido      pedido?   @relation(fields: [pedido_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  producto    producto? @relation(fields: [producto_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model pago_metodo {
+  id          Int    @id @default(autoincrement())
+  pago_metodo String @db.VarChar(50)
+  pagos       pago[]
+}
+
+model pago_estado {
+  id          Int    @id @default(autoincrement())
+  pago_estado String @db.VarChar(50)
+  pagos       pago[]
+}
+
+model pago {
+  id             Int          @id @default(autoincrement())
+  cantidad       Decimal      @db.Decimal(10, 2)
+  pago_metodo_id Int?
+  pago_estado_id Int?
+  fecha          DateTime     @db.Date
+  pedido_id      Int?
+  pedido         pedido?      @relation(fields: [pedido_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_pedido_pago")
+  pago_estado    pago_estado? @relation(fields: [pago_estado_id], references: [id], onUpdate: NoAction)
+  pago_metodo    pago_metodo? @relation(fields: [pago_metodo_id], references: [id], onUpdate: NoAction)
+  pagos_log      pago_log[]
+}
+
+model pago_log {
+  id       Int         @id @default(autoincrement())
+  accion   accion_enum
+  detalles Json?
+  fecha    DateTime    @db.Date
+  pago_id  Int?
+  pago     pago?       @relation(fields: [pago_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
 
 enum rol_enum {
   supervisor
@@ -24,192 +184,4 @@ enum accion_enum {
   CREADO
   ACTUALIZADO
   ELIMINADO
-}
-
-// =====================================================
-// MODELOS PRINCIPALES
-// =====================================================
-
-model usuario {
-  id                 Int       @id @default(autoincrement())
-  correo_electronico String    @unique
-  contrasena         String
-  rol                rol_enum
-
-  clientes           cliente[]
-  vendedores         vendedor[]
-}
-
-model cliente {
-  id              Int       @id @default(autoincrement())
-  nombre_completo String
-  telefono        String
-  usuario_id      Int
-
-  usuario         usuario   @relation(fields: [usuario_id], references: [id])
-  pedidos         pedido[]
-}
-
-model vendedor {
-  id              Int       @id @default(autoincrement())
-  nombre_completo String
-  telefono        String
-  area_venta_id   Int?
-  usuario_id      Int
-  fecha_registro  DateTime  @default(now())
-  numEmpleado     Int?
-  genero          String?
-  edad            Int?
-  email           String?
-  estatus         Boolean   @default(true)
-
-  usuario         usuario       @relation(fields: [usuario_id], references: [id])
-  area_venta      area_venta?   @relation(fields: [area_venta_id], references: [id])
-  vendedor_areas  vendedor_area[]
-  productos       producto[]
-}
-
-model area_venta {
-  id               Int       @id @default(autoincrement())
-  area_venta       String
-  descripcion      String?
-  status           Boolean   @default(true)
-  horario_apertura DateTime?
-  horario_cierre   DateTime?
-  fecha_registro   DateTime  @default(now())
-
-  vendedores       vendedor[]
-  vendedor_areas   vendedor_area[]
-  productos        producto[]
-  pedidos          pedido[]
-}
-
-model vendedor_area {
-  id                Int       @id @default(autoincrement())
-  area_id           Int
-  vendedor_id       Int
-  fecha_asignacion  DateTime  @default(now())
-  estatus           Boolean   @default(true)
-  fecha_baja        DateTime?
-
-  area_venta        area_venta @relation(fields: [area_id], references: [id])
-  vendedor          vendedor   @relation(fields: [vendedor_id], references: [id])
-}
-
-model categoria {
-  id              Int       @id @default(autoincrement())
-  nombre          String
-  descripcion     String?
-  status          Boolean   @default(true)
-  fecha_registro  DateTime  @default(now())
-
-  productos       producto[]
-}
-
-model producto {
-  id                  Int       @id @default(autoincrement())
-  nombre              String
-  descripcion         String?
-  precio              Decimal
-  imagen_url          String?
-  categoria_id        Int?
-  area_venta_id       Int?
-  estado              Boolean   @default(true)
-  tiempo_preparacion  Int
-  fecha_registro      DateTime  @default(now())
-  ingredientes        Json?
-  calorias            Int?
-  vendedorFK          Int?
-
-  categoria           categoria? @relation(fields: [categoria_id], references: [id])
-  area_venta          area_venta? @relation(fields: [area_venta_id], references: [id])
-  vendedor            vendedor?   @relation(fields: [vendedorFK], references: [id])
-  pedido_productos    pedido_producto[]
-  producto_calificaciones producto_calificacion[]
-}
-
-model pedido_estado {
-  id          Int       @id @default(autoincrement())
-  estado      String
-
-  pedidos     pedido[]
-}
-
-model pedido {
-  id                Int       @id @default(autoincrement())
-  codigo            String    @unique
-  detalles_pedido   String?
-  area_venta_id     Int?
-  cliente_id        Int
-  fecha_registro    DateTime  @default(now())
-  fecha_entrega     DateTime?
-  total_pedido      Decimal   @default(0.00)
-  pedido_estado_id  Int?
-
-  cliente           cliente        @relation(fields: [cliente_id], references: [id])
-  area_venta        area_venta?    @relation(fields: [area_venta_id], references: [id])
-  pedido_estado     pedido_estado? @relation(fields: [pedido_estado_id], references: [id])
-  pedido_productos  pedido_producto[]
-  producto_calificaciones producto_calificacion[]
-  pagos             pago[]
-}
-
-model pedido_producto {
-  id              Int       @id @default(autoincrement())
-  pedido_id       Int
-  producto_id     Int
-  cantidad        Int
-  precio_unitario Decimal
-
-  pedido          pedido    @relation(fields: [pedido_id], references: [id])
-  producto        producto  @relation(fields: [producto_id], references: [id])
-}
-
-model producto_calificacion {
-  id          Int       @id @default(autoincrement())
-  resena      Decimal?
-  comentario  String?
-  producto_id Int
-  pedido_id   Int
-
-  producto    producto  @relation(fields: [producto_id], references: [id])
-  pedido      pedido    @relation(fields: [pedido_id], references: [id])
-}
-
-model pago_metodo {
-  id          Int       @id @default(autoincrement())
-  pago_metodo String
-
-  pagos       pago[]
-}
-
-model pago_estado {
-  id          Int       @id @default(autoincrement())
-  pago_estado String
-
-  pagos       pago[]
-}
-
-model pago {
-  id              Int       @id @default(autoincrement())
-  cantidad        Decimal
-  pago_metodo_id  Int?
-  pago_estado_id  Int?
-  fecha           DateTime
-  pedido_id       Int?
-
-  pago_metodo     pago_metodo?   @relation(fields: [pago_metodo_id], references: [id])
-  pago_estado     pago_estado?   @relation(fields: [pago_estado_id], references: [id])
-  pedido          pedido?        @relation(fields: [pedido_id], references: [id])
-  pagos_log       pago_log[]
-}
-
-model pago_log {
-  id          Int          @id @default(autoincrement())
-  accion      accion_enum
-  detalles    Json?
-  fecha       DateTime
-  pago_id     Int
-
-  pago        pago         @relation(fields: [pago_id], references: [id])
 }
