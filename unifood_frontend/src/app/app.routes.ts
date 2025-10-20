@@ -4,6 +4,7 @@ import { BorrarComponent } from './components/borrar/borrar.component';
 import { authGuard } from './guards/auth.guard';
 import { MenuComponent } from './components/menu/menu.component';
 import { ListaVendedoresComponent } from './components/lista-vendedores/lista-vendedores.component';
+import { CrearVendedorComponent } from './components/crear-vendedor/crear-vendedor.component';
 
 export const routes: Routes = [
     {path: '', redirectTo: 'borrar', pathMatch: 'full'},
@@ -11,5 +12,6 @@ export const routes: Routes = [
     {path: 'borrar', component: BorrarComponent, canActivate: [authGuard]},
     {path: 'menu', component: MenuComponent},
     {path: 'lista-vendedores', component: ListaVendedoresComponent},
-    {path: '**', redirectTo: 'borrar' }
+    {path: 'crear-vendedor', component: CrearVendedorComponent},
+    {path: '**', redirectTo: 'lista-vendedores' }
 ];

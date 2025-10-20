@@ -3,44 +3,35 @@ export interface Vendedor {
   nombre: string;
   telefono: string;
   usuario_id: number;
-  numEmpleado: number;
+  num_empleado: number;  // Cambiado de numEmpleado
   genero: string;
   edad: number;
   email: string;
-  estatus: boolean;
+  estatus: string;       // Cambiado de boolean a string
   fecha_registro: Date;
 }
 
+// Para crear - usar snake_case
 export interface CreateVendedorRequest {
   nombre: string;
   telefono: string;
   usuario_id: number;
-  numEmpleado: number;
+  num_empleado: number;  // Cambiado
   genero: string;
   edad: number;
   email: string;
-  estatus?: boolean;
+  estatus: string;       // Cambiado
 }
 
+// Para actualizar
 export interface UpdateVendedorRequest {
   nombre?: string;
   telefono?: string;
   usuario_id?: number;
-  numEmpleado?: number;
+  num_empleado?: number; // Cambiado
   genero?: string;
   edad?: number;
   email?: string;
-  estatus?: boolean;
+  estatus?: string;      // Cambiado
 }
 
-export interface VendedoresResponse {
-  success: boolean;
-  data: Vendedor[];
-  message?: string;
-}
-
-export interface VendedorResponse {
-  success: boolean;
-  data: Vendedor;
-  message?: string;
-}

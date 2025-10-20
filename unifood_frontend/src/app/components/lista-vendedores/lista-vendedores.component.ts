@@ -153,7 +153,7 @@ export class ListaVendedoresComponent implements OnInit {
    * Navegar al formulario de creación
    */
   agregarVendedor() {
-    this.router.navigate(['/vendedores/nuevo']);
+    this.router.navigate(['/crear-vendedor']);
   }
 
   /**
@@ -173,11 +173,11 @@ export class ListaVendedoresComponent implements OnInit {
   /**
    * Utilidades para la vista
    */
-  getEstatusTexto(estatus: boolean): string {
+  getEstatusTexto(estatus: string): string {
     return estatus ? 'Activo' : 'Inactivo';
   }
 
-  getEstatusClase(estatus: boolean): string {
+  getEstatusClase(estatus: string): string {
     return estatus ? 'estatus-activo' : 'estatus-inactivo';
   }
 
