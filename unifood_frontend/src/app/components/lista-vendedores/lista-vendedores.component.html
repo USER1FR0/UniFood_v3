@@ -78,10 +78,10 @@
           </button>
           <button 
             class="btn-estatus"
-            [class]="vendedor.estatus ? 'btn-desactivar' : 'btn-activar'"
+            [class]="vendedor.estatus === 'true' ? 'btn-desactivar' : 'btn-activar'"
             (click)="cambiarEstatus(vendedor)">
-            <span class="icono">{{ vendedor.estatus ? '⏸️' : '▶️' }}</span>
-            {{ vendedor.estatus ? 'Desactivar' : 'Activar' }}
+            <span class="icono">{{ vendedor.estatus === 'true' ? '⏸️' : '▶️' }}</span>
+            {{ vendedor.estatus === 'true' ? 'Desactivar' : 'Activar' }}
           </button>
           <button 
             class="btn-eliminar"
@@ -106,4 +106,186 @@
     </div>
 
   </div>
+
+  <!-- Modal de Edición -->
+  <div *ngIf="modalEditarAbierto" class="modal-overlay">
+    <div class="modal-container">
+      <div class="modal-card">
+        
+        <!-- Header del Modal -->
+        <div class="modal-header">
+          <h2>Editar Vendedor</h2>
+          <button class="btn-cerrar" (click)="cerrarModalEdicion()">×</button>
+        </div>
+
+        <!-- Formulario de Edición -->
+        <form [formGroup]="editarForm" (ngSubmit)="actualizarVendedor()" class="vendedor-form">
+          
+          <!-- Fila 1: Nombre y Teléfono -->
+          <div class="form-row">
+            <div class="form-group" [class.error]="esCampoInvalido('nombre')">
+              <label for="nombre-editar">Nombre Completo *</label>
+              <input 
+                type="text" 
+                id="nombre-editar"
+                formControlName="nombre"
+                placeholder="Ej: María González Rodríguez"
+                [class.invalid]="esCampoInvalido('nombre')"
+              >
+              <div class="error-message" *ngIf="esCampoInvalido('nombre')">
+                {{ obtenerMensajeError('nombre') }}
+              </div>
+            </div>
+
+            <div class="form-group" [class.error]="esCampoInvalido('telefono')">
+              <label for="telefono-editar">Teléfono *</label>
+              <input 
+                type="tel" 
+                id="telefono-editar"
+                formControlName="telefono"
+                placeholder="Ej: 555-123-4567"
+                [class.invalido]="esCampoInvalido('telefono')"
+              >
+              <div class="error-message" *ngIf="esCampoInvalido('telefono')">
+                {{ obtenerMensajeError('telefono') }}
+              </div>
+            </div>
+          </div>
+
+          <!-- Fila 2: Email y Número de Empleado -->
+          <div class="form-row">
+            <div class="form-group" [class.error]="esCampoInvalido('email')">
+              <label for="email-editar">Correo Electrónico *</label>
+              <input 
+                type="email" 
+                id="email-editar"
+                formControlName="email"
+                placeholder="Ej: maria.gonzalez@unifood.edu"
+                [class.invalido]="esCampoInvalido('email')"
+              >
+              <div class="error-message" *ngIf="esCampoInvalido('email')">
+                {{ obtenerMensajeError('email') }}
+              </div>
+            </div>
+
+            <div class="form-group" [class.error]="esCampoInvalido('num_empleado')">
+              <label for="num_empleado-editar">Número de Empleado *</label>
+              <input 
+                type="number" 
+                id="num_empleado-editar"
+                formControlName="num_empleado"
+                placeholder="Ej: 1001"
+                min="1"
+                max="99999"
+                [class.invalido]="esCampoInvalido('num_empleado')"
+              >
+              <div class="error-message" *ngIf="esCampoInvalido('num_empleado')">
+                {{ obtenerMensajeError('num_empleado') }}
+              </div>
+            </div>
+          </div>
+
+          <!-- Fila 3: Género y Edad -->
+          <div class="form-row">
+            <div class="form-group" [class.error]="esCampoInvalido('genero')">
+              <label for="genero-editar">Género *</label>
+              <select 
+                id="genero-editar"
+                formControlName="genero"
+                [class.invalido]="esCampoInvalido('genero')"
+              >
+                <option value="">Selecciona un género</option>
+                <option *ngFor="let genero of generos" [value]="genero">
+                  {{ genero }}
+                </option>
+              </select>
+              <div class="error-message" *ngIf="esCampoInvalido('genero')">
+                {{ obtenerMensajeError('genero') }}
+              </div>
+            </div>
+
+            <div class="form-group" [class.error]="esCampoInvalido('edad')">
+              <label for="edad-editar">Edad *</label>
+              <input 
+                type="number" 
+                id="edad-editar"
+                formControlName="edad"
+                placeholder="Ej: 28"
+                min="18"
+                max="100"
+                [class.invalido]="esCampoInvalido('edad')"
+              >
+              <div class="error-message" *ngIf="esCampoInvalido('edad')">
+                {{ obtenerMensajeError('edad') }}
+              </div>
+            </div>
+          </div>
+
+          <!-- Fila 4: Usuario ID y Estatus -->
+          <div class="form-row">
+            <div class="form-group" [class.error]="esCampoInvalido('usuario_id')">
+              <label for="usuario_id-editar">ID de Usuario *</label>
+              <input 
+                type="number" 
+                id="usuario_id-editar"
+                formControlName="usuario_id"
+                placeholder="Ej: 101"
+                min="1"
+                [class.invalido]="esCampoInvalido('usuario_id')"
+              >
+              <div class="error-message" *ngIf="esCampoInvalido('usuario_id')">
+                {{ obtenerMensajeError('usuario_id') }}
+              </div>
+            </div>
+
+            <div class="form-group estatus-group">
+              <label for="estatus-editar">Estatus del Vendedor</label>
+              <div class="estatus-options">
+                <label class="estatus-option">
+                  <input 
+                    type="radio" 
+                    formControlName="estatus"
+                    value="true"
+                  >
+                  <span class="radio-custom"></span>
+                  <span class="estatus-text activo">Activo</span>
+                </label>
+                <label class="estatus-option">
+                  <input 
+                    type="radio" 
+                    formControlName="estatus"
+                    value="false"
+                  >
+                  <span class="radio-custom"></span>
+                  <span class="estatus-text inactivo">Inactivo</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Botones del Modal -->
+          <div class="form-actions">
+            <button 
+              type="button" 
+              class="btn-cancelar"
+              (click)="cerrarModalEdicion()"
+              [disabled]="editando"
+            >
+              Cancelar
+            </button>
+            <button 
+              type="submit" 
+              class="btn-actualizar"
+              [disabled]="editarForm.invalid || editando"
+            >
+              <span *ngIf="!editando">💾 Actualizar</span>
+              <span *ngIf="editando">⏳ Actualizando...</span>
+            </button>
+          </div>
+        </form>
+
+      </div>
+    </div>
+  </div>
+
 </div>

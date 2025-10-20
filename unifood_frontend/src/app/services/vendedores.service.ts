@@ -70,7 +70,15 @@ export class VendedoresService {
    * Cambiar el estatus de un vendedor (activar/desactivar)
    */
   cambiarEstatusVendedor(id: number, estatus: boolean): Observable<Vendedor> {
-    return this.http.patch<Vendedor>(`${this.apiUrl}/${id}`, { estatus })
+    // Convertir boolean a string para el backend
+    const estatusString = estatus ? 'true' : 'false';
+    
+    // Usar PUT con solo el campo estatus
+    const updateData: UpdateVendedorRequest = {
+      estatus: estatusString
+    };
+    
+    return this.http.put<Vendedor>(`${this.apiUrl}/${id}`, updateData)
       .pipe(
         catchError(this.handleError)
       );

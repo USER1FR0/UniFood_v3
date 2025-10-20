@@ -62,7 +62,7 @@ export class CrearVendedorComponent implements OnInit {
         Validators.required,
         Validators.min(1)
       ]],
-      estatus: ["true", Validators.required]
+      estatus: ['', Validators.required]
     });
   }
 
@@ -94,7 +94,9 @@ export class CrearVendedorComponent implements OnInit {
 
     this.cargando = true;
 
+    const estatusString = this.vendedorForm.value.estatus === 'true' ? 'Activo' : 'Inactivo';
     const vendedorData: CreateVendedorRequest = {
+      
       nombre: this.vendedorForm.value.nombre.trim(),
       telefono: this.vendedorForm.value.telefono,
       email: this.vendedorForm.value.email.toLowerCase().trim(),
@@ -102,8 +104,11 @@ export class CrearVendedorComponent implements OnInit {
       genero: this.vendedorForm.value.genero,
       edad: Number(this.vendedorForm.value.edad),
       usuario_id: Number(this.vendedorForm.value.usuario_id),
-      estatus: this.vendedorForm.value.estatus
+      estatus: estatusString
+      
+      
     };
+    
 
     this.vendedoresService.createVendedor(vendedorData).subscribe({
       next: (vendedorCreado) => {

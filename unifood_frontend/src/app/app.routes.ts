@@ -7,7 +7,7 @@ import { ListaVendedoresComponent } from './components/lista-vendedores/lista-ve
 import { CrearVendedorComponent } from './components/crear-vendedor/crear-vendedor.component';
 
 export const routes: Routes = [
-    {path: '', redirectTo: 'borrar', pathMatch: 'full'},
+    {path: '', redirectTo: 'lista-vendedores', pathMatch: 'full'},
     {path: 'login', component: LoginComponent},
     {path: 'borrar', component: BorrarComponent, canActivate: [authGuard]},
     {path: 'menu', component: MenuComponent},
