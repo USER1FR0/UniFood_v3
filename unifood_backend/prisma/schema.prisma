@@ -1,0 +1,215 @@
+// Prisma Schema corregido y alineado con la BD PostgreSQL + diagrama ER
+
+generator client {
+  provider   = "prisma-client-js"
+  engineType = "binary"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DB_URI")
+}
+
+// =====================================================
+// ENUMS
+// =====================================================
+
+enum rol_enum {
+  supervisor
+  vendedor
+  cliente
+}
+
+enum accion_enum {
+  CREADO
+  ACTUALIZADO
+  ELIMINADO
+}
+
+// =====================================================
+// MODELOS PRINCIPALES
+// =====================================================
+
+model usuario {
+  id                 Int       @id @default(autoincrement())
+  correo_electronico String    @unique
+  contrasena         String
+  rol                rol_enum
+
+  clientes           cliente[]
+  vendedores         vendedor[]
+}
+
+model cliente {
+  id              Int       @id @default(autoincrement())
+  nombre_completo String
+  telefono        String
+  usuario_id      Int
+
+  usuario         usuario   @relation(fields: [usuario_id], references: [id])
+  pedidos         pedido[]
+}
+
+model vendedor {
+  id              Int       @id @default(autoincrement())
+  nombre_completo String
+  telefono        String
+  area_venta_id   Int?
+  usuario_id      Int
+  fecha_registro  DateTime  @default(now())
+  numEmpleado     Int?
+  genero          String?
+  edad            Int?
+  email           String?
+  estatus         Boolean   @default(true)
+
+  usuario         usuario       @relation(fields: [usuario_id], references: [id])
+  area_venta      area_venta?   @relation(fields: [area_venta_id], references: [id])
+  vendedor_areas  vendedor_area[]
+  productos       producto[]
+}
+
+model area_venta {
+  id               Int       @id @default(autoincrement())
+  area_venta       String
+  descripcion      String?
+  status           Boolean   @default(true)
+  horario_apertura DateTime?
+  horario_cierre   DateTime?
+  fecha_registro   DateTime  @default(now())
+
+  vendedores       vendedor[]
+  vendedor_areas   vendedor_area[]
+  productos        producto[]
+  pedidos          pedido[]
+}
+
+model vendedor_area {
+  id                Int       @id @default(autoincrement())
+  area_id           Int
+  vendedor_id       Int
+  fecha_asignacion  DateTime  @default(now())
+  estatus           Boolean   @default(true)
+  fecha_baja        DateTime?
+
+  area_venta        area_venta @relation(fields: [area_id], references: [id])
+  vendedor          vendedor   @relation(fields: [vendedor_id], references: [id])
+}
+
+model categoria {
+  id              Int       @id @default(autoincrement())
+  nombre          String
+  descripcion     String?
+  status          Boolean   @default(true)
+  fecha_registro  DateTime  @default(now())
+
+  productos       producto[]
+}
+
+model producto {
+  id                  Int       @id @default(autoincrement())
+  nombre              String
+  descripcion         String?
+  precio              Decimal
+  imagen_url          String?
+  categoria_id        Int?
+  area_venta_id       Int?
+  estado              Boolean   @default(true)
+  tiempo_preparacion  Int
+  fecha_registro      DateTime  @default(now())
+  ingredientes        Json?
+  calorias            Int?
+  vendedorFK          Int?
+
+  categoria           categoria? @relation(fields: [categoria_id], references: [id])
+  area_venta          area_venta? @relation(fields: [area_venta_id], references: [id])
+  vendedor            vendedor?   @relation(fields: [vendedorFK], references: [id])
+  pedido_productos    pedido_producto[]
+  producto_calificaciones producto_calificacion[]
+}
+
+model pedido_estado {
+  id          Int       @id @default(autoincrement())
+  estado      String
+
+  pedidos     pedido[]
+}
+
+model pedido {
+  id                Int       @id @default(autoincrement())
+  codigo            String    @unique
+  detalles_pedido   String?
+  area_venta_id     Int?
+  cliente_id        Int
+  fecha_registro    DateTime  @default(now())
+  fecha_entrega     DateTime?
+  total_pedido      Decimal   @default(0.00)
+  pedido_estado_id  Int?
+
+  cliente           cliente        @relation(fields: [cliente_id], references: [id])
+  area_venta        area_venta?    @relation(fields: [area_venta_id], references: [id])
+  pedido_estado     pedido_estado? @relation(fields: [pedido_estado_id], references: [id])
+  pedido_productos  pedido_producto[]
+  producto_calificaciones producto_calificacion[]
+  pagos             pago[]
+}
+
+model pedido_producto {
+  id              Int       @id @default(autoincrement())
+  pedido_id       Int
+  producto_id     Int
+  cantidad        Int
+  precio_unitario Decimal
+
+  pedido          pedido    @relation(fields: [pedido_id], references: [id])
+  producto        producto  @relation(fields: [producto_id], references: [id])
+}
+
+model producto_calificacion {
+  id          Int       @id @default(autoincrement())
+  resena      Decimal?
+  comentario  String?
+  producto_id Int
+  pedido_id   Int
+
+  producto    producto  @relation(fields: [producto_id], references: [id])
+  pedido      pedido    @relation(fields: [pedido_id], references: [id])
+}
+
+model pago_metodo {
+  id          Int       @id @default(autoincrement())
+  pago_metodo String
+
+  pagos       pago[]
+}
+
+model pago_estado {
+  id          Int       @id @default(autoincrement())
+  pago_estado String
+
+  pagos       pago[]
+}
+
+model pago {
+  id              Int       @id @default(autoincrement())
+  cantidad        Decimal
+  pago_metodo_id  Int?
+  pago_estado_id  Int?
+  fecha           DateTime
+  pedido_id       Int?
+
+  pago_metodo     pago_metodo?   @relation(fields: [pago_metodo_id], references: [id])
+  pago_estado     pago_estado?   @relation(fields: [pago_estado_id], references: [id])
+  pedido          pedido?        @relation(fields: [pedido_id], references: [id])
+  pagos_log       pago_log[]
+}
+
+model pago_log {
+  id          Int          @id @default(autoincrement())
+  accion      accion_enum
+  detalles    Json?
+  fecha       DateTime
+  pago_id     Int
+
+  pago        pago         @relation(fields: [pago_id], references: [id])
+}

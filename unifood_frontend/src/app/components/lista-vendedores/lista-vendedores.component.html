@@ -1,0 +1,109 @@
+<div class="vendedores-container">
+  <div class="vendedores-card">
+    <!-- Header -->
+    <div class="vendedores-header">
+      <h1>Gestión de Vendedores</h1>
+      <p>Administra el equipo de vendedores de UniFood</p>
+    </div>
+
+    <!-- Botón Agregar -->
+    <div class="acciones-container">
+      <button class="btn-agregar" (click)="agregarVendedor()">
+        <span class="icono">+</span>
+        Nuevo Vendedor
+      </button>
+    </div>
+
+    <!-- Estado de Carga -->
+    <div *ngIf="cargando" class="estado-carga">
+      <div class="spinner"></div>
+      <p>Cargando vendedores...</p>
+    </div>
+
+    <!-- Error -->
+    <div *ngIf="error && !cargando" class="estado-error">
+      <p>{{ error }}</p>
+      <button class="btn-reintentar" (click)="reintentarCarga()">
+        Reintentar
+      </button>
+    </div>
+
+    <!-- Lista de Vendedores -->
+    <div *ngIf="!cargando && !error" class="lista-vendedores">
+      
+      <!-- Card de Vendedor -->
+      <div *ngFor="let vendedor of vendedores" class="vendedor-card">
+        
+        <!-- Header de la Card -->
+        <div class="vendedor-header">
+          <div class="avatar">
+            {{ getIniciales(vendedor.nombre) }}
+          </div>
+          <div class="vendedor-info">
+            <h3 class="nombre">{{ vendedor.nombre }}</h3>
+            <p class="numero-empleado">#{{ vendedor.numEmpleado }}</p>
+          </div>
+          <div class="estatus" [class]="getEstatusClase(vendedor.estatus)">
+            {{ getEstatusTexto(vendedor.estatus) }}
+          </div>
+        </div>
+
+        <!-- Información del Vendedor -->
+        <div class="vendedor-detalles">
+          <div class="detalle-item">
+            <span class="icono">📧</span>
+            <span class="texto">{{ vendedor.email }}</span>
+          </div>
+          <div class="detalle-item">
+            <span class="icono">📞</span>
+            <span class="texto">{{ vendedor.telefono }}</span>
+          </div>
+          <div class="detalle-item">
+            <span class="icono">👤</span>
+            <span class="texto">{{ vendedor.genero }} • {{ vendedor.edad }} años</span>
+          </div>
+          <div class="detalle-item">
+            <span class="icono">📅</span>
+            <span class="texto">{{ formatearFecha(vendedor.fecha_registro) }}</span>
+          </div>
+        </div>
+
+        <!-- Acciones -->
+        <div class="vendedor-acciones">
+          <button 
+            class="btn-editar"
+            (click)="editarVendedor(vendedor)">
+            <span class="icono">✏️</span>
+            Editar
+          </button>
+          <button 
+            class="btn-estatus"
+            [class]="vendedor.estatus ? 'btn-desactivar' : 'btn-activar'"
+            (click)="cambiarEstatus(vendedor)">
+            <span class="icono">{{ vendedor.estatus ? '⏸️' : '▶️' }}</span>
+            {{ vendedor.estatus ? 'Desactivar' : 'Activar' }}
+          </button>
+          <button 
+            class="btn-eliminar"
+            (click)="eliminarVendedor(vendedor)">
+            <span class="icono">🗑️</span>
+            Eliminar
+          </button>
+        </div>
+
+      </div>
+
+      <!-- Estado Vacío -->
+      <div *ngIf="vendedores.length === 0" class="estado-vacio">
+        <div class="icono-vacio">🛍️</div>
+        <h3>No hay vendedores registrados</h3>
+        <p>Comienza agregando el primer vendedor a tu equipo</p>
+        <button class="btn-agregar-primero" (click)="agregarVendedor()">
+          Agregar Primer Vendedor
+        </button>
+      </div>
+
+    </div>
+
+  </div>
+</div>

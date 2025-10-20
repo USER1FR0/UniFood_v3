@@ -1,0 +1,361 @@
+.vendedores-container {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f4e5c2 0%, #e8d4a8 100%);
+  padding: 40px 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+.vendedores-container::before {
+  content: '';
+  position: absolute;
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(82, 167, 163, 0.15) 0%, transparent 70%);
+  border-radius: 50%;
+  top: -300px;
+  right: -300px;
+}
+
+.vendedores-container::after {
+  content: '';
+  position: absolute;
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, rgba(245, 158, 135, 0.12) 0%, transparent 70%);
+  border-radius: 50%;
+  bottom: -250px;
+  left: -250px;
+}
+
+.vendedores-card {
+  background: white;
+  padding: 40px;
+  border-radius: 20px;
+  box-shadow: 0 20px 60px rgba(82, 167, 163, 0.2);
+  width: 100%;
+  max-width: 1000px;
+  position: relative;
+  z-index: 1;
+  border: 2px solid rgba(82, 167, 163, 0.1);
+}
+
+.vendedores-header {
+  text-align: center;
+  margin-bottom: 35px;
+}
+
+.vendedores-header h1 {
+  margin: 0 0 12px;
+  color: #52a7a3;
+  font-size: 32px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.vendedores-header p {
+  margin: 0;
+  color: #666;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.acciones-container {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 30px;
+}
+
+.btn-agregar {
+  background: linear-gradient(135deg, #52a7a3 0%, #4a9693 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  padding: 12px 24px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.4s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 8px 20px rgba(82, 167, 163, 0.3);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.btn-agregar:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 30px rgba(82, 167, 163, 0.4);
+  background: linear-gradient(135deg, #5db9b5 0%, #52a7a3 100%);
+}
+
+.btn-agregar .icono {
+  font-size: 18px;
+  font-weight: bold;
+}
+
+/* Estados */
+.estado-carga, .estado-error, .estado-vacio {
+  text-align: center;
+  padding: 60px 20px;
+}
+
+.estado-carga .spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #52a7a3;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 20px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.estado-error p {
+  color: #e74c3c;
+  margin-bottom: 20px;
+  font-weight: 500;
+}
+
+.estado-vacio .icono-vacio {
+  font-size: 64px;
+  margin-bottom: 20px;
+}
+
+.estado-vacio h3 {
+  color: #52a7a3;
+  margin-bottom: 10px;
+  font-size: 20px;
+}
+
+.estado-vacio p {
+  color: #666;
+  margin-bottom: 25px;
+}
+
+.btn-reintentar, .btn-agregar-primero {
+  background: linear-gradient(135deg, #52a7a3 0%, #4a9693 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  padding: 12px 24px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.4s ease;
+  box-shadow: 0 8px 20px rgba(82, 167, 163, 0.3);
+}
+
+.btn-reintentar:hover, .btn-agregar-primero:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 30px rgba(82, 167, 163, 0.4);
+}
+
+/* Lista de Vendedores */
+.lista-vendedores {
+  display: grid;
+  gap: 20px;
+}
+
+.vendedor-card {
+  background: #fefbf5;
+  border: 2px solid #e8d4a8;
+  border-radius: 16px;
+  padding: 24px;
+  transition: all 0.3s ease;
+}
+
+.vendedor-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 40px rgba(82, 167, 163, 0.15);
+  border-color: #52a7a3;
+}
+
+.vendedor-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.avatar {
+  width: 50px;
+  height: 50px;
+  background: linear-gradient(135deg, #52a7a3 0%, #4a9693 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 800;
+  font-size: 16px;
+  box-shadow: 0 4px 12px rgba(82, 167, 163, 0.3);
+}
+
+.vendedor-info {
+  flex: 1;
+}
+
+.nombre {
+  margin: 0 0 4px;
+  color: #2c3e50;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.numero-empleado {
+  margin: 0;
+  color: #7f8c8d;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.estatus {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.estatus-activo {
+  background: #d4edda;
+  color: #155724;
+}
+
+.estatus-inactivo {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.vendedor-detalles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.detalle-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+}
+
+.detalle-item .icono {
+  font-size: 14px;
+}
+
+.detalle-item .texto {
+  color: #555;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.vendedor-acciones {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.vendedor-acciones button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.btn-editar {
+  background: #e3f2fd;
+  color: #1976d2;
+}
+
+.btn-editar:hover {
+  background: #bbdefb;
+  transform: translateY(-2px);
+}
+
+.btn-estatus {
+  background: #fff3e0;
+  color: #f57c00;
+}
+
+.btn-estatus:hover {
+  background: #ffe0b2;
+  transform: translateY(-2px);
+}
+
+.btn-eliminar {
+  background: #ffebee;
+  color: #d32f2f;
+}
+
+.btn-eliminar:hover {
+  background: #ffcdd2;
+  transform: translateY(-2px);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .vendedores-container {
+    padding: 20px 15px;
+  }
+
+  .vendedores-card {
+    padding: 30px 20px;
+  }
+
+  .vendedores-header h1 {
+    font-size: 26px;
+  }
+
+  .vendedor-header {
+    flex-direction: column;
+    text-align: center;
+    gap: 12px;
+  }
+
+  .vendedor-detalles {
+    grid-template-columns: 1fr;
+  }
+
+  .vendedor-acciones {
+    justify-content: center;
+  }
+
+  .acciones-container {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .vendedores-header h1 {
+    font-size: 22px;
+  }
+
+  .vendedor-acciones {
+    flex-direction: column;
+  }
+
+  .vendedor-acciones button {
+    justify-content: center;
+  }
+}

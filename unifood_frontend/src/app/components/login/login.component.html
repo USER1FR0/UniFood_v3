@@ -1,0 +1,47 @@
+<div class="login-container">
+  <div class="login-card">
+    <div class="login-header">
+      <h1>Bienvenido</h1>
+      <p>Inicia sesión en tu cuenta</p>
+    </div>
+
+    <form (ngSubmit)="iniciarSesion()">
+      
+      <div class="form-group">
+        <label for="correo">Correo Electrónico</label>
+        <input 
+          type="email" 
+          id="correo"
+          [(ngModel)]="loginData.correo_electronico" 
+          name="correo"
+          placeholder="tu@correo.com"
+          [disabled]="cargando"
+          required
+        >
+      </div>
+
+      <div class="form-group">
+        <label for="contrasena">Contraseña</label>
+        <input 
+          type="password" 
+          id="contrasena"
+          [(ngModel)]="loginData.contrasena" 
+          name="contrasena"
+          placeholder="••••••••"
+          [disabled]="cargando"
+          required
+        >
+      </div>
+
+      <button 
+        type="submit" 
+        class="btn-submit"
+        [disabled]="cargando"
+      >
+        <span *ngIf="!cargando">Iniciar Sesión</span>
+        <span *ngIf="cargando">Cargando...</span>
+      </button>
+
+    </form>
+  </div>
+</div>
