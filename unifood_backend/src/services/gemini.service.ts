@@ -16,13 +16,7 @@ export class GeminiService {
     private readonly prismaService: PrismaService,
     private readonly cacheService: CacheService,
   ) {
-    const apiKey = this.configService.get<string>('GEMINI_API_KEY');
-    if (!apiKey) {
-      throw new Error('GEMINI_API_KEY is not configured');
-    }
-    
-    this.genAI = new GoogleGenerativeAI(apiKey);
-    this.model = this.genAI.getGenerativeModel({ model: 'gemini-pro' });
+    this.logger.warn('Gemini deshabilitado: usando respuestas estáticas.');
   }
 
   async generateRecommendation(
@@ -30,55 +24,48 @@ export class GeminiService {
     userId: number,
   ): Promise<ChatResponseDto> {
     try {
-      this.logger.log(`Generating recommendation for user ${userId}`);
-
-      // Obtener contexto del usuario desde cache o DB
-      const userContext = await this.getUserContext(userId);
+      this.logger.log(`Generando respuesta estática para el usuario ${userId}`);
       
-      // Obtener productos disponibles
-      const availableProducts = await this.getAvailableProducts();
+      // Respuestas estáticas de ejemplo
+      const responses = [
+        '¡Hola! Soy tu asistente de comida. ¿En qué puedo ayudarte hoy?',
+        'Puedo recomendarte opciones saludables, rápidas o de tu preferencia.',
+        '¿Te gustaría saber sobre opciones vegetarianas, bajas en calorías o algo específico?',
+        '¡Claro! Aquí tienes algunas recomendaciones: Ensalada César, Sándwich de pollo, o una sopa del día.'
+      ];
       
-      // Construir prompt contextualizado
-      const prompt = this.buildPrompt(message.mensaje, userContext, availableProducts);
-      
-      // Generar respuesta con Gemini
-      const result = await this.model.generateContent(prompt);
-      const response = await result.response;
-      const text = response.text();
-      
-      // Parsear respuesta JSON
-      const parsedResponse = this.parseGeminiResponse(text);
+      const randomResponse = responses[Math.floor(Math.random() * responses.length)];
       
       // Generar sessionId si no existe
       const sessionId = message.sessionId || this.generateSessionId();
       
       // Crear respuesta estructurada
       const chatResponse: ChatResponseDto = {
-        respuesta: parsedResponse.respuesta || text,
+        respuesta: randomResponse,
         sessionId,
         timestamp: Date.now(),
-        recomendaciones: parsedResponse.recomendaciones || [],
+        recomendaciones: [
+          { producto_id: 1, nombre: 'Ensalada César', descripcion: 'Lechuga, pollo, crutones, queso parmesano', precio: 12.99, imagen_url: '', categoria: 'Ensaladas', score_recomendacion: 0.95 },
+          { producto_id: 2, nombre: 'Sándwich de Pollo', descripcion: 'Pechuga de pollo, lechuga, tomate, mayonesa', precio: 8.99, imagen_url: '', categoria: 'Sándwiches', score_recomendacion: 0.92 },
+          { producto_id: 3, nombre: 'Sopa del Día', descripcion: 'Sopa casera preparada diariamente', precio: 6.99, imagen_url: '', categoria: 'Sopas', score_recomendacion: 0.90 }
+        ],
         metadata: {
           userId,
-          model: 'gemini-pro',
-          tokens_used: response.usageMetadata?.totalTokenCount || 0,
+          model: 'static-response',
+          tokens_used: 0,
         },
       };
 
-      // Guardar en base de datos
-      await this.saveChatRecord(userId, message.mensaje, chatResponse, sessionId);
-      
-      // Cachear conversación
-      await this.cacheConversation(sessionId, chatResponse);
-
-      this.logger.log(`Recommendation generated successfully for user ${userId}`);
+      // Simular guardado en base de datos
+      this.logger.log(`Respuesta estática generada para el usuario ${userId}`);
       return chatResponse;
 
     } catch (error) {
-      this.logger.error(`Error generating recommendation: ${error.message}`, error.stack);
-      
-      // Fallback determinístico
-      return this.getFallbackResponse(message, userId);
+      this.logger.error(`Error en respuesta estática: ${error.message}`, error.stack);
+      throw new HttpException(
+        'Error al generar respuesta',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
   }
 
@@ -241,7 +228,7 @@ Responde SOLO con el JSON válido, sin texto adicional.
         data: {
           usuario_id: userId,
           mensaje_usuario: userMessage,
-          respuesta_gemini: response,
+          respuesta_gemini: response as any,
           session_id: sessionId,
           metadata: response.metadata,
         },
@@ -288,7 +275,7 @@ Responde SOLO con el JSON válido, sin texto adicional.
     });
     
     return Object.entries(preferences)
-      .sort(([,a], [,b]) => b - a)
+      .sort(([,a], [,b]) => (b as number) - (a as number))
       .slice(0, 5)
       .map(([categoria, cantidad]) => ({ categoria, cantidad }));
   }

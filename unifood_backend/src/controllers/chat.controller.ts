@@ -15,7 +15,7 @@ import { ChatMessageDto, ChatResponseDto, ChatHistoryDto } from '../models/chat.
 import { JwtAuthGuard } from '../middlewares/auth.middleware';
 
 @Controller('chat')
-@UseGuards(JwtAuthGuard)
+// @UseGuards(JwtAuthGuard) // Deshabilitado temporalmente para pruebas
 export class ChatController {
   private readonly logger = new Logger(ChatController.name);
 
@@ -27,9 +27,10 @@ export class ChatController {
     @Request() req: any,
   ): Promise<ChatResponseDto> {
     try {
-      this.logger.log(`Processing chat message from user ${req.user.id}`);
+      // Usuario temporal para pruebas (sin JWT)
+      const userId = 1;
+      this.logger.log(`Processing chat message from user ${userId}`);
       
-      const userId = req.user.id;
       const response = await this.geminiService.generateRecommendation(chatMessageDto, userId);
       
       this.logger.log(`Chat response generated for user ${userId}`);
@@ -46,7 +47,8 @@ export class ChatController {
   @Get('history')
   async getChatHistory(@Request() req: any): Promise<ChatHistoryDto[]> {
     try {
-      const userId = req.user.id;
+      // Usuario temporal para pruebas (sin JWT)
+      const userId = 1;
       const history = await this.geminiService.getChatHistory(userId);
       
       this.logger.log(`Retrieved chat history for user ${userId}`);
@@ -66,7 +68,8 @@ export class ChatController {
     @Request() req: any,
   ): Promise<ChatHistoryDto[]> {
     try {
-      const userId = req.user.id;
+      // Usuario temporal para pruebas (sin JWT)
+      const userId = 1;
       const history = await this.geminiService.getChatHistory(userId, sessionId);
       
       this.logger.log(`Retrieved chat history for session ${sessionId}, user ${userId}`);
@@ -83,7 +86,8 @@ export class ChatController {
   @Post('clear-history')
   async clearChatHistory(@Request() req: any): Promise<{ message: string }> {
     try {
-      const userId = req.user.id;
+      // Usuario temporal para pruebas (sin JWT)
+      const userId = 1;
       // Aquí se implementaría la lógica para limpiar el historial
       // Por ahora retornamos un mensaje de confirmación
       

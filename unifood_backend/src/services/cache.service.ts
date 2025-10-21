@@ -5,10 +5,16 @@ import Redis from 'ioredis';
 @Injectable()
 export class CacheService {
   private readonly logger = new Logger(CacheService.name);
-  private redis: Redis;
+  private redis: Redis | null = null;
+  private memoryCache: Map<string, { value: string; expiry?: number }> = new Map();
+  private useRedis = false; // Deshabilitar Redis temporalmente
 
   constructor(private readonly configService: ConfigService) {
-    this.initializeRedis();
+    if (this.useRedis) {
+      this.initializeRedis();
+    } else {
+      this.logger.warn('Redis disabled - using in-memory cache');
+    }
   }
 
   private initializeRedis(): void {
@@ -17,7 +23,6 @@ export class CacheService {
         host: this.configService.get<string>('REDIS_HOST', 'localhost'),
         port: this.configService.get<number>('REDIS_PORT', 6379),
         password: this.configService.get<string>('REDIS_PASSWORD', ''),
-        retryDelayOnFailover: 100,
         maxRetriesPerRequest: 3,
         lazyConnect: true,
       });
@@ -41,11 +46,21 @@ export class CacheService {
 
   async get(key: string): Promise<string | null> {
     try {
-      if (!this.redis) {
-        this.logger.warn('Redis not initialized');
+      if (this.redis) {
+        return await this.redis.get(key);
+      } else {
+        // Usar memoria cache
+        const cachedValue = this.memoryCache.get(key);
+        if (cachedValue) {
+          if (!cachedValue.expiry || cachedValue.expiry > Date.now()) {
+            return cachedValue.value;
+          } else {
+            // Expirado, eliminar
+            this.memoryCache.delete(key);
+          }
+        }
         return null;
       }
-      return await this.redis.get(key);
     } catch (error) {
       this.logger.error(`Error getting key ${key}:`, error);
       return null;
@@ -54,15 +69,16 @@ export class CacheService {
 
   async set(key: string, value: string, ttlSeconds?: number): Promise<boolean> {
     try {
-      if (!this.redis) {
-        this.logger.warn('Redis not initialized');
-        return false;
-      }
-      
-      if (ttlSeconds) {
-        await this.redis.setex(key, ttlSeconds, value);
+      if (this.redis) {
+        if (ttlSeconds) {
+          await this.redis.setex(key, ttlSeconds, value);
+        } else {
+          await this.redis.set(key, value);
+        }
       } else {
-        await this.redis.set(key, value);
+        // Usar memoria cache
+        const expiry = ttlSeconds ? Date.now() + (ttlSeconds * 1000) : undefined;
+        this.memoryCache.set(key, { value, expiry });
       }
       return true;
     } catch (error) {
@@ -73,11 +89,11 @@ export class CacheService {
 
   async del(key: string): Promise<boolean> {
     try {
-      if (!this.redis) {
-        this.logger.warn('Redis not initialized');
-        return false;
+      if (this.redis) {
+        await this.redis.del(key);
+      } else {
+        this.memoryCache.delete(key);
       }
-      await this.redis.del(key);
       return true;
     } catch (error) {
       this.logger.error(`Error deleting key ${key}:`, error);
@@ -232,21 +248,32 @@ export class CacheService {
 
   async clearUserCache(userId: number): Promise<boolean> {
     try {
-      const patterns = [
-        `user_context_${userId}`,
-        `chat_counter_${userId}`,
-        `conversation_*_${userId}`,
-      ];
+      if (this.redis) {
+        const patterns = [
+          `user_context_${userId}`,
+          `chat_counter_${userId}`,
+          `conversation_*_${userId}`,
+        ];
 
-      for (const pattern of patterns) {
-        if (pattern.includes('*')) {
-          const keys = await this.redis.keys(pattern);
-          if (keys.length > 0) {
-            await this.redis.del(...keys);
+        for (const pattern of patterns) {
+          if (pattern.includes('*')) {
+            const keys = await this.redis.keys(pattern);
+            if (keys.length > 0) {
+              await this.redis.del(...keys);
+            }
+          } else {
+            await this.redis.del(pattern);
           }
-        } else {
-          await this.redis.del(pattern);
         }
+      } else {
+        // Limpiar memoria cache
+        const keysToDelete: string[] = [];
+        this.memoryCache.forEach((_, key) => {
+          if (key.includes(`${userId}`)) {
+            keysToDelete.push(key);
+          }
+        });
+        keysToDelete.forEach(key => this.memoryCache.delete(key));
       }
 
       return true;
@@ -263,7 +290,7 @@ export class CacheService {
       }
 
       const info = await this.redis.info();
-      const memory = await this.redis.memory('usage');
+      const memory = await this.redis.memory('STATS');
       const keyspace = await this.redis.info('keyspace');
 
       return {

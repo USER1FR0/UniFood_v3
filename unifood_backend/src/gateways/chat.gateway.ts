@@ -30,24 +30,10 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   async handleConnection(client: Socket) {
     try {
-      // Extraer token JWT del handshake
-      const token = client.handshake.auth?.token || client.handshake.headers?.authorization?.replace('Bearer ', '');
+      // Sin JWT por ahora - usar userId del handshake o valor por defecto
+      const userId = client.handshake.auth?.userId || 1; // Usuario temporal para pruebas
       
-      if (!token) {
-        this.logger.warn('Connection attempt without token');
-        client.disconnect();
-        return;
-      }
-
-      // Aquí deberías validar el JWT y extraer el userId
-      // Por simplicidad, asumimos que el token es válido
-      const userId = this.extractUserIdFromToken(token);
-      
-      if (!userId) {
-        this.logger.warn('Invalid token provided');
-        client.disconnect();
-        return;
-      }
+      this.logger.log(`Connection attempt with userId: ${userId}`);
 
       // Registrar usuario conectado
       this.connectedUsers.set(client.id, { userId, socket: client });

@@ -2,6 +2,8 @@ import {
   Injectable,
   NestMiddleware,
   UnauthorizedException,
+  CanActivate,
+  ExecutionContext,
 } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
 import { JwtService } from '@nestjs/jwt';
@@ -64,5 +66,36 @@ export class RolMiddleware implements NestMiddleware {
     }
 
     next();
+  }
+}
+
+// Guard JWT para usar con @UseGuards
+@Injectable()
+export class JwtAuthGuard implements CanActivate {
+  constructor(private jwtService: JwtService) {}
+
+  canActivate(context: ExecutionContext): boolean {
+    const request = context.switchToHttp().getRequest();
+    const authHeader = request.headers.authorization;
+
+    if (!authHeader) {
+      throw new UnauthorizedException('Token no proporcionado');
+    }
+
+    try {
+      const token = authHeader.replace('Bearer ', '');
+      const decoded = this.jwtService.verify(token);
+
+      // Agregar usuario al request
+      request.user = {
+        id: decoded.id,
+        correo: decoded.correo,
+        rol: decoded.rol,
+      };
+
+      return true;
+    } catch (error) {
+      throw new UnauthorizedException('Token inválido o expirado');
+    }
   }
 }

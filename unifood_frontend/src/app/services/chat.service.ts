@@ -26,15 +26,12 @@ export class ChatService {
 
   connect(sessionId: string): void {
     try {
-      const token = this.authService.getToken();
-      if (!token) {
-        console.error('No authentication token available');
-        return;
-      }
+      // Conexión sin JWT por ahora - usando userId de prueba
+      const userId = 1; // ID de usuario temporal para pruebas
 
       this.socket = io(`${this.wsUrl}/chat`, {
         auth: {
-          token: token
+          userId: userId
         },
         transports: ['websocket']
       });
@@ -129,9 +126,8 @@ export class ChatService {
   }
 
   private getAuthHeaders(): HttpHeaders {
-    const token = this.authService.getToken();
+    // Sin JWT por ahora - solo Content-Type
     return new HttpHeaders({
-      'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json'
     });
   }

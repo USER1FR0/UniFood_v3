@@ -2,9 +2,9 @@ import { Component, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/co
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
-import { AuthService } from '../services/auth.service';
-import { ChatService } from '../services/chat.service';
-import { ChatMessage, ChatResponse, ProductRecommendation } from '../models/chat.model';
+import { AuthService } from '../../services/auth.service';
+import { ChatService } from '../../services/chat.service';
+import { ChatMessage, ChatResponse, ProductRecommendation } from '../../models/chat.model';
 
 @Component({
   selector: 'app-chat',
@@ -161,13 +161,27 @@ export class ChatComponent implements OnInit, OnDestroy {
   loadChatHistory(): void {
     this.chatService.getChatHistory().subscribe({
       next: (history) => {
-        this.messages = history.map(msg => ({
-          id: msg.id,
-          content: msg.isUser ? msg.mensaje_usuario : msg.respuesta_gemini.respuesta,
-          isUser: msg.isUser,
-          timestamp: new Date(msg.timestamp),
-          sessionId: msg.session_id || this.sessionId
-        }));
+        // Convertir historial a mensajes del chat
+        const chatMessages: ChatMessage[] = [];
+        history.forEach(msg => {
+          // Mensaje del usuario
+          chatMessages.push({
+            id: msg.id,
+            content: msg.mensaje_usuario,
+            isUser: true,
+            timestamp: new Date(msg.timestamp),
+            sessionId: msg.session_id || this.sessionId
+          });
+          // Respuesta del bot
+          chatMessages.push({
+            id: msg.id + 0.5,
+            content: msg.respuesta_gemini.respuesta,
+            isUser: false,
+            timestamp: new Date(msg.timestamp),
+            sessionId: msg.session_id || this.sessionId
+          });
+        });
+        this.messages = chatMessages;
         this.scrollToBottom();
       },
       error: (error) => {

@@ -5,6 +5,7 @@ import { authGuard } from './guards/auth.guard';
 import { MenuComponent } from './components/menu/menu.component';
 import { ListaVendedoresComponent } from './components/lista-vendedores/lista-vendedores.component';
 import { CrearVendedorComponent } from './components/crear-vendedor/crear-vendedor.component';
+import { ChatComponent } from './components/chat/chat.component';
 
 export const routes: Routes = [
     {path: '', redirectTo: 'lista-vendedores', pathMatch: 'full'},
@@ -13,5 +14,6 @@ export const routes: Routes = [
     {path: 'menu', component: MenuComponent},
     {path: 'lista-vendedores', component: ListaVendedoresComponent},
     {path: 'crear-vendedor', component: CrearVendedorComponent},
+    {path: 'chat', component: ChatComponent},
     {path: '**', redirectTo: 'lista-vendedores' }
 ];

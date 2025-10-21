@@ -38,6 +38,7 @@ model usuario {
 
   clientes           cliente[]
   vendedores         vendedor[]
+  registro_chats     registro_chat[]
 }
 
 model cliente {
@@ -212,4 +213,16 @@ model pago_log {
   pago_id     Int
 
   pago        pago         @relation(fields: [pago_id], references: [id])
+}
+
+model registro_chat {
+  id                Int       @id @default(autoincrement())
+  usuario_id        Int
+  mensaje_usuario   String
+  respuesta_gemini  Json
+  timestamp         DateTime  @default(now())
+  session_id        String?
+  metadata          Json?
+
+  usuario           usuario   @relation(fields: [usuario_id], references: [id])
 }
