@@ -1,0 +1,88 @@
+<div class="chat-container">
+  <div class="chat-header">
+    <h2>Chat de Recomendaciones</h2>
+    <div class="connection-status" [class.connected]="isConnected" [class.disconnected]="!isConnected">
+      <span class="status-dot"></span>
+      {{ isConnected ? 'Conectado' : 'Desconectado' }}
+    </div>
+  </div>
+
+  <div class="chat-messages" #messagesContainer>
+    <div 
+      *ngFor="let message of messages" 
+      class="message" 
+      [class.user-message]="message.isUser"
+      [class.bot-message]="!message.isUser"
+    >
+      <div class="message-content">
+        <div class="message-text">{{ message.content }}</div>
+        <div class="message-time">{{ message.timestamp | date:'short' }}</div>
+      </div>
+    </div>
+    
+    <div *ngIf="isLoading" class="message bot-message">
+      <div class="message-content">
+        <div class="typing-indicator">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="recommendations.length > 0" class="recommendations-panel">
+    <h3>Recomendaciones</h3>
+    <div class="recommendations-grid">
+      <div 
+        *ngFor="let rec of recommendations" 
+        class="recommendation-card"
+        (click)="selectRecommendation(rec)"
+      >
+        <div class="recommendation-image" *ngIf="rec.imagen_url">
+          <img [src]="rec.imagen_url" [alt]="rec.nombre">
+        </div>
+        <div class="recommendation-content">
+          <h4>{{ rec.nombre }}</h4>
+          <p *ngIf="rec.descripcion">{{ rec.descripcion }}</p>
+          <div class="recommendation-price">${{ rec.precio | number:'1.2-2' }}</div>
+          <div *ngIf="rec.categoria" class="recommendation-category">{{ rec.categoria }}</div>
+          <div *ngIf="rec.score_recomendacion" class="recommendation-score">
+            Score: {{ (rec.score_recomendacion * 100) | number:'1.0-0' }}%
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="chat-input">
+    <div class="input-container">
+      <textarea
+        [(ngModel)]="newMessage"
+        (keypress)="onKeyPress($event)"
+        placeholder="Escribe tu mensaje aquí..."
+        [disabled]="isLoading"
+        rows="2"
+        class="message-input"
+      ></textarea>
+      <button 
+        (click)="sendMessage()" 
+        [disabled]="!newMessage.trim() || isLoading"
+        class="send-button"
+      >
+        <i class="send-icon">📤</i>
+      </button>
+    </div>
+  </div>
+
+  <div class="chat-actions">
+    <button (click)="loadChatHistory()" class="action-button">
+      <i class="history-icon">📜</i>
+      Historial
+    </button>
+    <button (click)="clearChat()" class="action-button">
+      <i class="clear-icon">🗑️</i>
+      Limpiar
+    </button>
+  </div>
+</div>
