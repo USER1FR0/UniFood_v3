@@ -15,7 +15,7 @@ import { VendedorLayoutComponent } from './components/layouts/vendedor-layout/ve
 export const routes: Routes = [
   { path: '', redirectTo: 'lista-vendedores', pathMatch: 'full' },
   { path: 'login', component: LoginComponent },
-  { path: 'borrar', component: BorrarComponent, canActivate: [authGuard] },
+  //{ path: 'borrar', component: BorrarComponent },
   { path: 'menu', component: MenuComponent },
   { path: 'crear-vendedor', component: CrearVendedorComponent },
 
@@ -39,6 +39,7 @@ export const routes: Routes = [
       { path: '', redirectTo: 'pedidos', pathMatch: 'full' },
       { path: 'pedidos', component: VendedorPedidoComponent },
       { path: 'lista-vendedores', component: ListaVendedoresComponent },
+       { path: 'borrar', component: BorrarComponent },
     ],
   },
 

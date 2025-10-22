@@ -1,32 +1,46 @@
-import { Component,OnInit } from '@angular/core';
-import { RouterOutlet,Router } from '@angular/router';
+import { Component, OnInit } from '@angular/core';
+import { RouterOutlet, Router } from '@angular/router';
 import { AuthService } from './services/auth.service';
 
 @Component({
   selector: 'app-root',
+  standalone: true,
   imports: [RouterOutlet],
   templateUrl: './app.component.html',
-  styleUrl: './app.component.scss'
+  styleUrls: ['./app.component.scss'],
 })
 export class AppComponent implements OnInit {
-  constructor(
-    private authService: AuthService,
-    private router: Router
-  ) {}
+  constructor(private authService: AuthService, private router: Router) {}
 
   title = 'UniFood';
 
-  ngOnInit(): void {
-    if (this.authService.estaAutenticado()) {
+ ngOnInit(): void {
+  this.router.events.subscribe({
+    next: (event: any) => {
+      // Solo ejecuta lógica al finalizar una navegación real
+      if (event.constructor.name !== 'NavigationEnd') return;
+
       const usuario = this.authService.obtenerUsuario();
-      
-      if (usuario?.rol === 'cliente') {
-        this.router.navigate(['/cliente/carrito']);
-      } else if (usuario?.rol === 'vendedor') {
-        this.router.navigate(['/vendedor/lista-vendedores']);
+      const autenticado = this.authService.estaAutenticado();
+
+      // Si no está autenticado y no está en login → redirige
+      if (!autenticado && this.router.url !== '/login') {
+        this.router.navigate(['/login']);
+        return;
       }
-    } else {
-      console.log('Usuario no autenticado');
-    }
-  }
+
+      // Si ya está autenticado y está en login o raíz → redirige según rol
+      if (autenticado && (this.router.url === '/' || this.router.url === '/login')) {
+        if (usuario?.rol === 'cliente') {
+          this.router.navigate(['/cliente']);
+        } else if (usuario?.rol === 'vendedor') {
+          this.router.navigate(['/vendedor']);
+        } else {
+          this.router.navigate(['/login']);
+        }
+      }
+    },
+  });
+}
+
 }

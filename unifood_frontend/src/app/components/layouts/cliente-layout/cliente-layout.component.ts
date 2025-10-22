@@ -281,6 +281,7 @@ export class ClienteLayoutComponent implements OnInit, OnDestroy {
   }
 
   abrirSeguimiento(): void {
+    this.verificarPedidosActivos();
     if (this.pedidosActivos.length === 1) {
       this.pedidoSeleccionado = this.pedidosActivos[0];
       this.mostrarModalSeguimiento = true;
