@@ -8,52 +8,53 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
-import { authService } from "src/services/auth.service";
+import { authService } from 'src/services/auth.service';
 import { LoginDto } from 'src/models/auth.model';
 
 @Controller('auth')
 export class authController {
-    constructor(private readonly authService: authService){}
+  constructor(private readonly authService: authService) {}
 
-    //Login
-    @Post('login')
-    @HttpCode(HttpStatus.OK)
-    async login(@Body() loginDto: LoginDto){
-        return this.authService.login(loginDto);
+  //Login
+  @Post('login')
+  @HttpCode(HttpStatus.OK)
+  async login(@Body() loginDto: LoginDto) {
+    return this.authService.login(loginDto);
+  }
+
+  //Verificar Token
+  // CAMBIAR "autorization" por "authorization"
+  @Get('verificar')
+  async verificar(@Headers('authorization') authorization: string) {
+    if (!authorization) {
+      throw new UnauthorizedException('Token no proporcionado');
     }
 
-    //Verificar Token
-    @Get('verificar')
-    async verifcar(@Headers('autorization') autorization:string){
-        if (!autorization){
-            throw new UnauthorizedException('Token no proporcionado');
-        }
+    const token = authorization.replace('Bearer ', '');
+    const usuario = await this.authService.verificarToken(token);
 
-        const token = autorization.replace('Bearer ', '');
-        const usuario = await this.authService.verificarToken(token);
+    return {
+      valido: true,
+      usuario,
+    };
+  }
 
-        return{
-            valido:true,
-            usuario,
-        };
+  @Get('perfil')
+  async perfil(@Headers('authorization') authorization: string) {
+    if (!authorization) {
+      throw new UnauthorizedException('Token no proporcionado');
     }
 
-    @Get('perfil')
-    async perfil(@Headers('autorization') autorization:string){
-        if (!autorization){
-            throw new UnauthorizedException('Token no proporcionado');
-        }
+    const token = authorization.replace('Bearer ', '');
+    return this.authService.verificarToken(token);
+  }
 
-        const token = autorization.replace('Bearer ', '');
-        return this.authService.verificarToken(token);
-    }
-
-    // cerrar sesion
-    @Post('logout')
-    @HttpCode(HttpStatus.OK)
-    async logout(){
-        return{
-            mensaje: 'Sesion cerrada exitosamente',
-        };
-    }
+  // cerrar sesion
+  @Post('logout')
+  @HttpCode(HttpStatus.OK)
+  async logout() {
+    return {
+      mensaje: 'Sesion cerrada exitosamente',
+    };
+  }
 }

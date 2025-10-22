@@ -8,8 +8,8 @@ import { PrismaModule } from './prisma.module';
 @Module({
     imports: [
         JwtModule.register({
-            secret: process.env.JWT_SECRET_KEY,
-            signOptions:{ expiresIn:'3600s' }
+            secret: process.env.JWT_SECRET,
+            signOptions:{ expiresIn:'24h' }
         }),
         PrismaModule
     ],

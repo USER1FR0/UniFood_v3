@@ -36,15 +36,29 @@ export class AuthService {
   }
 
   obtenerToken(): string | null {
-    return localStorage.getItem('token');
+    const token = localStorage.getItem('token');
+    return token;
   }
 
   obtenerUsuario(): Usuario | null {
     return this.usuarioSubject.value;
   }
 
+  
   estaAutenticado(): boolean {
-    return this.obtenerToken() !== null;
+    const token = this.obtenerToken();
+    const usuario = this.obtenerUsuario();
+    const autenticado = !!(token && usuario);
+    
+    return autenticado;
+  }
+
+  verificarToken(): Observable<any> {
+    return this.http.get(`${this.apiUrl}/verificar`);
+  }
+
+  obtenerPerfil(): Observable<Usuario> {
+    return this.http.get<Usuario>(`${this.apiUrl}/perfil`);
   }
 
   esSupervisor(): boolean {
@@ -73,4 +87,21 @@ export class AuthService {
     }
     return null;
   }
+
+  // AL FINAL DE LA CLASE AuthService, agregar:
+
+// Método para debug
+verificarEstadoAuth(): void {
+  const token = localStorage.getItem('token');
+  const usuario = localStorage.getItem('usuario');
+  
+  console.log('📊 Estado de autenticación:');
+  console.log('  - Token en localStorage:', token ? 'SÍ' : 'NO');
+  console.log('  - Usuario en localStorage:', usuario ? 'SÍ' : 'NO');
+  console.log('  - Token completo:', token);
+  
+  if (usuario) {
+    console.log('  - Usuario:', JSON.parse(usuario));
+  }
+}
 }

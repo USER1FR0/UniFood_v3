@@ -13,18 +13,26 @@ export class LoginDto {
 }
 
 //Respuesta Login
-export interface LoginResponse{
-    token: string;
-    usuario:{
-        id: number;
-        correo:string;
-        rol:string;
-    };
+export interface JwtPayload {
+  id: number;
+  id_rol: number | null;
+  correo: string;
+  rol: string;
 }
 
-//Payload del JWT
-export interface JwtPayload{
+export interface LoginResponse {
+  token: string;
+  usuario: {
     id: number;
+    id_rol: number | null;  // ← Agrega esta línea
     correo: string;
     rol: string;
+  };
+}
+
+export interface Usuario {
+  id: number;
+  id_rol: number | null;
+  correo: string;
+  rol: string;
 }
