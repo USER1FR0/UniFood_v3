@@ -94,35 +94,31 @@
 
             <!-- Estado texto -->
             <div class="estado-texto">
-              <!-- Info -->
-              <div class="pedido-info">
-                <strong>#{{ pedido.codigo }}</strong>
+            <!-- Info -->
+            <div class="pedido-info">
+              <strong>#{{ pedido.codigo }}</strong>
+              <p>
+                <strong>Área: </strong>
+                <span class="area">{{
+                  pedido.area_venta?.area_venta || "Área desconocida"
+                }}</span> 
                 <p>
-                  <strong>Área: </strong>
-                  <span class="area">{{
-                    pedido.area_venta?.area_venta || "Área desconocida"
-                  }}</span>
-                </p>
+                <strong>Subtotal: </strong>
+                <span class="total">${{ pedido.total_pedido }}</span>
+              </p>
+              <p>
+                <strong> Pedido: </strong>
+                <span *ngIf="pedido.pedido_estado_id === 1">Pendiente</span>
+                <span *ngIf="pedido.pedido_estado_id === 2"
+                  >En preparación</span
+                >
+                <span *ngIf="pedido.pedido_estado_id === 3" class="listo-texto">
+                  ¡Listo en el area: {{ pedido.area_venta?.area_venta }}!
+                </span>
+              </p>
+            </div>
 
-                <p>
-                  <strong>Subtotal: </strong>
-                  <span class="total">${{ pedido.total_pedido }}</span>
-                </p>
-                <p>
-                  <strong> Pedido: </strong>
-                  <span *ngIf="pedido.pedido_estado_id === 1">Pendiente</span>
-                  <span *ngIf="pedido.pedido_estado_id === 2"
-                    >En preparación</span
-                  >
-                  <span
-                    *ngIf="pedido.pedido_estado_id === 3"
-                    class="listo-texto"
-                  >
-                    ¡Listo en el area: {{ pedido.area_venta?.area_venta }}!
-                  </span>
-                </p>
-              </div>
-
+            
               <!-- Botón ver -->
               <button class="btn btn-ver">
                 <i class="fas fa-eye"></i>
@@ -280,18 +276,15 @@
           >
             <span class="cantidad">{{ item.cantidad }}x</span>
             <span class="nombre">{{ item.producto?.nombre }}</span>
-            <span class="nombre"> {{ item.detalles_producto }} </span>
+            <span class = "nombre"> {{item.detalles_producto}} </span>
             <span class="precio"
               >${{ item.precio_unitario * item.cantidad }}</span
             >
           </div>
-          <div *ngIf="pedidoSeleccionado?.detalles_pedido">
-            <i class="fas fa-receipt"></i
-            ><strong> Detalles adicionales:</strong>
-            <span *ngIf="pedidoSeleccionado?.detalles_pedido">
-              {{ pedidoSeleccionado?.detalles_pedido }}</span
-            >
-          </div>
+          <div *ngIf ="pedidoSeleccionado?.detalles_pedido"></div>
+          <i  class="fas fa-receipt"></i><strong> Detalles adicionales:</strong>
+          <span *ngIf ="pedidoSeleccionado?.detalles_pedido">
+            {{ pedidoSeleccionado?.detalles_pedido}}</span>
         </div>
       </div>
 

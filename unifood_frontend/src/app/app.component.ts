@@ -23,7 +23,7 @@ export class AppComponent implements OnInit {
       if (usuario?.rol === 'cliente') {
         this.router.navigate(['/cliente/carrito']);
       } else if (usuario?.rol === 'vendedor') {
-        this.router.navigate(['/vendedor']);
+        this.router.navigate(['/vendedor/lista-vendedores']);
       }
     } else {
       console.log('Usuario no autenticado');

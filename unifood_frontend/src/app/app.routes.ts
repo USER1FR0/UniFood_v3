@@ -9,55 +9,48 @@ import { VendedorPedidoComponent } from './components/vendedor-pedido/vendedor-p
 import { MenuComponent } from './components/menu/menu.component';
 import { ListaVendedoresComponent } from './components/lista-vendedores/lista-vendedores.component';
 import { CrearVendedorComponent } from './components/crear-vendedor/crear-vendedor.component';
+import { ClienteLayoutComponent } from './components/layouts/cliente-layout/cliente-layout.component';
+import { VendedorLayoutComponent } from './components/layouts/vendedor-layout/vendedor-layout.component';
 
 export const routes: Routes = [
-    {path: '', redirectTo: 'lista-vendedores', pathMatch: 'full'},
-    {path: 'login', component: LoginComponent},
-    {path: 'borrar', component: BorrarComponent, canActivate: [authGuard]},
-    {path: 'menu', component: MenuComponent},
-    {path: 'lista-vendedores', component: ListaVendedoresComponent},
-    {path: 'crear-vendedor', component: CrearVendedorComponent},
-    {path: '**', redirectTo: 'lista-vendedores' }
+  { path: '', redirectTo: 'lista-vendedores', pathMatch: 'full' },
+  { path: 'login', component: LoginComponent },
+  { path: 'borrar', component: BorrarComponent, canActivate: [authGuard] },
+  { path: 'menu', component: MenuComponent },
+  { path: 'crear-vendedor', component: CrearVendedorComponent },
+
+  // ========== CLIENTE ==========
   {
-    path: 'login',
-    component: LoginComponent,
-  },
-    {
     path: 'cliente',
     canActivate: [clienteGuard],
-    loadComponent: () => import('../app/components/layouts/cliente-layout/cliente-layout.component')
-      .then(m => m.ClienteLayoutComponent),
+    component: ClienteLayoutComponent, 
     children: [
-      { 
-        path: '', 
-        redirectTo: 'carrito', 
-        pathMatch: 'full' 
-      },
-      { 
-        path: 'carrito', 
-        loadComponent: () => import('./components/cliente-pedido/cliente-pedido.component')
-          .then(m => m.ClientePedidoComponent)
-      }
-    ]
+      { path: '', redirectTo: 'carrito', pathMatch: 'full' },
+      { path: 'carrito', component: ClientePedidoComponent },
+    ],
   },
 
-  // Rutas de Vendedor
+  // ========== VENDEDOR ==========
   {
     path: 'vendedor',
     canActivate: [vendedorGuard],
-    loadComponent: () => import('../app/components/layouts/vendedor-layout/vendedor-layout.component')
-      .then(m => m.VendedorLayoutComponent),
+    component: VendedorLayoutComponent, 
     children: [
-      { 
-        path: '', 
-        loadComponent: () => import('./components/vendedor-pedido/vendedor-pedido.component')
-          .then(m => m.VendedorPedidoComponent)
-      }
-    ]
+      { path: '', redirectTo: 'pedidos', pathMatch: 'full' },
+      { path: 'pedidos', component: VendedorPedidoComponent },
+      { path: 'lista-vendedores', component: ListaVendedoresComponent },
+    ],
   },
 
-  { 
-    path: '**', 
-    redirectTo: '/login' 
-  }
+  // ========== SUPERVISOR ==========
+  {
+    path: 'supervisor',
+    component: VendedorLayoutComponent, 
+    children: [
+      { path: '', redirectTo: 'lista-vendedores', pathMatch: 'full' },
+      { path: 'lista-vendedores', component: ListaVendedoresComponent },
+    ],
+  },
+
+  { path: '**', redirectTo: '/login' },
 ];

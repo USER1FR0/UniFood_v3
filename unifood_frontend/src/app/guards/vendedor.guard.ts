@@ -13,7 +13,7 @@ export const vendedorGuard: CanActivateFn = (route, state) => {
 
   const usuario = authService.obtenerUsuario();
   if (usuario?.rol !== 'vendedor') {
-    router.navigate(['/cliente/carrito']);
+    router.navigate(['/cliente']);
     return false;
   }
 

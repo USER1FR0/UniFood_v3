@@ -70,7 +70,7 @@ export class LoginComponent {
           } else if (this.authService.esVendedor()) {
             this.router.navigate(['/vendedor']);
           } else if (this.authService.esCliente()) {
-            this.router.navigate(['/cliente/carrito']);
+            this.router.navigate(['/cliente/']);
           }
         });
       },
