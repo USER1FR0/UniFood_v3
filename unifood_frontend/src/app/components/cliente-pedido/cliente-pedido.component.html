@@ -1,0 +1,298 @@
+<div class="carrito-container">
+  <!--button class="btn-logout" (click)="logout()">
+    <i class="fas fa-sign-out-alt"></i>
+  </!--button-->
+
+  <!-- Vista: Selección de área (cuando hay múltiples áreas) -->
+  <div
+    class="seleccion-area"
+    *ngIf="!areaSeleccionada && carritosPorArea.length > 1"
+  >
+    <div class="titulo-seccion">
+      <i class="fas fa-shopping-cart"></i>
+      <h2>Selecciona el área de tu pedido</h2>
+    </div>
+
+    <div class="areas-grid">
+      <div
+        *ngFor="let area of carritosPorArea"
+        class="area-card"
+        (click)="seleccionarArea(area)"
+      >
+        <div class="area-header">
+          <h3>{{ area.area_nombre }}</h3>
+          <span class="badge-items">{{ area.items.length }} producto(s)</span>
+        </div>
+
+        <div class="area-productos">
+          <div *ngFor="let item of area.items" class="producto-mini">
+            <span class="cantidad">{{ item.cantidad }}x</span>
+            <span class="nombre">{{ item.producto.nombre }}</span>
+          </div>
+        </div>
+
+        <div class="area-total">
+          <span>Total:</span>
+          <strong>${{ area.total }}</strong>
+        </div>
+
+        <button class="btn-seleccionar">
+          <i class="fas fa-arrow-right"></i>
+          Continuar con esta área
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Vista: Confirmación de pedido -->
+  <div class="confirmacion-pedido" *ngIf="areaSeleccionada">
+    <!-- Header con botón volver -->
+    <div class="header-confirmacion">
+      <button
+        *ngIf="carritosPorArea.length > 1"
+        class="btn-volver"
+        (click)="volver()"
+      >
+        <i class="fas fa-arrow-left"></i>
+        Volver
+      </button>
+      <div class="titulo-seccion">
+        <i class="fas fa-check-circle"></i>
+        <h2>Confirmar Pedido - {{ areaSeleccionada.area_nombre }}</h2>
+      </div>
+    </div>
+
+    <!-- Productos del área seleccionada -->
+    <div class="seccion-productos">
+      <h3>
+        <i class="fas fa-list"></i>
+        Productos ({{ areaSeleccionada.items.length }})
+      </h3>
+
+      <div class="productos-lista">
+        <div
+          *ngFor="let item of areaSeleccionada.items"
+          class="producto-carrito"
+        >
+          <div class="producto-imagen">
+            <img
+              [src]="item.producto.imagen_url"
+              [alt]="item.producto.nombre"
+            />
+          </div>
+
+          <div class="producto-info">
+            <h4>{{ item.producto.nombre }}</h4>
+            <p class="descripcion">{{ item.producto.descripcion }}</p>
+            <div class="producto-meta">
+              <span class="meta-item">
+                <i class="fas fa-clock"></i>
+                {{ item.producto.tiempo_preparacion }} min
+              </span>
+              <span class="meta-item">
+                <i class="fas fa-fire"></i>
+                {{ item.producto.calorias }} cal
+              </span>
+            </div>
+            <div class="detalles-especiales" *ngIf="item.detalles">
+              <i class="fas fa-comment"></i>
+              <span>{{ item.detalles }}</span>
+            </div>
+          </div>
+
+          <div class="producto-acciones">
+            <div class="cantidad-control">
+              <button
+                *ngIf = "item.cantidad > 1"
+                class="btn-cantidad"
+                (click)="actualizarCantidad(item, item.cantidad - 1)"
+              >
+                <i class="fas fa-minus"></i>
+              </button>
+              <span class="cantidad-valor">{{ item.cantidad }}</span>
+              <button
+                class="btn-cantidad"
+                (click)="actualizarCantidad(item, item.cantidad + 1)"
+              >
+                <i class="fas fa-plus"></i>
+              </button>
+            </div>
+
+            <div class="precio-item">
+              <span class="precio-unitario"
+                >${{ item.producto.precio }} c/u</span
+              >
+              <strong class="subtotal">${{ item.subtotal }}</strong>
+            </div>
+
+            <button class="btn-eliminar" (click)="eliminarItem(item)">
+              <i class="fas fa-trash"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Detalles adicionales -->
+    <div class="seccion-detalles">
+      <h3>
+        <i class="fas fa-comment-dots"></i>
+        Detalles adicionales (opcional)
+      </h3>
+      <textarea
+        [(ngModel)]="detallesPedido"
+        placeholder="Ej: Para llevar, para las 11:30, etc. (Max 80 caracteres)"
+        rows="3"
+      ></textarea>
+    </div>
+
+    <!-- Método de pago -->
+    <div class="seccion-pago">
+      <h3>
+        <i class="fas fa-credit-card"></i>
+        Método de pago
+      </h3>
+
+      <div class="metodos-pago">
+        <div
+          class="metodo-card"
+          [class.selected]="metodoPagoSeleccionado === 'efectivo'"
+          (click)="metodoPagoSeleccionado = 'efectivo'"
+        >
+          <div class="metodo-icono">
+            <i class="fas fa-money-bill-wave"></i>
+          </div>
+          <div class="metodo-info">
+            <strong>Efectivo</strong>
+            <span>Pagar al recoger</span>
+          </div>
+          <div class="metodo-check">
+            <i class="fas fa-check-circle"></i>
+          </div>
+        </div>
+
+        <div
+          class="metodo-card"
+          [class.selected]="metodoPagoSeleccionado === 'tarjeta'"
+          (click)="metodoPagoSeleccionado = 'tarjeta'"
+        >
+          <div class="metodo-icono">
+            <i class="fas fa-credit-card"></i>
+          </div>
+          <div class="metodo-info">
+            <strong>Tarjeta</strong>
+            <span>Pagar ahora</span>
+          </div>
+          <div class="metodo-check">
+            <i class="fas fa-check-circle"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Resumen y confirmación -->
+    <div class="seccion-resumen">
+      <div class="resumen-card">
+        <div class="resumen-row">
+          <span>Subtotal ({{ areaSeleccionada.items.length }} productos):</span>
+          <strong>${{ areaSeleccionada.total }}</strong>
+        </div>
+        <div class="resumen-row total">
+          <span>Total a pagar:</span>
+          <strong>${{ areaSeleccionada.total }}</strong>
+        </div>
+      </div>
+
+      <button
+        class="btn-confirmar"
+        (click)="confirmarPedido()"
+        [disabled]="procesando || !metodoPagoSeleccionado"
+      >
+        <i class="fas fa-spinner fa-spin" *ngIf="procesando"></i>
+        <i class="fas fa-check" *ngIf="!procesando"></i>
+        {{ procesando ? "Procesando..." : "Confirmar Pedido" }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Estado vacío -->
+  <div class="carrito-vacio" *ngIf="carritosPorArea.length === 0">
+    <div class="vacio-icono">
+      <i class="fas fa-shopping-cart"></i>
+    </div>
+    <h3>Tu carrito está vacío</h3>
+    <p>Agrega productos para continuar</p>
+  </div>
+</div>
+
+
+<!-- Modal de pueba para agregar al carrito w-->
+ <!-- Botón flotante para abrir modal de prueba -->
+<button class="btn-test-carrito" (click)="mostrarModalTest = true" title="Probar Carrito">
+  <i class="fas fa-flask"> Probar Carrito</i>
+</button>
+
+
+<!-- Modal de Prueba del Carrito -->
+<div class="modal-overlay" *ngIf="mostrarModalTest" (click)="mostrarModalTest = false">
+  <div class="modal-container modal-test" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2><i class="fas fa-flask"></i> Probar Carrito</h2>
+      <button class="btn-close" (click)="mostrarModalTest = false">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <div class="form-group">
+        <label>ID del Producto:</label>
+        <input 
+          type="number" 
+          [(ngModel)]="testProductoId" 
+          placeholder="Ej: 1"
+          class="form-control">
+      </div>
+
+      <div class="form-group">
+        <label>Cantidad:</label>
+        <input 
+          type="number" 
+          [(ngModel)]="testCantidad" 
+          placeholder="Ej: 2"
+          class="form-control"
+          min="1">
+      </div>
+
+      <div class="form-group">
+        <label>Detalles (opcional):</label>
+        <textarea 
+          [(ngModel)]="testDetalles" 
+          placeholder="Ej: Sin cebolla, extra queso"
+          class="form-control"
+          rows="3"></textarea>
+      </div>
+
+      <div class="resultado-test" *ngIf="resultadoTest">
+        <div class="alert" [class.success]="!errorTest" [class.error]="errorTest">
+          <i class="fas" [class.fa-check-circle]="!errorTest" [class.fa-times-circle]="errorTest"></i>
+          <div class="alert-content">
+            <strong>{{ errorTest ? 'Error' : 'Éxito' }}</strong>
+            <p>{{ resultadoTest }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="mostrarModalTest = false">
+        Cerrar
+      </button>
+      <button class="btn btn-primary" (click)="probarAgregarCarrito()" [disabled]="procesandoTest">
+        <i class="fas fa-spinner fa-spin" *ngIf="procesandoTest"></i>
+        <i class="fas fa-plus" *ngIf="!procesandoTest"></i>
+        {{ procesandoTest ? 'Agregando...' : 'Agregar al Carrito' }}
+      </button>
+    </div>
+  </div>
+</div>
+

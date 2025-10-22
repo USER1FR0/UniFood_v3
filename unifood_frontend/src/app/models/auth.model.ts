@@ -14,3 +14,10 @@ export interface Usuario {
   correo: string;
   rol: 'supervisor' | 'vendedor' | 'cliente';
 }
+
+export interface JwtPayload {
+  id: number;
+  id_rol: number | null;
+  correo: string;
+  rol: 'cliente' | 'vendedor';
+}
