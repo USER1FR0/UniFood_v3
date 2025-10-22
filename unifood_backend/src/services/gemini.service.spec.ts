@@ -1,165 +1,168 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { GeminiService } from '../services/gemini.service';
 import { ConfigService } from '@nestjs/config';
-import { PrismaService } from '../services/prisma.service';
-import { CacheService } from '../services/cache.service';
+import { GeminiService } from './gemini.service';
+import { PrismaService } from './prisma.service';
+import { CacheService } from './cache.service';
 import { ChatMessageDto } from '../models/chat.model';
+
+const createConfigServiceMock = () => ({
+  get: jest.fn((key: string, defaultValue?: unknown) => {
+    const values: Record<string, unknown> = {
+      GEMINI_MODEL: 'gemini-test',
+      CHAT_RECOMMENDATION_LIMIT: 2,
+      GEMINI_TEMPERATURE: 0.2,
+    };
+    return key in values ? values[key] : defaultValue;
+  }),
+});
+
+const mockUserRecord = {
+  id: 1,
+  clientes: [
+    {
+      pedidos: [
+        {
+          fecha_registro: new Date('2024-01-01T00:00:00Z'),
+          total_pedido: 120,
+          pedido_productos: [
+            {
+              cantidad: 1,
+              precio_unitario: 120,
+              producto: {
+                nombre: 'Wrap de Pollo',
+                categoria: { nombre: 'Wraps' },
+              },
+            },
+          ],
+        },
+      ],
+    },
+  ],
+};
+
+const mockProducts = [
+  {
+    id: 1,
+    nombre: 'Ensalada Mediterranea',
+    descripcion: 'Frescura con aceite de oliva',
+    precio: 95,
+    categoria: { nombre: 'Ensaladas' },
+    imagen_url: null,
+  },
+  {
+    id: 2,
+    nombre: 'Tostada de Aguacate',
+    descripcion: 'Pan integral con aguacate y huevo',
+    precio: 75,
+    categoria: { nombre: 'Desayunos' },
+    imagen_url: null,
+  },
+];
+
+const createPrismaServiceMock = () => ({
+  usuario: {
+    findUnique: jest.fn().mockResolvedValue(mockUserRecord),
+  },
+  producto: {
+    findMany: jest.fn().mockResolvedValue(mockProducts),
+  },
+  registro_chat: {
+    create: jest.fn().mockResolvedValue(undefined),
+    findMany: jest.fn().mockResolvedValue([
+      {
+        id: 10,
+        usuario_id: 1,
+        mensaje_usuario: 'Hola',
+        respuesta_gemini: { respuesta: 'Hola!' },
+        timestamp: new Date('2024-01-02T00:00:00Z'),
+        session_id: 'chat_session',
+        metadata: { model: 'fallback' },
+      },
+    ]),
+    deleteMany: jest.fn().mockResolvedValue({ count: 1 }),
+  },
+});
+
+const createCacheServiceMock = () => ({
+  getConversation: jest.fn().mockResolvedValue(null),
+  cacheConversation: jest.fn().mockResolvedValue(true),
+  getUserContext: jest.fn().mockResolvedValue(null),
+  cacheUserContext: jest.fn().mockResolvedValue(true),
+  getAvailableProducts: jest.fn().mockResolvedValue(null),
+  cacheAvailableProducts: jest.fn().mockResolvedValue(true),
+  incrementChatCounter: jest.fn().mockResolvedValue(1),
+  clearUserCache: jest.fn().mockResolvedValue(true),
+});
 
 describe('GeminiService', () => {
   let service: GeminiService;
-  let configService: ConfigService;
-  let prismaService: PrismaService;
-  let cacheService: CacheService;
-
-  const mockConfigService = {
-    get: jest.fn().mockReturnValue('test-api-key'),
-  };
-
-  const mockPrismaService = {
-    registro_chat: {
-      create: jest.fn(),
-      findMany: jest.fn(),
-    },
-    usuario: {
-      findUnique: jest.fn(),
-    },
-    producto: {
-      findMany: jest.fn(),
-    },
-  };
-
-  const mockCacheService = {
-    get: jest.fn(),
-    set: jest.fn(),
-  };
+  let prismaMock: ReturnType<typeof createPrismaServiceMock>;
+  let cacheMock: ReturnType<typeof createCacheServiceMock>;
+  let configMock: ReturnType<typeof createConfigServiceMock>;
 
   beforeEach(async () => {
+    prismaMock = createPrismaServiceMock();
+    cacheMock = createCacheServiceMock();
+    configMock = createConfigServiceMock();
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         GeminiService,
-        {
-          provide: ConfigService,
-          useValue: mockConfigService,
-        },
-        {
-          provide: PrismaService,
-          useValue: mockPrismaService,
-        },
-        {
-          provide: CacheService,
-          useValue: mockCacheService,
-        },
+        { provide: ConfigService, useValue: configMock },
+        { provide: PrismaService, useValue: prismaMock },
+        { provide: CacheService, useValue: cacheMock },
       ],
     }).compile();
 
-    service = module.get<GeminiService>(GeminiService);
-    configService = module.get<ConfigService>(ConfigService);
-    prismaService = module.get<PrismaService>(PrismaService);
-    cacheService = module.get<CacheService>(CacheService);
+    service = module.get(GeminiService);
   });
 
-  it('should be defined', () => {
-    expect(service).toBeDefined();
+  afterEach(() => {
+    jest.clearAllMocks();
   });
 
-  describe('generateRecommendation', () => {
-    it('should generate a recommendation successfully', async () => {
-      const chatMessage: ChatMessageDto = {
-        mensaje: 'Quiero algo saludable para comer',
-        sessionId: 'test-session-123',
-      };
+  it('should return fallback response when Gemini API key is not configured', async () => {
+    const message: ChatMessageDto = {
+      mensaje: 'Necesito algo ligero',
+    };
 
-      const userId = 1;
+    const response = await service.generateRecommendation(message, 1);
 
-      // Mock user context
-      mockCacheService.get.mockResolvedValueOnce(null);
-      mockPrismaService.usuario.findUnique.mockResolvedValueOnce({
-        id: 1,
-        clientes: [{
-          pedidos: []
-        }]
-      });
-
-      // Mock available products
-      mockCacheService.get.mockResolvedValueOnce(null);
-      mockPrismaService.producto.findMany.mockResolvedValueOnce([
-        {
-          id: 1,
-          nombre: 'Ensalada César',
-          precio: 12.99,
-          categoria: { nombre: 'Ensaladas' },
-        },
-      ]);
-
-      // Mock chat record creation
-      mockPrismaService.registro_chat.create.mockResolvedValueOnce({});
-
-      // Mock cache conversation
-      mockCacheService.set.mockResolvedValueOnce(undefined);
-
-      const result = await service.generateRecommendation(chatMessage, userId);
-
-      expect(result).toBeDefined();
-      expect(result.sessionId).toBe('test-session-123');
-      expect(result.respuesta).toBeDefined();
-      expect(result.timestamp).toBeDefined();
-    });
-
-    it('should handle errors gracefully with fallback response', async () => {
-      const chatMessage: ChatMessageDto = {
-        mensaje: 'Test message',
-      };
-
-      const userId = 1;
-
-      // Mock error in user context
-      mockCacheService.get.mockRejectedValueOnce(new Error('Cache error'));
-
-      const result = await service.generateRecommendation(chatMessage, userId);
-
-      expect(result).toBeDefined();
-      expect(result.respuesta).toContain('Lo siento');
-      expect(result.metadata.fallback).toBe(true);
-    });
+    expect(response.sessionId).toBeDefined();
+    expect(response.respuesta).toBeTruthy();
+    expect(response.recomendaciones?.length).toBeGreaterThan(0);
+    expect(response.metadata?.isFallback).toBe(true);
+    expect(prismaMock.registro_chat.create).toHaveBeenCalled();
+    expect(cacheMock.cacheConversation).toHaveBeenCalled();
   });
 
-  describe('getChatHistory', () => {
-    it('should return chat history for a user', async () => {
-      const userId = 1;
-      const mockHistory = [
-        {
-          id: 1,
-          usuario_id: 1,
-          mensaje_usuario: 'Test message',
-          respuesta_gemini: { respuesta: 'Test response' },
-          timestamp: new Date(),
-          session_id: 'test-session',
-        },
-      ];
+  it('should map chat history records correctly', async () => {
+    const history = await service.getChatHistory(1);
 
-      mockPrismaService.registro_chat.findMany.mockResolvedValueOnce(mockHistory);
-
-      const result = await service.getChatHistory(userId);
-
-      expect(result).toEqual(mockHistory);
-      expect(mockPrismaService.registro_chat.findMany).toHaveBeenCalledWith({
-        where: { usuario_id: userId },
-        orderBy: { timestamp: 'desc' },
-        take: 50,
-      });
+    expect(history).toHaveLength(1);
+    expect(history[0]).toMatchObject({
+      id: 10,
+      usuario_id: 1,
+      session_id: 'chat_session',
     });
+    expect(typeof history[0].timestamp).toBe('string');
+  });
 
-    it('should return chat history for a specific session', async () => {
-      const userId = 1;
-      const sessionId = 'test-session-123';
+  it('should clear chat history and related cache', async () => {
+    const deleted = await service.clearChatHistory(1);
 
-      await service.getChatHistory(userId, sessionId);
+    expect(deleted).toBe(1);
+    expect(prismaMock.registro_chat.deleteMany).toHaveBeenCalledWith({
+      where: { usuario_id: 1 },
+    });
+    expect(cacheMock.clearUserCache).toHaveBeenCalledWith(1);
+  });
 
-      expect(mockPrismaService.registro_chat.findMany).toHaveBeenCalledWith({
-        where: { usuario_id: userId, session_id: sessionId },
-        orderBy: { timestamp: 'desc' },
-        take: 50,
-      });
+  it('should throw when mensaje is missing', async () => {
+    await expect(
+      service.generateRecommendation({} as ChatMessageDto, 1),
+    ).rejects.toMatchObject({
+      status: 400,
     });
   });
 });

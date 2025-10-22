@@ -7,13 +7,21 @@ export class CacheService {
   private readonly logger = new Logger(CacheService.name);
   private redis: Redis | null = null;
   private memoryCache: Map<string, { value: string; expiry?: number }> = new Map();
-  private useRedis = false; // Deshabilitar Redis temporalmente
+  private useRedis = false;
 
   constructor(private readonly configService: ConfigService) {
+    const driver =
+      this.configService.get<string>('CACHE_DRIVER', 'memory').toLowerCase();
+    const redisEnabled =
+      this.configService.get<string>('REDIS_ENABLED', 'false').toLowerCase() ===
+      'true';
+
+    this.useRedis = driver === 'redis' || redisEnabled;
+
     if (this.useRedis) {
       this.initializeRedis();
     } else {
-      this.logger.warn('Redis disabled - using in-memory cache');
+      this.logger.log('CacheService running with in-memory driver');
     }
   }
 
@@ -33,14 +41,19 @@ export class CacheService {
 
       this.redis.on('error', (error) => {
         this.logger.error('Redis connection error:', error);
+        this.useRedis = false;
       });
 
       this.redis.on('close', () => {
         this.logger.warn('Redis connection closed');
       });
 
+      this.useRedis = true;
+      this.logger.log('Redis driver initialised');
     } catch (error) {
       this.logger.error('Failed to initialize Redis:', error);
+      this.redis = null;
+      this.useRedis = false;
     }
   }
 
@@ -103,8 +116,15 @@ export class CacheService {
 
   async exists(key: string): Promise<boolean> {
     try {
-      if (!this.redis) {
-        this.logger.warn('Redis not initialized');
+      if (!this.redis || !this.useRedis) {
+        const cachedValue = this.memoryCache.get(key);
+        if (!cachedValue) {
+          return false;
+        }
+        if (!cachedValue.expiry || cachedValue.expiry > Date.now()) {
+          return true;
+        }
+        this.memoryCache.delete(key);
         return false;
       }
       const result = await this.redis.exists(key);
@@ -117,9 +137,14 @@ export class CacheService {
 
   async expire(key: string, ttlSeconds: number): Promise<boolean> {
     try {
-      if (!this.redis) {
-        this.logger.warn('Redis not initialized');
-        return false;
+      if (!this.redis || !this.useRedis) {
+        const cachedValue = this.memoryCache.get(key);
+        if (!cachedValue) {
+          return false;
+        }
+        const expiry = Date.now() + ttlSeconds * 1000;
+        this.memoryCache.set(key, { value: cachedValue.value, expiry });
+        return true;
       }
       await this.redis.expire(key, ttlSeconds);
       return true;
@@ -195,13 +220,18 @@ export class CacheService {
     return context ? JSON.parse(context) : null;
   }
 
-  async cacheConversation(sessionId: string, conversation: any, ttlSeconds: number = 3600): Promise<boolean> {
-    const key = `conversation_${sessionId}`;
+  async cacheConversation(
+    sessionId: string,
+    conversation: any,
+    ttlSeconds: number = 3600,
+    userId?: number,
+  ): Promise<boolean> {
+    const key = this.buildConversationKey(sessionId, userId);
     return await this.set(key, JSON.stringify(conversation), ttlSeconds);
   }
 
-  async getConversation(sessionId: string): Promise<any | null> {
-    const key = `conversation_${sessionId}`;
+  async getConversation(sessionId: string, userId?: number): Promise<any | null> {
+    const key = this.buildConversationKey(sessionId, userId);
     const conversation = await this.get(key);
     return conversation ? JSON.parse(conversation) : null;
   }
@@ -220,9 +250,11 @@ export class CacheService {
   async incrementChatCounter(userId: number): Promise<number> {
     const key = `chat_counter_${userId}`;
     try {
-      if (!this.redis) {
-        this.logger.warn('Redis not initialized');
-        return 0;
+      if (!this.redis || !this.useRedis) {
+        const current = this.memoryCache.get(key);
+        const nextValue = current ? parseInt(current.value, 10) + 1 : 1;
+        this.memoryCache.set(key, { value: String(nextValue) });
+        return nextValue;
       }
       return await this.redis.incr(key);
     } catch (error) {
@@ -234,8 +266,15 @@ export class CacheService {
   async getChatCounter(userId: number): Promise<number> {
     const key = `chat_counter_${userId}`;
     try {
-      if (!this.redis) {
-        this.logger.warn('Redis not initialized');
+      if (!this.redis || !this.useRedis) {
+        const cachedValue = this.memoryCache.get(key);
+        if (!cachedValue) {
+          return 0;
+        }
+        if (!cachedValue.expiry || cachedValue.expiry > Date.now()) {
+          return parseInt(cachedValue.value, 10) || 0;
+        }
+        this.memoryCache.delete(key);
         return 0;
       }
       const count = await this.redis.get(key);
@@ -252,7 +291,7 @@ export class CacheService {
         const patterns = [
           `user_context_${userId}`,
           `chat_counter_${userId}`,
-          `conversation_*_${userId}`,
+          `conversation_${userId}_*`,
         ];
 
         for (const pattern of patterns) {
@@ -314,5 +353,13 @@ export class CacheService {
     } catch (error) {
       this.logger.error('Error disconnecting from Redis:', error);
     }
+  }
+
+  private buildConversationKey(sessionId: string, userId?: number): string {
+    const sanitizedSession = sessionId.replace(/[^a-zA-Z0-9_-]/g, '');
+    if (userId) {
+      return `conversation_${userId}_${sanitizedSession}`;
+    }
+    return `conversation_${sanitizedSession}`;
   }
 }

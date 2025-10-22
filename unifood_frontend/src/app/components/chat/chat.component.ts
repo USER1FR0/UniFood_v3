@@ -22,6 +22,7 @@ export class ChatComponent implements OnInit, OnDestroy {
   sessionId: string = '';
   isConnected: boolean = false;
   recommendations: ProductRecommendation[] = [];
+  showRecommendations: boolean = false;
 
   constructor(
     private http: HttpClient,
@@ -63,6 +64,11 @@ export class ChatComponent implements OnInit, OnDestroy {
 
     this.chatService.onRecommendations().subscribe((recommendations: ProductRecommendation[]) => {
       this.recommendations = recommendations;
+      // Mostrar recomendaciones si están disponibles
+      if (recommendations && recommendations.length > 0) {
+        this.showRecommendations = true;
+        this.addRecommendationsToChat(recommendations);
+      }
     });
 
     this.chatService.onConnectionStatus().subscribe((status: boolean) => {
@@ -107,7 +113,9 @@ export class ChatComponent implements OnInit, OnDestroy {
       content: response.respuesta,
       isUser: false,
       timestamp: new Date(response.timestamp),
-      sessionId: response.sessionId
+      sessionId: response.sessionId,
+      recommendations: response.recomendaciones || [],
+      showRecommendations: false // No mostrar automáticamente
     };
 
     this.messages.push(botMessage);
@@ -125,6 +133,48 @@ export class ChatComponent implements OnInit, OnDestroy {
 
     this.messages.push(botMessage);
     this.scrollToBottom();
+  }
+
+  shouldShowRecommendations(): boolean {
+    if (this.messages.length === 0) return false;
+    
+    const lastUserMessage = this.messages
+      .filter(msg => msg.isUser)
+      .pop();
+    
+    if (!lastUserMessage) return false;
+    
+    const message = lastUserMessage.content.toLowerCase();
+    const recommendationKeywords = [
+      'recomiéndame', 'recomendar', 'recomendación', 'recomendaciones',
+      'qué me recomiendas', 'que me recomiendas', 'recomendación',
+      'sugiéreme', 'sugerir', 'sugerencia', 'sugerencias',
+      'qué puedo comer', 'que puedo comer', 'qué puedo pedir', 'que puedo pedir',
+      'opciones', 'alternativas', 'menú', 'menu',
+      'qué hay disponible', 'que hay disponible', 'disponible',
+      'quiero', 'necesito', 'busco', 'me gustaría',
+      'algo dulce', 'algo salado', 'algo económico', 'algo barato',
+      'algo rico', 'algo rico', 'algo saludable', 'algo rápido'
+    ];
+    
+    return recommendationKeywords.some(keyword => message.includes(keyword));
+  }
+
+  private addRecommendationsToChat(recommendations: ProductRecommendation[]): void {
+    if (recommendations && recommendations.length > 0) {
+      const recommendationsMessage: ChatMessage = {
+        id: Date.now() + 1,
+        content: 'Aquí tienes algunas recomendaciones para ti:',
+        isUser: false,
+        timestamp: new Date(),
+        sessionId: this.sessionId,
+        recommendations: recommendations,
+        isRecommendation: true
+      };
+
+      this.messages.push(recommendationsMessage);
+      this.scrollToBottom();
+    }
   }
 
   private scrollToBottom(): void {
@@ -152,10 +202,19 @@ export class ChatComponent implements OnInit, OnDestroy {
   clearChat(): void {
     this.messages = [];
     this.recommendations = [];
+    this.showRecommendations = false;
     this.sessionId = this.generateSessionId();
     this.initializeChat();
     this.chatService.disconnect();
     this.connectWebSocket();
+  }
+
+  closeRecommendations(): void {
+    this.showRecommendations = false;
+  }
+
+  toggleRecommendations(): void {
+    this.showRecommendations = !this.showRecommendations;
   }
 
   loadChatHistory(): void {

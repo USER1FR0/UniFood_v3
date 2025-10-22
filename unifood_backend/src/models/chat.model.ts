@@ -1,10 +1,19 @@
-import { IsString, IsNotEmpty, IsOptional, IsNumber, IsObject, ValidateNested } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsOptional,
+  IsNumber,
+  IsObject,
+  ValidateNested,
+  IsArray,
+  IsDateString,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class ChatMessageDto {
   @IsString()
   @IsNotEmpty()
-  mensaje: string;
+  mensaje!: string;
 
   @IsOptional()
   @IsString()
@@ -12,104 +21,106 @@ export class ChatMessageDto {
 
   @IsOptional()
   @IsObject()
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
+}
+
+export class ProductRecommendationDto {
+  @IsNumber()
+  producto_id!: number;
+
+  @IsString()
+  @IsNotEmpty()
+  nombre!: string;
+
+  @IsOptional()
+  @IsString()
+  descripcion?: string;
+
+  @IsNumber()
+  precio!: number;
+
+  @IsOptional()
+  @IsString()
+  imagen_url?: string;
+
+  @IsOptional()
+  @IsString()
+  categoria?: string;
+
+  @IsOptional()
+  @IsNumber()
+  score_recomendacion?: number;
 }
 
 export class ChatResponseDto {
   @IsString()
   @IsNotEmpty()
-  respuesta: string;
+  respuesta!: string;
 
   @IsString()
   @IsNotEmpty()
-  sessionId: string;
+  sessionId!: string;
 
   @IsNumber()
-  timestamp: number;
+  timestamp!: number;
 
   @IsOptional()
-  @IsObject()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ProductRecommendationDto)
   recomendaciones?: ProductRecommendationDto[];
 
   @IsOptional()
   @IsObject()
-  metadata?: Record<string, any>;
-}
-
-export class ProductRecommendationDto {
-  @IsNumber()
-  producto_id: number;
-
-  @IsString()
-  @IsNotEmpty()
-  nombre: string;
-
-  @IsString()
-  @IsOptional()
-  descripcion?: string;
-
-  @IsNumber()
-  precio: number;
-
-  @IsString()
-  @IsOptional()
-  imagen_url?: string;
-
-  @IsString()
-  @IsOptional()
-  categoria?: string;
-
-  @IsNumber()
-  @IsOptional()
-  score_recomendacion?: number;
+  metadata?: Record<string, unknown>;
 }
 
 export class ChatHistoryDto {
   @IsNumber()
-  id: number;
+  id!: number;
 
   @IsNumber()
-  usuario_id: number;
+  usuario_id!: number;
 
   @IsString()
-  mensaje_usuario: string;
+  mensaje_usuario!: string;
 
   @IsObject()
-  respuesta_gemini: any;
+  respuesta_gemini!: Record<string, unknown>;
 
-  @IsString()
-  timestamp: string;
+  @IsDateString()
+  timestamp!: string;
 
-  @IsString()
   @IsOptional()
+  @IsString()
   session_id?: string;
 
-  @IsObject()
   @IsOptional()
-  metadata?: Record<string, any>;
+  @IsObject()
+  metadata?: Record<string, unknown>;
 }
 
 export class ChatSessionDto {
   @IsString()
   @IsNotEmpty()
-  sessionId: string;
+  sessionId!: string;
 
   @IsNumber()
-  usuario_id: number;
+  usuario_id!: number;
 
-  @IsNumber()
   @IsOptional()
+  @IsNumber()
   total_mensajes?: number;
 
-  @IsString()
   @IsOptional()
+  @IsString()
   ultimo_mensaje?: string;
 
-  @IsString()
   @IsOptional()
+  @IsDateString()
   fecha_creacion?: string;
 
-  @IsString()
   @IsOptional()
+  @IsDateString()
   fecha_ultima_actividad?: string;
 }

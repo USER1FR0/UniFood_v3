@@ -1,0 +1,26 @@
+<!-- Botón flotante del chat -->
+<div class="chat-float-button" (click)="toggleChat()" [class.active]="isChatOpen">
+  <div class="chat-icon">💬</div>
+  <span *ngIf="unreadMessages > 0" class="unread-badge">{{ unreadMessages }}</span>
+</div>
+
+<!-- Contenedor del chat -->
+<div class="chat-container" [class.open]="isChatOpen">
+  <div class="chat-header">
+    <h3>Chat de Ayuda</h3>
+    <button class="close-btn" (click)="toggleChat()">×</button>
+  </div>
+  
+  <div class="chat-messages">
+    <!-- Aquí se pueden incluir los mensajes del chat existente -->
+    <div class="message bot">
+      <p>¡Hola! ¿En qué puedo ayudarte hoy?</p>
+      <span class="time">12:00 PM</span>
+    </div>
+  </div>
+  
+  <div class="chat-input">
+    <input type="text" placeholder="Escribe tu mensaje..." />
+    <button class="send-btn">Enviar</button>
+  </div>
+</div>

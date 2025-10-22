@@ -4,6 +4,9 @@ export interface ChatMessage {
   isUser: boolean;
   timestamp: Date;
   sessionId: string;
+  recommendations?: ProductRecommendation[];
+  isRecommendation?: boolean;
+  showRecommendations?: boolean;
 }
 
 export interface ChatResponse {

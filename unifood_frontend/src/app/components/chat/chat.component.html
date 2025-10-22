@@ -13,9 +13,37 @@
       class="message" 
       [class.user-message]="message.isUser"
       [class.bot-message]="!message.isUser"
+      [class.recommendation-message]="message.isRecommendation"
     >
       <div class="message-content">
         <div class="message-text">{{ message.content }}</div>
+        
+        <!-- Recomendaciones integradas en el chat -->
+        <div *ngIf="message.recommendations && message.recommendations.length > 0" class="recommendations-in-chat">
+          <div class="recommendations-header">
+            <h4>Recomendaciones</h4>
+            <button (click)="toggleRecommendations()" class="toggle-btn">
+              {{ showRecommendations ? 'Ocultar' : 'Ver' }}
+            </button>
+          </div>
+          
+          <div *ngIf="showRecommendations" class="recommendations-grid-inline">
+            <div 
+              *ngFor="let rec of message.recommendations" 
+              class="recommendation-card-inline"
+              (click)="selectRecommendation(rec)"
+            >
+              <div class="recommendation-content-inline">
+                <h5>{{ rec.nombre }}</h5>
+                <p *ngIf="rec.descripcion">{{ rec.descripcion }}</p>
+                <div class="recommendation-price-inline">${{ rec.precio | number:'1.2-2' }}</div>
+                <div *ngIf="rec.categoria" class="recommendation-category-inline">{{ rec.categoria }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        
         <div class="message-time">{{ message.timestamp | date:'short' }}</div>
       </div>
     </div>
@@ -31,8 +59,13 @@
     </div>
   </div>
 
-  <div *ngIf="recommendations.length > 0" class="recommendations-panel">
-    <h3>Recomendaciones</h3>
+  <!-- Panel de recomendaciones flotante (opcional) -->
+  <div *ngIf="recommendations.length > 0 && showRecommendations" class="recommendations-panel">
+    <div class="recommendations-panel-header">
+      <h3>Recomendaciones</h3>
+      <button (click)="closeRecommendations()" class="close-btn">×</button>
+    </div>
+    
     <div class="recommendations-grid">
       <div 
         *ngFor="let rec of recommendations" 
@@ -40,7 +73,7 @@
         (click)="selectRecommendation(rec)"
       >
         <div class="recommendation-image" *ngIf="rec.imagen_url">
-          <img [src]="rec.imagen_url" [alt]="rec.nombre">
+          <img [src]="rec.imagen_url" [alt]="rec.nombre" [title]="rec.nombre">
         </div>
         <div class="recommendation-content">
           <h4>{{ rec.nombre }}</h4>

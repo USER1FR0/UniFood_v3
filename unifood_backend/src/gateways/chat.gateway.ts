@@ -8,10 +8,14 @@ import {
   OnGatewayDisconnect,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { Logger, UseGuards } from '@nestjs/common';
+import { Logger } from '@nestjs/common';
 import { GeminiService } from '../services/gemini.service';
-import { ChatMessageDto, ChatResponseDto } from '../models/chat.model';
-import { JwtAuthGuard } from '../middlewares/auth.middleware';
+import { ChatMessageDto } from '../models/chat.model';
+
+type ConnectedUser = {
+  userId: number;
+  socket: Socket;
+};
 
 @WebSocketGateway({
   cors: {
@@ -19,48 +23,62 @@ import { JwtAuthGuard } from '../middlewares/auth.middleware';
   },
   namespace: '/chat',
 })
-export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
+export class ChatGateway
+  implements OnGatewayConnection, OnGatewayDisconnect
+{
   @WebSocketServer()
-  server: Server;
+  server!: Server;
 
   private readonly logger = new Logger(ChatGateway.name);
-  private connectedUsers = new Map<string, { userId: number; socket: Socket }>();
+  private readonly connectedUsers = new Map<string, ConnectedUser>();
 
   constructor(private readonly geminiService: GeminiService) {}
 
   async handleConnection(client: Socket) {
     try {
-      // Sin JWT por ahora - usar userId del handshake o valor por defecto
-      const userId = client.handshake.auth?.userId || 1; // Usuario temporal para pruebas
-      
-      this.logger.log(`Connection attempt with userId: ${userId}`);
+      const userId =
+        Number(client.handshake.auth?.userId) ||
+        Number(client.handshake.query?.userId) ||
+        1;
 
-      // Registrar usuario conectado
       this.connectedUsers.set(client.id, { userId, socket: client });
-      
-      // Unir al usuario a su sala personal
       client.join(`user_${userId}`);
-      
-      this.logger.log(`User ${userId} connected with socket ${client.id}`);
-      
-      // Enviar mensaje de bienvenida
+
+      this.logger.log(
+        JSON.stringify({
+          event: 'chat.ws.connected',
+          userId,
+          socketId: client.id,
+        }),
+      );
+
       client.emit('connected', {
-        message: 'Conectado al chat de recomendaciones',
         userId,
         timestamp: Date.now(),
+        message: 'Conectado al chat de recomendaciones',
       });
-
-    } catch (error) {
-      this.logger.error(`Error handling connection: ${error.message}`);
-      client.disconnect();
+    } catch (error: any) {
+      this.logger.warn(
+        `Socket connection rejected: ${error.message}`,
+        error.stack,
+      );
+      client.emit('error', { message: 'Authentication required' });
+      client.disconnect(true);
     }
   }
 
   async handleDisconnect(client: Socket) {
     const userInfo = this.connectedUsers.get(client.id);
     if (userInfo) {
-      this.logger.log(`User ${userInfo.userId} disconnected`);
       this.connectedUsers.delete(client.id);
+      client.leave(`user_${userInfo.userId}`);
+      this.logger.log(
+        JSON.stringify({
+          event: 'chat.ws.disconnected',
+          userId: userInfo.userId,
+          socketId: client.id,
+        }),
+      );
     }
   }
 
@@ -69,23 +87,25 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @MessageBody() data: ChatMessageDto,
     @ConnectedSocket() client: Socket,
   ) {
+    const userInfo =
+      this.connectedUsers.get(client.id) ??
+      this.registerAnonymousClient(client);
+
+    const sanitizedMessage = data?.mensaje?.trim();
+    if (!sanitizedMessage) {
+      client.emit('error', { message: 'mensaje must not be empty' });
+      return;
+    }
+
     try {
-      const userInfo = this.connectedUsers.get(client.id);
-      if (!userInfo) {
-        client.emit('error', { message: 'Usuario no autenticado' });
-        return;
-      }
+      const response = await this.geminiService.generateRecommendation(
+        { ...data, mensaje: sanitizedMessage },
+        userInfo.userId,
+      );
 
-      this.logger.log(`Processing message from user ${userInfo.userId}: ${data.mensaje}`);
-
-      // Generar respuesta con Gemini
-      const response = await this.geminiService.generateRecommendation(data, userInfo.userId);
-
-      // Enviar respuesta al cliente
       client.emit('message_response', response);
 
-      // Si hay recomendaciones, enviar evento adicional
-      if (response.recomendaciones && response.recomendaciones.length > 0) {
+      if (response.recomendaciones?.length) {
         client.emit('recommendations', {
           sessionId: response.sessionId,
           recomendaciones: response.recomendaciones,
@@ -93,14 +113,33 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         });
       }
 
-      this.logger.log(`Response sent to user ${userInfo.userId}`);
-
-    } catch (error) {
-      this.logger.error(`Error handling message: ${error.message}`, error.stack);
-      client.emit('error', { 
-        message: 'Error procesando mensaje. Intenta de nuevo.',
+      this.logger.log(
+        JSON.stringify({
+          event: 'chat.ws.message.processed',
+          userId: userInfo.userId,
+          sessionId: response.sessionId,
+          isFallback: response.metadata?.isFallback || false,
+        }),
+      );
+    } catch (error: any) {
+      this.logger.error(
+        `Error handling websocket message: ${error.message}`,
+        error.stack,
+      );
+      
+      // Enviar respuesta de fallback en caso de error
+      const fallbackResponse = {
+        respuesta: 'Lo siento, no puedo procesar tu solicitud en este momento. Por favor, intenta de nuevo.',
+        sessionId: data.sessionId || `chat_${Date.now()}`,
         timestamp: Date.now(),
-      });
+        recomendaciones: [],
+        metadata: {
+          isFallback: true,
+          error: 'Service temporarily unavailable',
+        },
+      };
+
+      client.emit('message_response', fallbackResponse);
     }
   }
 
@@ -109,28 +148,30 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @MessageBody() data: { sessionId: string },
     @ConnectedSocket() client: Socket,
   ) {
-    try {
-      const userInfo = this.connectedUsers.get(client.id);
-      if (!userInfo) {
-        client.emit('error', { message: 'Usuario no autenticado' });
-        return;
-      }
+    const userInfo =
+      this.connectedUsers.get(client.id) ??
+      this.registerAnonymousClient(client);
 
-      // Unir al cliente a la sesión específica
-      client.join(`session_${data.sessionId}`);
-      
-      this.logger.log(`User ${userInfo.userId} joined session ${data.sessionId}`);
-      
-      client.emit('session_joined', {
-        sessionId: data.sessionId,
-        message: 'Sesión unida exitosamente',
-        timestamp: Date.now(),
-      });
-
-    } catch (error) {
-      this.logger.error(`Error joining session: ${error.message}`);
-      client.emit('error', { message: 'Error uniendo a la sesión' });
+    const sessionId = this.sanitizeSessionId(data?.sessionId);
+    if (!sessionId) {
+      client.emit('error', { message: 'sessionId is required' });
+      return;
     }
+
+    client.join(`session_${sessionId}`);
+    client.emit('session_joined', {
+      sessionId,
+      message: 'Sesion unida exitosamente',
+      timestamp: Date.now(),
+    });
+
+    this.logger.log(
+      JSON.stringify({
+        event: 'chat.ws.session.joined',
+        userId: userInfo.userId,
+        sessionId,
+      }),
+    );
   }
 
   @SubscribeMessage('leave_session')
@@ -138,24 +179,18 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @MessageBody() data: { sessionId: string },
     @ConnectedSocket() client: Socket,
   ) {
-    try {
-      client.leave(`session_${data.sessionId}`);
-      
-      const userInfo = this.connectedUsers.get(client.id);
-      if (userInfo) {
-        this.logger.log(`User ${userInfo.userId} left session ${data.sessionId}`);
-      }
-      
-      client.emit('session_left', {
-        sessionId: data.sessionId,
-        message: 'Sesión abandonada',
-        timestamp: Date.now(),
-      });
-
-    } catch (error) {
-      this.logger.error(`Error leaving session: ${error.message}`);
-      client.emit('error', { message: 'Error abandonando la sesión' });
+    const sessionId = this.sanitizeSessionId(data?.sessionId);
+    if (!sessionId) {
+      client.emit('error', { message: 'sessionId is required' });
+      return;
     }
+
+    client.leave(`session_${sessionId}`);
+    client.emit('session_left', {
+      sessionId,
+      message: 'Sesion abandonada',
+      timestamp: Date.now(),
+    });
   }
 
   @SubscribeMessage('typing')
@@ -163,84 +198,94 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @MessageBody() data: { isTyping: boolean; sessionId?: string },
     @ConnectedSocket() client: Socket,
   ) {
-    try {
-      const userInfo = this.connectedUsers.get(client.id);
-      if (!userInfo) return;
+    const userInfo =
+      this.connectedUsers.get(client.id) ??
+      this.registerAnonymousClient(client);
 
-      const typingData = {
-        userId: userInfo.userId,
-        isTyping: data.isTyping,
-        timestamp: Date.now(),
-      };
+    const payload = {
+      userId: userInfo.userId,
+      isTyping: Boolean(data?.isTyping),
+      timestamp: Date.now(),
+    };
 
-      if (data.sessionId) {
-        // Enviar a todos los usuarios en la sesión
-        client.to(`session_${data.sessionId}`).emit('user_typing', typingData);
-      } else {
-        // Enviar a todos los usuarios conectados
-        this.server.emit('user_typing', typingData);
+    if (data?.sessionId) {
+      const sessionId = this.sanitizeSessionId(data.sessionId);
+      if (sessionId) {
+        client.to(`session_${sessionId}`).emit('user_typing', payload);
       }
-
-    } catch (error) {
-      this.logger.error(`Error handling typing: ${error.message}`);
+    } else {
+      client.broadcast.emit('user_typing', payload);
     }
   }
 
-  // Método para enviar notificaciones a usuarios específicos
   async sendNotificationToUser(userId: number, notification: any) {
     try {
       this.server.to(`user_${userId}`).emit('notification', {
         ...notification,
         timestamp: Date.now(),
       });
-      
-      this.logger.log(`Notification sent to user ${userId}`);
-    } catch (error) {
-      this.logger.error(`Error sending notification: ${error.message}`);
+    } catch (error: any) {
+      this.logger.error(
+        `Error sending notification: ${error.message}`,
+        error.stack,
+      );
     }
   }
 
-  // Método para enviar mensajes a una sesión específica
   async sendMessageToSession(sessionId: string, message: any) {
+    const sanitized = this.sanitizeSessionId(sessionId);
+    if (!sanitized) {
+      return;
+    }
+
     try {
-      this.server.to(`session_${sessionId}`).emit('session_message', {
+      this.server.to(`session_${sanitized}`).emit('session_message', {
         ...message,
         timestamp: Date.now(),
       });
-      
-      this.logger.log(`Message sent to session ${sessionId}`);
-    } catch (error) {
-      this.logger.error(`Error sending session message: ${error.message}`);
+    } catch (error: any) {
+      this.logger.error(
+        `Error sending session message: ${error.message}`,
+        error.stack,
+      );
     }
   }
 
-  // Método auxiliar para extraer userId del token (simplificado)
-  private extractUserIdFromToken(token: string): number | null {
-    try {
-      // En una implementación real, aquí validarías el JWT
-      // Por ahora, retornamos un ID de prueba
-      // TODO: Implementar validación real de JWT
-      return 1; // ID de prueba
-    } catch (error) {
-      this.logger.error(`Error extracting user ID from token: ${error.message}`);
-      return null;
-    }
+  getConnectedUsers() {
+    return Array.from(this.connectedUsers.entries()).map(
+      ([socketId, info]) => ({
+        socketId,
+        userId: info.userId,
+      }),
+    );
   }
 
-  // Obtener usuarios conectados
-  getConnectedUsers(): Array<{ userId: number; socketId: string }> {
-    return Array.from(this.connectedUsers.entries()).map(([socketId, userInfo]) => ({
-      userId: userInfo.userId,
-      socketId,
-    }));
-  }
-
-  // Obtener estadísticas del gateway
   getGatewayStats() {
     return {
       connectedUsers: this.connectedUsers.size,
-      totalRooms: this.server.sockets.adapter.rooms.size,
+      totalRooms: this.server?.sockets?.adapter?.rooms?.size ?? 0,
       timestamp: Date.now(),
     };
+  }
+
+  private registerAnonymousClient(client: Socket): ConnectedUser {
+    const userId =
+      Number(client.handshake.auth?.userId) ||
+      Number(client.handshake.query?.userId) ||
+      1;
+
+    const info: ConnectedUser = { userId, socket: client };
+    this.connectedUsers.set(client.id, info);
+    client.join(`user_${userId}`);
+    return info;
+  }
+
+  private sanitizeSessionId(sessionId?: string): string | undefined {
+    const value = sessionId?.trim();
+    if (!value) {
+      return undefined;
+    }
+
+    return value.replace(/[^a-zA-Z0-9_-]/g, '');
   }
 }
