@@ -3,14 +3,14 @@ import {
   WebSocketServer,
   SubscribeMessage,
   OnGatewayConnection,
-  OnGatewayDisconnect
+  OnGatewayDisconnect,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 
 @WebSocketGateway({
   cors: {
-    origin: '*', 
-  }
+    origin: '*',
+  },
 })
 export class PedidoGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
@@ -48,10 +48,10 @@ export class PedidoGateway implements OnGatewayConnection, OnGatewayDisconnect {
   notificarCambioPedido(pedido: any) {
     // Al cliente específico
     this.server.to(`pedido-${pedido.id}`).emit('actualizarPedido', pedido);
-    
+
     // A todos los vendedores del área
     this.server.to(`vendedor-area-${pedido.area_venta_id}`).emit('actualizarPedido', pedido);
-    
+
     console.log(`Actualización del pedido ${pedido.id} notificada`);
   }
 
@@ -59,10 +59,10 @@ export class PedidoGateway implements OnGatewayConnection, OnGatewayDisconnect {
   notificarPedidoListo(pedido: any) {
     // Al cliente
     this.server.to(`pedido-${pedido.id}`).emit('pedidoListo', pedido);
-    
+
     // A los vendedores del área
     this.server.to(`vendedor-area-${pedido.area_venta_id}`).emit('pedidoListo', pedido);
-    
+
     console.log(`Pedido ${pedido.id} marcado como listo y notificado`);
   }
 
@@ -78,5 +78,18 @@ export class PedidoGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.server.to(`pedido-${pedido.id}`).emit('pagoProcesado', pedido);
     this.server.to(`vendedor-area-${pedido.area_venta_id}`).emit('pagoProcesado', pedido);
     console.log(`Pago del pedido ${pedido.id} procesado y notificado`);
+  }
+
+  // Notificar pedido rechazado
+  notificarPedidoRechazado(pedido: any) {
+    this.server.to(`pedido-${pedido.id}`).emit('pedidoRechazado', pedido);
+    this.server.to(`vendedor-area-${pedido.area_venta_id}`).emit('pedidoRechazado', pedido);
+    console.log(`Pedido ${pedido.id} rechazado y notificado`);
+  }
+
+  //Notificar pedido entregado al cliente
+  notificarPedidoEntregado(pedido: any): void {
+    this.server.to(`pedido-${pedido.id}`).emit('pedidoEntregado', pedido);
+    this.server.to(`vendedor-area-${pedido.area_venta_id}`).emit('pedidoEntregado', pedido);
   }
 }

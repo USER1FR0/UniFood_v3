@@ -49,6 +49,8 @@ export class PedidosService {
     // Generar código único
     const codigo = `PED-${Date.now()}-${clienteId}`;
 
+    const pagoMetodoId = dto.metodo_pago === 'tarjeta' ? 1 : 2; // 1=tarjeta, 2=efectivo
+
     // Crear pedido en BD (estado pendiente, SIN procesar pago todavía)
     const pedido = await this.prisma.pedido.create({
       data: {
@@ -58,33 +60,40 @@ export class PedidosService {
         total_pedido: new Prisma.Decimal(total),
         detalles_pedido: dto.detalles_pedido || null,
         pedido_estado_id: 1, // pendiente
+        //metodo_pago_seleccionado: dto.metodo_pago,
         pedido_productos: {
           create: dto.productos.map((p) => ({
             producto_id: p.producto_id,
             cantidad: p.cantidad,
             precio_unitario: new Prisma.Decimal(p.precio_unitario),
+            detalles_producto: p.detalles_producto || null,
           })),
+        },
+        // AGREGAR: Crear el registro de pago PENDIENTE
+        pagos: {
+          create: {
+            cantidad: new Prisma.Decimal(total),
+            pago_metodo_id: pagoMetodoId,
+            pago_estado_id: 2, // 2=pendiente (tarjeta), 1=completado (efectivo)
+            fecha: new Date(),
+          },
         },
       },
       include: {
         cliente: true,
         pedido_productos: { include: { producto: true } },
         area_venta: true,
+        pagos: {
+          include: {
+            pago_metodo: true,
+            pago_estado: true,
+          },
+        },
       },
     });
 
-    // Guardar método de pago seleccionado (pero NO procesarlo todavía)
-    // Esto puede ir en una tabla auxiliar o campo del pedido según tu schema
-    // Por ahora lo comentamos, pero deberías tener un campo como "metodo_pago_seleccionado"
-
-    // OPCIONAL: Si tu schema tiene un campo para guardar el método de pago:
-    // await this.prisma.pedido.update({
-    //   where: { id: pedido.id },
-    //   data: { metodo_pago: dto.metodo_pago }
-    // });
-
     // Enviar SMS de confirmación
-    if (pedido.cliente) {
+    if (pedido.cliente && pedido.cliente.telefono) {
       await this.comunicacionClient.enviarPedidoRecibido(pedido.cliente.telefono, pedido.id);
     }
 
@@ -94,29 +103,51 @@ export class PedidosService {
     return pedido;
   }
 
-  // NUEVO MÉTODO: Procesar pago pendiente con tarjeta
+  // MÉTODO: Procesar pago pendiente con tarjeta
   async procesarPagoPendiente(pedidoId: number, clienteId: number, dto: ProcesarPagoTarjetaDto) {
-    // Buscar pedido
+    // Buscar pedido con todos sus datos
     const pedido = await this.prisma.pedido.findUnique({
       where: { id: pedidoId },
-      include: { cliente: true, pagos: true },
+      include: {
+        cliente: true,
+        pagos: {
+          include: {
+            pago_metodo: true,
+            pago_estado: true,
+          },
+        },
+        pedido_productos: {
+          include: { producto: true },
+        },
+        area_venta: true,
+      },
     });
 
     if (!pedido) throw new NotFoundException('Pedido no encontrado');
-    if (pedido.cliente_id !== clienteId)
-      throw new UnauthorizedException('No puedes procesar el pago de este pedido');
-    if (pedido.pedido_estado_id !== 1)
-      throw new BadRequestException('Solo se pueden procesar pagos de pedidos pendientes');
 
-    // Verificar que no tenga ya un pago registrado
-    if (pedido.pagos.length > 0) {
-      throw new BadRequestException('Este pedido ya tiene un pago registrado');
+    if (pedido.cliente_id !== clienteId) {
+      throw new UnauthorizedException('No puedes procesar el pago de este pedido');
+    }
+
+    if (pedido.pedido_estado_id !== 1) {
+      throw new BadRequestException('Solo se pueden procesar pagos de pedidos pendientes');
+    }
+
+    // Buscar el pago pendiente con tarjeta
+    const pagoPendiente = pedido.pagos.find(
+      (p) => p.pago_metodo_id === 1 && p.pago_estado_id === 2,
+    );
+
+    if (!pagoPendiente) {
+      throw new BadRequestException('No hay un pago pendiente con tarjeta para este pedido');
     }
 
     // Validar que el total no sea null
     if (!pedido.total_pedido) {
       throw new BadRequestException('El pedido no tiene un total válido');
     }
+
+    console.log(`💳 Procesando pago con tarjeta para pedido ${pedido.codigo}`);
 
     // Procesar pago con el microservicio
     try {
@@ -126,29 +157,40 @@ export class PedidosService {
         tarjeta: dto.datos_tarjeta,
       });
 
-      // Registrar pago en BD
-      await this.prisma.pago.create({
+      console.log(`✅ Pago procesado exitosamente con el microservicio`);
+
+      // Actualizar el pago pendiente a completado
+      await this.prisma.pago.update({
+        where: { id: pagoPendiente.id },
         data: {
-          pedido_id: pedido.id,
-          cantidad: pedido.total_pedido,
-          pago_metodo_id: 1, // 1 = tarjeta
           pago_estado_id: 1, // 1 = completado
-          fecha: new Date(),
+          fecha: new Date(), // Actualizar fecha de pago
         },
       });
 
-      // Notificar a vendedores que el pago fue procesado
+      console.log(`✅ Pago actualizado en BD: ${pagoPendiente.id}`);
+
+      // Obtener pedido actualizado con el pago completado
       const pedidoActualizado = await this.prisma.pedido.findUnique({
         where: { id: pedidoId },
         include: {
           cliente: true,
           pedido_productos: { include: { producto: true } },
-          pagos: true,
+          pagos: {
+            include: {
+              pago_metodo: true,
+              pago_estado: true,
+            },
+          },
+          area_venta: true,
+          pedido_estado: true,
         },
       });
 
+      // Notificar a vendedores y cliente que el pago fue procesado
       if (pedidoActualizado) {
         this.pedidoGateway.notificarCambioPedido(pedidoActualizado);
+        console.log(`🔔 Notificación de pago procesado enviada`);
       }
 
       return {
@@ -157,25 +199,56 @@ export class PedidosService {
         transaccion: resultadoPago,
       };
     } catch (error) {
+      console.error(`❌ Error al procesar el pago:`, error);
+
+      // Opcional: Marcar el pago como fallido
+      await this.prisma.pago
+        .update({
+          where: { id: pagoPendiente.id },
+          data: {
+            pago_estado_id: 4, // 4 = fallido (si tienes este estado)
+          },
+        })
+        .catch((err) => console.error('Error al actualizar estado de pago fallido:', err));
+
       throw new BadRequestException(`Error al procesar el pago: ${error.message}`);
     }
   }
 
-  async obtenerMiPedidoActivo(clienteId: number) {
-    const pedido = await this.prisma.pedido.findFirst({
+  async obtenerMisPedidosActivos(clienteId: number) {
+    // Obtener el pedido más reciente que no esté entregado ni cancelado
+    const pedidos = await this.prisma.pedido.findMany({
       where: {
         cliente_id: clienteId,
         pedido_estado_id: { in: [1, 2, 3] }, // pendiente, en_proceso, listo
       },
       include: {
-        pedido_productos: { include: { producto: true } },
+        pedido_productos: {
+          include: {
+            producto: true,
+          },
+        },
         pedido_estado: true,
-        pagos: true,
+        pagos: {
+          include: {
+            pago_metodo: true,
+            pago_estado: true,
+          },
+        },
+        area_venta: true,
+        cliente: true,
       },
       orderBy: { fecha_registro: 'desc' },
     });
 
-    return pedido;
+    // Log para debugging
+    if (pedidos) {
+      console.log(`📦 Pedido activo para cliente ${clienteId}`);
+    } else {
+      console.log(`ℹ️ No hay pedidos activos para cliente ${clienteId}`);
+    }
+
+    return pedidos;
   }
 
   async cancelarPorCliente(pedidoId: number, clienteId: number) {
@@ -191,10 +264,33 @@ export class PedidosService {
       throw new BadRequestException('Solo se pueden cancelar pedidos pendientes');
 
     // Si tiene pago con tarjeta, solicitar reembolso
-    if (pedido.pagos.length > 0) {
-      const pagoTarjeta = pedido.pagos.find((p) => p.pago_metodo_id === 1);
-      if (pagoTarjeta) {
-        await this.pagosClient.cancelarPago(pagoTarjeta.id.toString());
+    // Si tiene pago con tarjeta COMPLETADO, solicitar reembolso
+    if (pedido.pagos.find((p) => p.pago_metodo_id === 1)) {
+      const pagoTarjetaCompletado = pedido.pagos.find(
+        (p) => (p.pago_metodo_id === 1 && p.pago_estado_id === 1) || p.pago_estado_id === 2,
+      );
+
+      if (pagoTarjetaCompletado) {
+        console.log(`🔄 Solicitando reembolso para pago ${pagoTarjetaCompletado.id}`);
+        await this.pagosClient.cancelarPago(pagoTarjetaCompletado.id.toString());
+
+        // Actualizar estado del pago a cancelado
+        await this.prisma.pago.update({
+          where: { id: pagoTarjetaCompletado.id },
+          data: { pago_estado_id: 3 }, // 3 = cancelado
+        });
+      }
+    } else {
+      // Si solo está pendiente, simplemente cancelarlo siendo pago en efectivo
+      const pagoPendiente = pedido.pagos.find(
+        (p) => (p.pago_metodo_id === 2 && p.pago_estado_id === 1) || p.pago_estado_id === 2,
+      );
+
+      if (pagoPendiente) {
+        await this.prisma.pago.update({
+          where: { id: pagoPendiente.id },
+          data: { pago_estado_id: 3 }, // 3 = cancelado
+        });
       }
     }
 
@@ -277,9 +373,19 @@ export class PedidosService {
     // Buscar el pedido primero para obtener su área
     const pedido = await this.prisma.pedido.findUnique({
       where: { id: pedidoId },
+      include: {
+        cliente: true,
+        pedido_productos: {
+          include: { producto: true },
+        },
+      },
     });
 
     if (!pedido) throw new NotFoundException('Pedido no encontrado');
+
+    if (pedido.pedido_estado_id !== 1) {
+      throw new BadRequestException('Solo se pueden aceptar pedidos pendientes');
+    }
 
     // Verificar límite de pedidos en proceso POR ÁREA
     const pedidosEnProceso = await this.prisma.pedido.count({
@@ -324,11 +430,33 @@ export class PedidosService {
     if (pedido.pedido_estado_id !== 1)
       throw new BadRequestException('Solo se pueden rechazar pedidos pendientes');
 
-    // Si tiene pago con tarjeta, cancelar transacción
-    if (pedido.pagos.length > 0) {
-      const pagoTarjeta = pedido.pagos.find((p) => p.pago_metodo_id === 1);
-      if (pagoTarjeta) {
-        await this.pagosClient.cancelarPago(pagoTarjeta.id.toString());
+    // Si tiene pago con tarjeta COMPLETADO, solicitar reembolso
+    if (pedido.pagos.find((p) => p.pago_metodo_id === 1)) {
+      const pagoTarjetaCompletado = pedido.pagos.find(
+        (p) => (p.pago_metodo_id === 1 && p.pago_estado_id === 1) || p.pago_estado_id === 2,
+      );
+
+      if (pagoTarjetaCompletado) {
+        console.log(`🔄 Solicitando reembolso para pago ${pagoTarjetaCompletado.id}`);
+        await this.pagosClient.cancelarPago(pagoTarjetaCompletado.id.toString());
+
+        // Actualizar estado del pago a cancelado
+        await this.prisma.pago.update({
+          where: { id: pagoTarjetaCompletado.id },
+          data: { pago_estado_id: 3 }, // 3 = cancelado
+        });
+      }
+    } else {
+      // Si solo está pendiente, simplemente cancelarlo
+      const pagoPendiente = pedido.pagos.find(
+        (p) => (p.pago_metodo_id === 2 && p.pago_estado_id === 1) || p.pago_estado_id === 2,
+      );
+
+      if (pagoPendiente) {
+        await this.prisma.pago.update({
+          where: { id: pagoPendiente.id },
+          data: { pago_estado_id: 3 }, // 3 = cancelado
+        });
       }
     }
 
@@ -336,7 +464,7 @@ export class PedidosService {
     const pedidoActualizado = await this.prisma.pedido.update({
       where: { id: pedidoId },
       data: {
-        pedido_estado_id: 5, // cancelado
+        pedido_estado_id: 6, // cancelado
         detalles_pedido: `RECHAZADO: ${dto.motivo}`, // Guardar el motivo
       },
       include: {
@@ -353,7 +481,8 @@ export class PedidosService {
         dto.motivo,
       );
     }
-    this.pedidoGateway.notificarCambioPedido(pedidoActualizado);
+
+    this.pedidoGateway.notificarPedidoRechazado(pedidoActualizado);
 
     return { mensaje: 'Pedido rechazado y cliente notificado' };
   }
@@ -361,6 +490,13 @@ export class PedidosService {
   async marcarComoListo(pedidoId: number) {
     const pedido = await this.prisma.pedido.findUnique({
       where: { id: pedidoId },
+      include: {
+        cliente: true,
+        pedido_productos: {
+          include: { producto: true },
+        },
+        pagos: true,
+      },
     });
 
     if (!pedido) throw new NotFoundException('Pedido no encontrado');
@@ -370,7 +506,11 @@ export class PedidosService {
     const pedidoActualizado = await this.prisma.pedido.update({
       where: { id: pedidoId },
       data: { pedido_estado_id: 3 }, // listo
-      include: { cliente: true, pedido_productos: { include: { producto: true } } },
+      include: {
+        cliente: true,
+        pedido_productos: { include: { producto: true } },
+        pagos: true,
+      },
     });
 
     // Notificar al cliente que puede recoger (SMS)
@@ -385,15 +525,26 @@ export class PedidosService {
   async entregarPedido(pedidoId: number, dto: EntregarPedidoDto) {
     const pedido = await this.prisma.pedido.findUnique({
       where: { id: pedidoId },
-      include: { pagos: true, cliente: true },
+      include: {
+        cliente: true,
+        pagos: {
+          include: {
+            pago_metodo: true,
+            pago_estado: true,
+          },
+        },
+        pedido_productos: {
+          include: { producto: true },
+        },
+      },
     });
 
     if (!pedido) throw new NotFoundException('Pedido no encontrado');
     if (pedido.pedido_estado_id !== 3)
       throw new BadRequestException('Solo se pueden entregar pedidos listos');
 
-    // Verificar si ya hay un pago registrado
-    if (pedido.pagos.length > 0) {
+    // Verificar si ya hay un pago (osea que el pago fue con tarjeta)
+    if (pedido.pagos.some((p) => p.pago_estado_id === 1)) {
       // Ya está pagado con tarjeta, solo entregar
       const pedidoActualizado = await this.prisma.pedido.update({
         where: { id: pedidoId },
@@ -408,22 +559,16 @@ export class PedidosService {
       });
 
       this.pedidoGateway.notificarCambioPedido(pedidoActualizado);
-      return { mensaje: 'Pedido entregado exitosamente', pedido: pedidoActualizado };
+      this.pedidoGateway.notificarPedidoEntregado(pedidoActualizado);
+      return {
+        mensaje: 'Pedido entregado exitosamente',
+        pedido: pedidoActualizado,
+      };
     }
 
-    // Si es pago en efectivo, registrarlo
-    if (dto.pago_metodo_id === 2 && dto.monto_efectivo) {
-      await this.prisma.pago.create({
-        data: {
-          pedido_id: pedidoId,
-          cantidad: new Prisma.Decimal(dto.monto_efectivo),
-          pago_metodo_id: 2, // efectivo
-          pago_estado_id: 1, // completado
-          fecha: new Date(),
-        },
-      });
-
-      // Actualizar pedido a entregado
+    // Verificar si el pago es con efectivo
+    if (pedido.pagos.some((p) => p.pago_metodo_id === 2)) {
+      // Ya está pagado con tarjeta, solo entregar
       const pedidoActualizado = await this.prisma.pedido.update({
         where: { id: pedidoId },
         data: {
@@ -436,14 +581,33 @@ export class PedidosService {
         },
       });
 
+      // Buscar el pago pendiente con tarjeta
+      const pagoPendiente = pedido.pagos.find(
+        (p) => p.pago_metodo_id === 2 && p.pago_estado_id === 2,
+      );
+
+      if (!pagoPendiente) {
+        throw new BadRequestException('No hay un pago en efectivo registrado');
+      }
+
+      // Actualizar el pago pendiente a completado
+      await this.prisma.pago.update({
+        where: { id: pagoPendiente.id },
+        data: {
+          pago_estado_id: 1, // 1 = completado
+          fecha: new Date(), // Actualizar fecha de pago
+        },
+      });
+
       this.pedidoGateway.notificarCambioPedido(pedidoActualizado);
+      this.pedidoGateway.notificarPedidoEntregado(pedidoActualizado);
       return {
-        mensaje: 'Pedido entregado y pago registrado exitosamente',
+        mensaje: 'Pedido entregado exitosamente',
         pedido: pedidoActualizado,
       };
     }
-
-    throw new BadRequestException('Debe proporcionar el monto del pago en efectivo');
+    return { mensaje: 'El pago no a sido realizado' };
+    //throw new BadRequestException('Debe proporcionar el monto del pago en efectivo');
   }
 
   // =============== MÉTODOS COMUNES ===============

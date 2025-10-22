@@ -13,7 +13,10 @@ async function bootstrap() {
 
   // CORS para que Angular pueda consumir la API
   app.enableCors({
-    origin: configService.get<string>('CORS_ORIGIN'),
+    origin: [
+      configService.get<string>('CORS_ORIGIN'),
+      'http://192.168.1.47:4200',
+    ]
   });
 
   //Validar automáticamente DTOs en los controllers
@@ -34,7 +37,7 @@ async function bootstrap() {
   }
 
 
-  await app.listen(process.env.PORT ?? 3000);
+  await app.listen(process.env.PORT ?? 3000, '0.0.0.0');
   console.log('Backend corriendo en http://localhost:3000/unifood/api');
   console.log('CORS habilitado para ' + configService.get<string>('CORS_ORIGIN'));
 

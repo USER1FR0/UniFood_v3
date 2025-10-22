@@ -8,27 +8,33 @@ import {
   Request,
   UseGuards,
   UnauthorizedException,
+  NotFoundException,
+  BadRequestException,
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
 import { PedidosService } from './../services/pedido.service';
+import { PagosClient } from 'src/clients/pagos.client';
 import {
   CrearPedidoDto,
   RechazarPedidoDto,
   EntregarPedidoDto,
   CalificarProductoDto,
   ProcesarPagoTarjetaDto,
+  AgregarCarritoDto,
 } from './../models/pedido.model';
+import { ComunicacionClient } from '../clients/comunicacion.client';
 import { JwtService } from '@nestjs/jwt';
-import { PrismaClient } from '@prisma/client';
+import { PrismaService } from 'src/services/prisma.service';
 
 @Controller('pedidos')
 export class PedidosController {
-  private prisma = new PrismaClient();
-
   constructor(
     private readonly pedidosService: PedidosService,
     private readonly jwtService: JwtService,
+    private readonly prisma: PrismaService,
+    private readonly comunicationClient: ComunicacionClient,
+    private readonly pagosClient: PagosClient,
   ) {}
 
   // Método auxiliar para verificar autenticación
@@ -44,32 +50,32 @@ export class PedidosController {
     }
   }
 
-// Método auxiliar para obtener área del vendedor
-private async obtenerAreaVendedor(usuarioId: number): Promise<number> {
-  const vendedor = await this.prisma.vendedor.findFirst({
-    where: { usuario_id: usuarioId },
-    include: {
-      vendedor_areas: true // Incluir la relación con vendedor_area
+  // Método auxiliar para obtener área del vendedor
+  private async obtenerAreaVendedor(usuarioId: number): Promise<number> {
+    const vendedor = await this.prisma.vendedor.findFirst({
+      where: { usuario_id: usuarioId },
+      include: {
+        vendedor_areas: true, // Incluir la relación con vendedor_area
+      },
+    });
+
+    if (!vendedor) {
+      throw new UnauthorizedException('Vendedor no encontrado');
     }
-  });
 
-  if (!vendedor) {
-    throw new UnauthorizedException('Vendedor no encontrado');
+    // Buscar el área activa del vendedor
+    const areaActiva = vendedor.vendedor_areas.find((va) => va.estatus === true);
+
+    if (!areaActiva) {
+      throw new UnauthorizedException('El vendedor no tiene un área de venta activa asignada');
+    }
+
+    if (!areaActiva.area_id) {
+      throw new UnauthorizedException('El área de venta activa no es válida');
+    }
+
+    return areaActiva.area_id;
   }
-
-  // Buscar el área activa del vendedor
-  const areaActiva = vendedor.vendedor_areas.find(va => va.estatus === true);
-
-  if (!areaActiva) {
-    throw new UnauthorizedException('El vendedor no tiene un área de venta activa asignada');
-  }
-
-  if (!areaActiva.area_id) {
-    throw new UnauthorizedException('El área de venta activa no es válida');
-  }
-
-  return areaActiva.area_id;
-}
 
   // =============== ENDPOINTS PARA CLIENTE ===============
 
@@ -82,7 +88,11 @@ private async obtenerAreaVendedor(usuarioId: number): Promise<number> {
       throw new UnauthorizedException('Solo los clientes pueden crear pedidos');
     }
 
-    return this.pedidosService.crear(dto, usuario.id);
+    if (!usuario.id_rol) {
+      throw new UnauthorizedException('Cliente no encontrado para este usuario');
+    }
+
+    return this.pedidosService.crear(dto, usuario.id_rol);
   }
 
   // NUEVO ENDPOINT: Procesar pago con tarjeta después de crear el pedido
@@ -95,18 +105,36 @@ private async obtenerAreaVendedor(usuarioId: number): Promise<number> {
       throw new UnauthorizedException('Solo los clientes pueden procesar pagos');
     }
 
-    return this.pedidosService.procesarPagoPendiente(+id, usuario.id, dto);
+    if (!usuario.id_rol) {
+      throw new UnauthorizedException('Cliente no encontrado para este usuario');
+    }
+
+    return this.pedidosService.procesarPagoPendiente(+id, usuario.id_rol, dto);
   }
 
-  @Get('mi-pedido')
-  async obtenerMiPedidoActivo(@Request() req) {
+  @Get('mis-pedidos-activos')
+  async obtenerMisPedidosActivos(@Request() req) {
     const usuario = this.verificarAuth(req.headers.authorization);
 
     if (usuario.rol !== 'cliente') {
       throw new UnauthorizedException('Solo los clientes pueden ver sus pedidos');
     }
 
-    return this.pedidosService.obtenerMiPedidoActivo(usuario.id);
+    if (!usuario.id_rol) {
+      throw new UnauthorizedException('Cliente no encontrado para este usuario');
+    }
+    return this.pedidosService.obtenerMisPedidosActivos(usuario.id_rol);
+  }
+
+  @Get('verificar-pagos')
+  async verificarMicroservicioPagos() {
+    try {
+      const disponible = await this.pagosClient.verificarDisponibilidad();
+      return { disponible };
+    } catch (error) {
+      console.error('⚠️ Error al verificar microservicio de pagos:', error);
+      return { disponible: false };
+    }
   }
 
   @Patch(':id/cancelar')
@@ -117,7 +145,11 @@ private async obtenerAreaVendedor(usuarioId: number): Promise<number> {
       throw new UnauthorizedException('Solo los clientes pueden cancelar pedidos');
     }
 
-    return this.pedidosService.cancelarPorCliente(+id, usuario.id);
+    if (!usuario.id_rol) {
+      throw new UnauthorizedException('Cliente no encontrado para este usuario');
+    }
+
+    return this.pedidosService.cancelarPorCliente(+id, usuario.id_rol);
   }
 
   @Post(':id/calificar')
@@ -131,7 +163,11 @@ private async obtenerAreaVendedor(usuarioId: number): Promise<number> {
       throw new UnauthorizedException('Solo los clientes pueden calificar');
     }
 
-    return this.pedidosService.calificarPedido(+id, usuario.id, dto);
+    if (!usuario.id_rol) {
+      throw new UnauthorizedException('Cliente no encontrado para este usuario');
+    }
+
+    return this.pedidosService.calificarPedido(+id, usuario.id_rol, dto);
   }
 
   @Get('historial')
@@ -142,7 +178,11 @@ private async obtenerAreaVendedor(usuarioId: number): Promise<number> {
       throw new UnauthorizedException('Solo los clientes pueden ver su historial');
     }
 
-    return this.pedidosService.obtenerHistorial(usuario.id);
+    if (!usuario.id_rol) {
+      throw new UnauthorizedException('Cliente no encontrado para este usuario');
+    }
+
+    return this.pedidosService.obtenerHistorial(usuario.id_rol);
   }
 
   // =============== ENDPOINTS PARA VENDEDOR ===============
@@ -234,5 +274,69 @@ private async obtenerAreaVendedor(usuarioId: number): Promise<number> {
     }
 
     return this.pedidosService.entregarPedido(+id, dto);
+  }
+
+  @Get('mi-area')
+  async obtenerMiArea(@Request() req) {
+    const usuario = this.verificarAuth(req.headers.authorization);
+
+    if (usuario.rol !== 'vendedor') {
+      throw new UnauthorizedException('Solo los vendedores pueden consultar su área');
+    }
+
+    const areaVentaId = await this.obtenerAreaVendedor(usuario.id);
+
+    return {
+      area_venta_id: areaVentaId,
+      mensaje: 'Área obtenida correctamente',
+    };
+  }
+
+  // =============== ENDPOINT PARA CARRITO ===============
+
+  @Post('carrito/agregar')
+  @HttpCode(HttpStatus.OK)
+  async agregarAlCarrito(@Body() dto: AgregarCarritoDto, @Request() req) {
+    const usuario = this.verificarAuth(req.headers.authorization);
+
+    if (usuario.rol !== 'cliente') {
+      throw new UnauthorizedException('Solo los clientes pueden agregar productos al carrito');
+    }
+
+    // Buscar el producto para validar y obtener datos
+    const producto = await this.prisma.producto.findUnique({
+      where: { id: dto.producto_id },
+      include: {
+        area_venta: true,
+        categoria: true,
+      },
+    });
+
+    if (!producto) {
+      throw new NotFoundException('Producto no encontrado');
+    }
+
+    if (!producto.estado) {
+      throw new BadRequestException('El producto no está disponible');
+    }
+
+    // Retornar producto completo para que el frontend lo agregue al carrito
+    return {
+      mensaje: 'Producto listo para agregar al carrito',
+      producto: {
+        id: producto.id,
+        nombre: producto.nombre,
+        descripcion: producto.descripcion,
+        precio: Number(producto.precio),
+        imagen_url: producto.imagen_url,
+        categoria_id: producto.categoria_id,
+        area_venta_id: producto.area_venta_id,
+        tiempo_preparacion: producto.tiempo_preparacion,
+        ingredientes: producto.ingredientes,
+        calorias: Number(producto.calorias),
+      },
+      cantidad: dto.cantidad,
+      detalles: dto.detalles || null,
+    };
   }
 }

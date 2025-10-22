@@ -32,18 +32,18 @@ export class authService {
     }
 
     // Obtener el id del rol (cliente o vendedor)
-let id_rol: number | null = null;
-if (usuario.rol === 'cliente') {
-    const cliente = await this.prisma.cliente.findFirst({
-        where: { usuario_id: usuario.id }
-    });
-    id_rol = cliente?.id ?? null;
-} else if (usuario.rol === 'vendedor') {
-    const vendedor = await this.prisma.vendedor.findFirst({
-        where: { usuario_id: usuario.id }
-    });
-    id_rol = vendedor?.id ?? null;
-}
+    let id_rol: number | null = null;
+    if (usuario.rol === 'cliente') {
+      const cliente = await this.prisma.cliente.findFirst({
+        where: { usuario_id: usuario.id },
+      });
+      id_rol = cliente?.id ?? null;
+    } else if (usuario.rol === 'vendedor') {
+      const vendedor = await this.prisma.vendedor.findFirst({
+        where: { usuario_id: usuario.id },
+      });
+      id_rol = vendedor?.id ?? null;
+    }
 
     // Generar payload JWT
     const payload: JwtPayload = {
@@ -83,18 +83,18 @@ if (usuario.rol === 'cliente') {
       }
 
       // Obtener el id del rol (cliente o vendedor)
-let id_rol: number | null = null;
-if (usuario.rol === 'cliente') {
-    const cliente = await this.prisma.cliente.findFirst({
-        where: { usuario_id: usuario.id }
-    });
-    id_rol = cliente?.id ?? null;
-} else if (usuario.rol === 'vendedor') {
-    const vendedor = await this.prisma.vendedor.findFirst({
-        where: { usuario_id: usuario.id }
-    });
-    id_rol = vendedor?.id ?? null;
-}
+      let id_rol: number | null = null;
+      if (usuario.rol === 'cliente') {
+        const cliente = await this.prisma.cliente.findFirst({
+          where: { usuario_id: usuario.id },
+        });
+        id_rol = cliente?.id ?? null;
+      } else if (usuario.rol === 'vendedor') {
+        const vendedor = await this.prisma.vendedor.findFirst({
+          where: { usuario_id: usuario.id },
+        });
+        id_rol = vendedor?.id ?? null;
+      }
 
       return {
         id: usuario.id,

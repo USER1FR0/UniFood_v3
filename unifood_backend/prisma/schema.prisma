@@ -121,13 +121,14 @@ model pedido {
 }
 
 model pedido_producto {
-  id              Int       @id @default(autoincrement())
-  pedido_id       Int?
-  producto_id     Int?
-  cantidad        Int
-  precio_unitario Decimal   @db.Decimal(10, 2)
-  pedido          pedido?   @relation(fields: [pedido_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  producto        producto? @relation(fields: [producto_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  id                Int       @id @default(autoincrement())
+  pedido_id         Int?
+  producto_id       Int?
+  cantidad          Int
+  precio_unitario   Decimal   @db.Decimal(10, 2)
+  detalles_producto String?   @db.VarChar
+  pedido            pedido?   @relation(fields: [pedido_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  producto          producto? @relation(fields: [producto_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 }
 
 model producto_calificacion {

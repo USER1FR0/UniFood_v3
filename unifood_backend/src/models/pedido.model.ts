@@ -6,6 +6,7 @@ import {
   IsOptional,
   ValidateNested,
   IsEnum,
+  Min
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
@@ -113,4 +114,20 @@ export class CalificarProductoDto {
   @IsString()
   @IsOptional()
   comentario?: string;
+}
+
+// DTO para agregar producto al carrito
+export class AgregarCarritoDto {
+  @IsNumber()
+  @IsNotEmpty()
+  producto_id: number;
+
+  @IsNumber()
+  @IsNotEmpty()
+  @Min(1)
+  cantidad: number;
+
+  @IsString()
+  @IsOptional()
+  detalles?: string;
 }

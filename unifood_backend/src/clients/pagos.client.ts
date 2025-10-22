@@ -21,7 +21,7 @@ export class PagosClient {
   async procesarPago(datos: ProcesarPagoDto) {
     try {
       const response = await firstValueFrom(
-        this.httpService.post(`${this.baseUrl}/pagos/procesar`, datos)
+        this.httpService.post(`${this.baseUrl}/pagos/procesar`, datos),
       );
       return response.data;
     } catch (error) {
@@ -32,7 +32,7 @@ export class PagosClient {
   async cancelarPago(transaccionId: string) {
     try {
       const response = await firstValueFrom(
-        this.httpService.post(`${this.baseUrl}/pagos/cancelar`, { transaccionId })
+        this.httpService.post(`${this.baseUrl}/pagos/cancelar`, { transaccionId }),
       );
       return response.data;
     } catch (error) {
@@ -40,10 +40,29 @@ export class PagosClient {
     }
   }
 
+  async verificarDisponibilidad(): Promise<boolean> {
+    try {
+      // Intentar hacer una petición simple al microservicio
+      const response = await firstValueFrom(
+        this.httpService.get(`${this.baseUrl}/pagos/estado/ping-test`, {
+          timeout: 3000,
+          validateStatus: () => true, // Aceptar cualquier status code
+        }),
+      );
+
+      // Si responde (aunque sea con error 404), está disponible
+      return response.status >= 200 && response.status < 600;
+    } catch (error) {
+      // Si no puede conectarse, no está disponible
+      console.error('⚠️ Microservicio de pagos no responde:', error.message);
+      return false;
+    }
+  }
+
   async verificarEstadoPago(transaccionId: string) {
     try {
       const response = await firstValueFrom(
-        this.httpService.get(`${this.baseUrl}/pagos/estado/${transaccionId}`)
+        this.httpService.get(`${this.baseUrl}/pagos/estado/${transaccionId}`),
       );
       return response.data;
     } catch (error) {
