@@ -1,0 +1,297 @@
+<div class="categorias-container">
+  <div class="categorias-card">
+    <!-- Header -->
+    <div class="categorias-header">
+      <h1>Gestión de Categorías</h1>
+      <p>Administra las categorías de productos disponibles en el sistema</p>
+      
+      <!-- Estadísticas rápidas -->
+      <div class="estadisticas-rapidas">
+        <div class="estadistica-item">
+          <span class="estadistica-numero">{{ getTotalCategorias() }}</span>
+          <span class="estadistica-texto">Total</span>
+        </div>
+        <div class="estadistica-item">
+          <span class="estadistica-numero activas">{{ getCategoriasActivas() }}</span>
+          <span class="estadistica-texto">Activas</span>
+        </div>
+        <div class="estadistica-item">
+          <span class="estadistica-numero inactivas">{{ getCategoriasInactivas() }}</span>
+          <span class="estadistica-texto">Inactivas</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Barra de acciones y búsqueda -->
+    <div class="acciones-container">
+      <div class="busqueda-container">
+        <div class="input-busqueda">
+          <span class="icono-busqueda">🔍</span>
+          <input
+            type="text"
+            [(ngModel)]="terminoBusqueda"
+            (keyup.enter)="buscarCategorias()"
+            placeholder="Buscar categorías por nombre o descripción..."
+            class="input-busqueda-field"
+          >
+          <button 
+            *ngIf="terminoBusqueda" 
+            class="btn-limpiar-busqueda"
+            (click)="limpiarBusqueda()"
+            title="Limpiar búsqueda"
+          >
+            ×
+          </button>
+        </div>
+        <button class="btn-buscar" (click)="buscarCategorias()">
+          Buscar
+        </button>
+      </div>
+      
+      <button class="btn-agregar" (click)="abrirModalCrear()">
+        <span class="icono">+</span>
+        Nueva Categoría
+      </button>
+    </div>
+
+    <!-- Estados de carga, error y vacío -->
+    <div *ngIf="cargando" class="estado-carga">
+      <div class="spinner"></div>
+      <p>Cargando categorías...</p>
+    </div>
+
+    <div *ngIf="error && !cargando" class="estado-error">
+      <p>{{ error }}</p>
+      <button class="btn-reintentar" (click)="cargarCategorias()">
+        Reintentar
+      </button>
+    </div>
+
+    <div *ngIf="!cargando && !error && getCategoriasFiltradas().length === 0" class="estado-vacio">
+      <div class="icono-vacio">📁</div>
+      <h3>No se encontraron categorías</h3>
+      <p *ngIf="terminoBusqueda">
+        No hay categorías que coincidan con "{{ terminoBusqueda }}"
+      </p>
+      <p *ngIf="!terminoBusqueda">
+        Comienza agregando tu primera categoría al sistema
+      </p>
+      <button class="btn-agregar-primero" (click)="abrirModalCrear()">
+        Agregar Primera Categoría
+      </button>
+    </div>
+
+    <!-- Lista de Categorías -->
+    <div *ngIf="!cargando && !error && getCategoriasFiltradas().length > 0" class="lista-categorias">
+      <div class="contador-resultados">
+        Mostrando {{ getCategoriasFiltradas().length }} categoría(s)
+        <span *ngIf="terminoBusqueda">para "{{ terminoBusqueda }}"</span>
+      </div>
+      
+      <div *ngFor="let categoria of getCategoriasFiltradas()" class="categoria-card">
+        <div class="categoria-header">
+          <div class="avatar">
+            {{ categoria.nombre.charAt(0).toUpperCase() }}
+          </div>
+          <div class="categoria-info">
+            <h3 class="nombre">{{ categoria.nombre }}</h3>
+            <p class="descripcion">{{ categoria.descripcion || 'Sin descripción' }}</p>
+          </div>
+          <div class="categoria-status">
+            <span 
+              class="estatus" 
+              [class.estatus-activo]="categoria.status" 
+              [class.estatus-inactivo]="!categoria.status"
+            >
+              {{ categoria.status ? 'Activo' : 'Inactivo' }}
+            </span>
+          </div>
+        </div>
+
+        <div class="categoria-detalles">
+          <div class="detalle-item">
+            <span class="icono">📅</span>
+            <span class="texto">Registrado: {{ categoria.fecha_registro | date:'dd/MM/yyyy' }}</span>
+          </div>
+          <div class="detalle-item">
+            <span class="icono">🆔</span>
+            <span class="texto">ID: {{ categoria.id }}</span>
+          </div>
+        </div>
+
+        <div class="categoria-acciones">
+          <button class="btn-editar" (click)="abrirModalEditar(categoria)">
+            <span class="icono">✏️</span>
+            Editar
+          </button>
+          <button 
+            class="btn-estatus" 
+            (click)="cambiarStatusCategoria(categoria)"
+            [title]="categoria.status ? 'Desactivar categoría' : 'Activar categoría'"
+          >
+            <span class="icono">{{ categoria.status ? '⏸️' : '▶️' }}</span>
+            {{ categoria.status ? 'Desactivar' : 'Activar' }}
+          </button>
+          <button class="btn-eliminar" (click)="eliminarCategoria(categoria)">
+            <span class="icono">🗑️</span>
+            Eliminar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Crear Categoría -->
+  <div *ngIf="mostrarModalCrear" class="modal-overlay" (click)="cerrarModales()">
+    <div class="modal-container" (click)="$event.stopPropagation()">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h2>Nueva Categoría</h2>
+          <button class="btn-cerrar" (click)="cerrarModales()">×</button>
+        </div>
+
+        <form class="categoria-form" (ngSubmit)="crearCategoria()">
+          <div class="form-group">
+            <label for="nombre">Nombre de la Categoría *</label>
+            <input
+              type="text"
+              id="nombre"
+              [(ngModel)]="nuevaCategoria.nombre"
+              name="nombre"
+              placeholder="Ej: Bebidas, Postres, Entradas..."
+              required
+              maxlength="50"
+            >
+            <div class="contador-caracteres">{{ nuevaCategoria.nombre.length || 0 }}/50</div>
+          </div>
+
+          <div class="form-group">
+            <label for="descripcion">Descripción</label>
+            <textarea
+              id="descripcion"
+              [(ngModel)]="nuevaCategoria.descripcion"
+              name="descripcion"
+              placeholder="Describe el tipo de productos que incluye esta categoría..."
+              rows="3"
+              maxlength="200"
+            ></textarea>
+            <div class="contador-caracteres">{{ nuevaCategoria.descripcion?.length || 0 }}/200</div>
+          </div>
+
+          <div class="form-group">
+            <label>Estado Inicial</label>
+            <div class="estatus-options">
+              <label class="estatus-option">
+                <input
+                  type="radio"
+                  [(ngModel)]="nuevaCategoria.status"
+                  name="statusCrear"
+                  [value]="true"
+                >
+                <span class="radio-custom"></span>
+                <span class="estatus-text activo">Activo</span>
+              </label>
+              <label class="estatus-option">
+                <input
+                  type="radio"
+                  [(ngModel)]="nuevaCategoria.status"
+                  name="statusCrear"
+                  [value]="false"
+                >
+                <span class="radio-custom"></span>
+                <span class="estatus-text inactivo">Inactivo</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="btn-cancelar" (click)="cerrarModales()" [disabled]="procesando">
+              Cancelar
+            </button>
+            <button type="submit" class="btn-actualizar" [disabled]="procesando || !nuevaCategoria.nombre">
+              <span *ngIf="procesando" class="spinner-mini"></span>
+              {{ procesando ? 'Creando...' : 'Crear Categoría' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Editar Categoría -->
+  <div *ngIf="mostrarModalEditar && categoriaSeleccionada" class="modal-overlay" (click)="cerrarModales()">
+    <div class="modal-container" (click)="$event.stopPropagation()">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h2>Editar Categoría</h2>
+          <button class="btn-cerrar" (click)="cerrarModales()">×</button>
+        </div>
+
+        <form class="categoria-form" (ngSubmit)="actualizarCategoria()">
+          <div class="form-group">
+            <label for="nombreEditar">Nombre de la Categoría *</label>
+            <input
+              type="text"
+              id="nombreEditar"
+              [(ngModel)]="categoriaEditada.nombre"
+              name="nombre"
+              placeholder="Ej: Bebidas, Postres, Entradas..."
+              required
+              maxlength="50"
+            >
+            <div class="contador-caracteres">{{ categoriaEditada.nombre?.length || 0 }}/50</div>
+          </div>
+
+          <div class="form-group">
+            <label for="descripcionEditar">Descripción</label>
+            <textarea
+              id="descripcionEditar"
+              [(ngModel)]="categoriaEditada.descripcion"
+              name="descripcion"
+              placeholder="Describe el tipo de productos que incluye esta categoría..."
+              rows="3"
+              maxlength="200"
+            ></textarea>
+            <div class="contador-caracteres">{{ categoriaEditada.descripcion?.length || 0 }}/200</div>
+          </div>
+
+          <div class="form-group">
+            <label>Estado</label>
+            <div class="estatus-options">
+              <label class="estatus-option">
+                <input
+                  type="radio"
+                  [(ngModel)]="categoriaEditada.status"
+                  name="statusEditar"
+                  [value]="true"
+                >
+                <span class="radio-custom"></span>
+                <span class="estatus-text activo">Activo</span>
+              </label>
+              <label class="estatus-option">
+                <input
+                  type="radio"
+                  [(ngModel)]="categoriaEditada.status"
+                  name="statusEditar"
+                  [value]="false"
+                >
+                <span class="radio-custom"></span>
+                <span class="estatus-text inactivo">Inactivo</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="btn-cancelar" (click)="cerrarModales()" [disabled]="procesando">
+              Cancelar
+            </button>
+            <button type="submit" class="btn-actualizar" [disabled]="procesando">
+              <span *ngIf="procesando" class="spinner-mini"></span>
+              {{ procesando ? 'Actualizando...' : 'Actualizar Categoría' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

@@ -23,7 +23,7 @@ export class LoginComponent {
 
   constructor(private authService: AuthService, private router: Router) {
     if (this.authService.estaAutenticado()) {
-      this.router.navigate(['/borrar']); // si ya esta autenticado redirige (cambiar ruta)
+      this.router.navigate(['/lista-vendedores']); // si ya esta autenticado redirige (cambiar ruta)
     }
   }
 
@@ -77,7 +77,7 @@ export class LoginComponent {
             }
 
             //Ejemplo, quitar cuando las rutas esten listas
-            this.router.navigate(['/borrar']); // si ya esta autenticado redirige (cambiar ruta)
+            this.router.navigate(['/lista-vendedores']); // si ya esta autenticado redirige (cambiar ruta)
           }
         });
       },

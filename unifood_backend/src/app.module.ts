@@ -7,6 +7,9 @@ import { VendedoresModule } from './modules/vendedores.module';
 import { ConfigModule } from '@nestjs/config';
 import { authModule } from './modules/auth.module';
 import { PrismaModule } from './modules/prisma.module';
+import { AreaVentaModule } from './modules/area-venta.module';
+import { CategoriaModule } from './modules/categoria.module';
+import { ProductoModule } from './modules/producto.module';
 
 @Module({
   imports: [
@@ -17,7 +20,10 @@ import { PrismaModule } from './modules/prisma.module';
     DatabaseConfig,
     RecursoModule, // Ejemplo de módulo importado
     VendedoresModule,
-    PrismaModule
+    PrismaModule,
+    AreaVentaModule,
+    CategoriaModule,
+    ProductoModule
   ],
   controllers: [AppController],
   providers: [AppService],
