@@ -49,14 +49,21 @@ export class ClientePedidoComponent implements OnInit {
     this.carritosPorArea = this.pedidoService.obtenerCarritoPorArea();
 
     if (this.carritosPorArea.length === 0) {
+      this.areaSeleccionada = null;
       Swal.fire({
         icon: 'info',
         title: 'Carrito vacío',
         text: 'Agrega productos para continuar',
         confirmButtonColor: '#5B9A97',
       });
+      return;
     } else if (this.carritosPorArea.length === 1) {
       this.areaSeleccionada = this.carritosPorArea[0];
+    } else {
+      this.areaSeleccionada =
+        this.carritosPorArea.find(
+          (a) => a.area_venta_id === this.areaSeleccionada?.area_venta_id
+        ) || null;
     }
   }
 
@@ -92,9 +99,9 @@ export class ClientePedidoComponent implements OnInit {
           .unsubscribe();
         const index = todosLosItems.indexOf(item);
         this.pedidoService.eliminarItem(index);
+        this.cargarCarrito();
       }
     });
-    this.cargarCarrito();
   }
 
   confirmarPedido(): void {
@@ -157,8 +164,12 @@ export class ClientePedidoComponent implements OnInit {
       return;
     }
 
-    if (this.detallesPedido.length > 80){
-      Swal.fire('Advertencia', 'Los detalles exceden el limite permitido', 'warning');
+    if (this.detallesPedido.length > 80) {
+      Swal.fire(
+        'Advertencia',
+        'Los detalles exceden el limite permitido',
+        'warning'
+      );
       return;
     }
 
@@ -186,15 +197,6 @@ export class ClientePedidoComponent implements OnInit {
         this.pedidoService.limpiarItemsPorArea(
           this.areaSeleccionada!.area_venta_id
         );
-
-        Swal.fire({
-          icon: 'success',
-          title: '¡Pedido creado!',
-          text: `Tu pedido #${pedido.codigo} ha sido registrado`,
-          timer: 2000,
-          showConfirmButton: false,
-        });
-
         // Resetear datos
         this.areaSeleccionada = null;
         this.metodoPagoSeleccionado = null;

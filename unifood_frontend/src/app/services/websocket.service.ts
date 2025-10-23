@@ -1,120 +1,162 @@
-import { Injectable } from '@angular/core';
+import { Injectable, NgZone } from '@angular/core';
 import { io, Socket } from 'socket.io-client';
-import { Observable } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
 import { environment } from '../../enviroments/enviroment';
 import { AuthService } from './auth.service';
 import { Pedido } from '../models/pedido.model';
 
-@Injectable({
-  providedIn: 'root',
-})
+@Injectable({ providedIn: 'root' })
 export class WebsocketService {
   private socket: Socket | null = null;
-  private conectado: boolean = false;
+  private conectado = false;
+  private eventBuffer: { name: string; callback: (...args: any[]) => void }[] =
+    [];
 
-  constructor(private authService: AuthService) {}
+  constructor(private authService: AuthService, private ngZone: NgZone) {}
 
-  /**
-   * Conectar al servidor WebSocket
-   */
   conectar(): void {
     if (this.conectado) {
-      console.log('WebSocket ya está conectado');
+      console.log('🟢 WebSocket ya conectado');
       return;
     }
 
     const token = this.authService.obtenerToken();
-
     if (!token) {
-      console.error('No hay token disponible para conectar WebSocket');
+      console.warn('⚠️ No hay token disponible para conectar WebSocket');
       return;
     }
 
     this.socket = io(environment.wsUrl, {
-      auth: {
-        token: token,
-      },
-      transports: ['websocket', 'polling'],
+      auth: { token },
+      transports: ['websocket'],
       reconnection: true,
-      reconnectionAttempts: 5,
+      reconnectionAttempts: Infinity,
       reconnectionDelay: 1000,
     });
 
-    // Eventos de conexión
     this.socket.on('connect', () => {
-      console.log('✅ WebSocket conectado:', this.socket?.id);
-      this.conectado = true;
+      this.ngZone.run(() => {
+        //console.log('✅ WebSocket conectado:', this.socket?.id);
+        this.conectado = true;
+        this.reRegisterBufferedListeners(); // 👈 reatacha todos los eventos
+      });
     });
 
     this.socket.on('disconnect', (reason) => {
-      console.log('❌ WebSocket desconectado:', reason);
+      console.warn('🔴 WebSocket desconectado:', reason);
       this.conectado = false;
     });
 
-    this.socket.on('connect_error', (error) => {
-      console.error('❌ Error de conexión WebSocket:', error);
-    });
-
-    this.socket.on('error', (error) => {
-      console.error('❌ Error en WebSocket:', error);
-    });
+    this.socket.on('connect_error', (err) =>
+      console.error('❌ Error al conectar WebSocket:', err)
+    );
   }
 
-  /**
-   * Desconectar del servidor WebSocket
-   */
   desconectar(): void {
-    if (this.socket) {
-      this.socket.disconnect();
-      this.socket = null;
-      this.conectado = false;
-      console.log('WebSocket desconectado manualmente');
-    }
+    this.socket?.disconnect();
+    this.socket = null;
+    this.conectado = false;
+    console.log('🔌 WebSocket desconectado manualmente');
   }
 
-  /**
-   * Verificar si está conectado
-   */
   estaConectado(): boolean {
-    return this.conectado && this.socket !== null;
+    return this.conectado && !!this.socket;
   }
 
   /**
-   * Suscribirse a un pedido específico (Cliente)
+   * Registra un listener de evento con autogestión
    */
-  suscribirPedido(pedidoId: number): void {
-    if (!this.socket) {
-      console.error('Socket no está conectado');
-      return;
+  on<T = any>(evento: string): Observable<T> {
+    const subject = new Subject<T>();
+
+    const register = () => {
+      if (!this.socket) return;
+      const callback = (data: T) => {
+        // Angular no detecta cambios fuera de NgZone
+        this.ngZone.run(() => subject.next(data));
+      };
+      this.socket.on(evento, callback);
+      this.eventBuffer.push({ name: evento, callback });
+    };
+
+    // Si el socket ya existe, registramos de inmediato
+    if (this.socket) register();
+    // Si no, esperamos a que se conecte
+    else {
+      const checkInterval = setInterval(() => {
+        if (this.socket) {
+          clearInterval(checkInterval);
+          register();
+        }
+      }, 300);
     }
 
-    this.socket.emit('suscribirPedido', pedidoId);
-    console.log(`📌 Suscrito al pedido: ${pedidoId}`);
+    return subject.asObservable();
   }
 
   /**
-   * Desuscribirse de un pedido (Cliente)
+   * Reatachar todos los listeners después de reconectar
    */
-  desuscribirPedido(pedidoId: number): void {
+  private reRegisterBufferedListeners(): void {
     if (!this.socket) return;
-
-    this.socket.emit('desuscribirPedido', pedidoId);
-    console.log(`📌 Desuscrito del pedido: ${pedidoId}`);
+    for (const { name, callback } of this.eventBuffer) {
+      this.socket.off(name); // evita duplicados
+      this.socket.on(name, callback);
+    }
+    console.log('🔁 Listeners restaurados después de reconexión');
   }
 
   /**
-   * Suscribirse a un área (Vendedor)
+   * Emitir un evento
    */
-  suscribirArea(areaId: number): void {
+  emit(evento: string, data?: any): void {
     if (!this.socket) {
-      console.error('Socket no está conectado');
+      console.warn('⚠️ No se puede emitir, socket no conectado');
       return;
     }
-
-    this.socket.emit('suscribirArea', areaId);
-    console.log(`📌 Suscrito al área: ${areaId}`);
+    this.socket.emit(evento, data);
   }
 
+  // ========= EVENTOS DE DOMINIO ========= //
+
+  onActualizarPedido() {
+    return this.on<Pedido>('actualizarPedido');
+  }
+  onPedidoListo() {
+    return this.on<Pedido>('pedidoListo');
+  }
+  onPedidoCancelado() {
+    return this.on<Pedido>('pedidoCancelado');
+  }
+  onNuevoPedido() {
+    return this.on<Pedido>('nuevoPedido');
+  }
+  onPedidoAceptado() {
+    return this.on<Pedido>('pedidoAceptado');
+  }
+  onPedidoRechazado() {
+    return this.on<Pedido>('pedidoRechazado');
+  }
+  onPedidoEntregado() {
+    return this.on<Pedido>('pedidoEntregado');
+  }
+  onPedidoCreado() {
+    return this.on<Pedido>('pedidoCreado');
+  }
+
+  suscribirPedido(pedidoId: number) {
+    this.emit('suscribirPedido', pedidoId);
+    console.log(`📌 Suscrito al pedido ${pedidoId}`);
+  }
+
+  suscribirArea(areaId: number) {
+    this.emit('suscribirArea', areaId);
+    console.log(`📌 Suscrito al área ${areaId}`);
+  }
+
+  /**
+   * Suscribir a un vendedor a su área (permite recibir eventos específicos)
+   */
   suscribirVendedor(payload: { areaId: number }): void {
     if (!this.socket) {
       console.error('Socket no está conectado');
@@ -123,203 +165,5 @@ export class WebsocketService {
 
     this.socket.emit('suscribirVendedor', payload);
     console.log(`📌 Vendedor suscrito al área: ${payload.areaId}`);
-  }
-
-  onPedidoEntregado(): Observable<Pedido> {
-    return new Observable((observer) => {
-      this.socket?.on('pedidoEntregado', (pedido: Pedido) => {
-        //console.log('📦 Pedido entregado (evento WebSocket):', pedido);
-        observer.next(pedido);
-      });
-    });
-
-    
-  }
-
-  /**
-   * Desuscribirse de un área (Vendedor)
-   */
-  desuscribirArea(areaId: number): void {
-    if (!this.socket) return;
-
-    this.socket.emit('desuscribirArea', areaId);
-    console.log(`📌 Desuscrito del área: ${areaId}`);
-  }
-
-  // ========== EVENTOS PARA CLIENTE ==========
-
-  /**
-   * Escuchar actualización de pedido
-   */
-  onActualizarPedido(): Observable<Pedido> {
-    return new Observable((observer) => {
-      if (!this.socket) {
-        observer.error('Socket no conectado');
-        return;
-      }
-
-      this.socket.on('actualizarPedido', (pedido: Pedido) => {
-        console.log('📦 Pedido actualizado:', pedido);
-        observer.next(pedido);
-      });
-
-      // Cleanup
-      return () => {
-        if (this.socket) {
-          this.socket.off('actualizarPedido');
-        }
-      };
-    });
-  }
-
-  /**
-   * Escuchar cuando el pedido está listo
-   */
-  onPedidoListo(): Observable<Pedido> {
-    return new Observable((observer) => {
-      if (!this.socket) {
-        observer.error('Socket no conectado');
-        return;
-      }
-
-      this.socket.on('pedidoListo', (pedido: Pedido) => {
-        console.log('✅ Pedido listo:', pedido);
-        observer.next(pedido);
-      });
-
-      return () => {
-        if (this.socket) {
-          this.socket.off('pedidoListo');
-        }
-      };
-    });
-  }
-
-  /**
-   * Escuchar cuando el pedido es cancelado
-   */
-  onPedidoCancelado(): Observable<Pedido> {
-    return new Observable((observer) => {
-      if (!this.socket) {
-        observer.error('Socket no conectado');
-        return;
-      }
-
-      this.socket.on('pedidoCancelado', (pedido: Pedido) => {
-        console.log('❌ Pedido cancelado:', pedido);
-        observer.next(pedido);
-      });
-
-      return () => {
-        if (this.socket) {
-          this.socket.off('pedidoCancelado');
-        }
-      };
-    });
-  }
-
-  // ========== EVENTOS PARA VENDEDOR ==========
-
-  /**
-   * Escuchar nuevo pedido (Vendedor)
-   */
-  onNuevoPedido(): Observable<Pedido> {
-    return new Observable((observer) => {
-      if (!this.socket) {
-        observer.error('Socket no conectado');
-        return;
-      }
-
-      this.socket.on('nuevoPedido', (pedido: Pedido) => {
-        console.log('🆕 Nuevo pedido:', pedido);
-        observer.next(pedido);
-      });
-
-      return () => {
-        if (this.socket) {
-          this.socket.off('nuevoPedido');
-        }
-      };
-    });
-  }
-
-  /**
-   * Escuchar pedido aceptado
-   */
-  onPedidoAceptado(): Observable<Pedido> {
-    return new Observable((observer) => {
-      if (!this.socket) {
-        observer.error('Socket no conectado');
-        return;
-      }
-
-      this.socket.on('pedidoAceptado', (pedido: Pedido) => {
-        console.log('✅ Pedido aceptado:', pedido);
-        observer.next(pedido);
-      });
-
-      return () => {
-        if (this.socket) {
-          this.socket.off('pedidoAceptado');
-        }
-      };
-    });
-  }
-
-  /**
-   * Escuchar pedido rechazado
-   */
-  onPedidoRechazado(): Observable<Pedido> {
-    return new Observable((observer) => {
-      if (!this.socket) {
-        observer.error('Socket no conectado');
-        return;
-      }
-
-      this.socket.on('pedidoRechazado', (pedido: Pedido) => {
-        console.log('❌ Pedido rechazado:', pedido);
-        observer.next(pedido);
-      });
-
-      return () => {
-        if (this.socket) {
-          this.socket.off('pedidoRechazado');
-        }
-      };
-    });
-  }
-
-  /**
-   * Emitir evento personalizado
-   */
-  emit(evento: string, data: any): void {
-    if (!this.socket) {
-      console.error('Socket no está conectado');
-      return;
-    }
-
-    this.socket.emit(evento, data);
-  }
-
-  /**
-   * Escuchar evento personalizado
-   */
-  on(evento: string): Observable<any> {
-    return new Observable((observer) => {
-      if (!this.socket) {
-        observer.error('Socket no conectado');
-        return;
-      }
-
-      this.socket.on(evento, (data) => {
-        observer.next(data);
-      });
-
-      return () => {
-        if (this.socket) {
-          this.socket.off(evento);
-        }
-      };
-    });
   }
 }

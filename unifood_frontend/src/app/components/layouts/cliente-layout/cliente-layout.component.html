@@ -18,7 +18,7 @@
           class="btn-icon"
           (click)="abrirSeguimiento()"
           title="Ver mi pedido"
-          [class.active]="pedidoSeleccionado"
+          [class.active]="pedidosActivos"
         >
           <i class="fas fa-receipt"></i>
           <span class="badge-dot" *ngIf="pedidoSeleccionado"></span>

@@ -4,6 +4,7 @@ import {
   OnDestroy,
   ViewChild,
   ElementRef,
+  NgZone,
 } from '@angular/core';
 import { Router, RouterOutlet } from '@angular/router';
 import { AuthService } from '../../../services/auth.service';
@@ -51,7 +52,8 @@ export class ClienteLayoutComponent implements OnInit, OnDestroy {
     private authService: AuthService,
     private wsService: WebsocketService,
     private pedidoService: PedidoService,
-    private router: Router
+    private router: Router,
+    private ngZone: NgZone
   ) {}
 
   ngOnInit(): void {
@@ -110,6 +112,41 @@ export class ClienteLayoutComponent implements OnInit, OnDestroy {
   }
 
   escucharWebSockets(): void {
+    // Actualizar lista pedidos
+    this.subscriptions.push(
+      this.wsService.onPedidoCreado().subscribe((pedido) => {
+        this.ngZone.run(() => {
+          console.log('🆕 Nuevo pedido creado:', pedido);
+
+          const index = this.pedidosActivos.findIndex(
+            (p) => p.id === pedido.id
+          );
+          if (index === -1) {
+            this.pedidosActivos.push(pedido);
+            console.log('✅ Pedido agregado a la lista:', pedido.codigo);
+          } else {
+            this.pedidosActivos[index] = pedido;
+            console.log('🔁 Pedido actualizado en la lista:', pedido.codigo);
+          }
+
+          // Asegurarse de estar suscrito al nuevo pedido
+          this.wsService.suscribirPedido(pedido.id);
+
+          // Mostrar notificación visual
+          //this.reproducirSonido();
+          Swal.fire({
+            icon: 'success',
+            title: '¡Pedido creado!',
+            text: `Tu pedido #${pedido.codigo} ha sido registrado`,
+            timer: 2000,
+            showConfirmButton: false,
+          }).then((result) => {
+            this.onPedidoCreado(pedido);
+          });
+        });
+      })
+    );
+
     // Actualizar pedido
     this.subscriptions.push(
       this.wsService.onActualizarPedido().subscribe((pedido) => {
@@ -151,17 +188,14 @@ export class ClienteLayoutComponent implements OnInit, OnDestroy {
           this.reproducirSonido();
 
           const areaNombre =
-            pedido.area_venta?.area_venta|| 'tu área correspondiente';
+            pedido.area_venta?.area_venta || 'tu área correspondiente';
 
           Swal.fire({
             icon: 'success',
             title: '¡Tu pedido está listo!',
             html: `
-        <p style="font-size: 1.1rem; margin-bottom: 1rem;">
-          <strong>Recógelo en:</strong>
-        </p>
         <p style="font-size: 1.3rem; color: #5B9A97; font-weight: bold;">
-          📍 ${areaNombre}
+          📍 Area de ${areaNombre}
         </p>
       `,
             confirmButtonText: 'Ir a recoger',
@@ -199,32 +233,33 @@ export class ClienteLayoutComponent implements OnInit, OnDestroy {
     // Pedido rechazado
     this.subscriptions.push(
       this.wsService.onPedidoRechazado().subscribe((pedido) => {
-        this.pedidosActivos = this.pedidosActivos.filter(
-          (p) => p.id !== pedido.id
-        );
+        this.ngZone.run(() => {
+          // 👈 fuerza detección de cambios
+          console.log('🚨 Pedido rechazado recibido en cliente:', pedido);
 
-        if (this.pedidoSeleccionado?.id === pedido.id) {
-          this.pedidoSeleccionado = null;
-          this.mostrarModalSeguimiento = false;
-        }
+          this.pedidosActivos = this.pedidosActivos.filter(
+            (p) => p.id !== pedido.id
+          );
 
-        this.reproducirSonido();
-        const motivo =
-          pedido.detalles_pedido?.replace('RECHAZADO: ', '') ||
-          'Sin motivo especificado';
-
-        Swal.fire({
-          icon: 'error',
-          title: 'Pedido rechazado',
-          html: `<p>Tu pedido fue rechazado por el vendedor.</p><p><strong>Motivo:</strong> ${motivo}</p>`,
-          confirmButtonColor: '#5B9A97',
-        }).then(() => {
-          if (this.pedidosActivos.length > 0) {
-            this.verificarPedidosActivos();
-            setTimeout(() => {
-              this.abrirListaPedidos();
-            }, 2100);
+          if (this.pedidoSeleccionado?.id === pedido.id) {
+            this.pedidoSeleccionado = null;
+            this.mostrarModalSeguimiento = false;
           }
+
+          this.reproducirSonido();
+
+          const motivo =
+            pedido.detalles_pedido?.replace('RECHAZADO: ', '') ||
+            'Sin motivo especificado';
+
+          Swal.fire({
+            icon: 'error',
+            title: 'Pedido rechazado',
+            html: `<p>Tu pedido fue rechazado por el vendedor.</p><p><strong>Motivo:</strong> ${motivo}</p>`,
+            confirmButtonColor: '#5B9A97',
+          }).then(() => {
+            this.verificarPedidosActivos();
+          });
         });
       })
     );
@@ -323,6 +358,7 @@ export class ClienteLayoutComponent implements OnInit, OnDestroy {
     this.pedidosActivos.push(pedido);
     this.pedidoSeleccionado = pedido;
     this.wsService.suscribirPedido(pedido.id);
+    console.log('Pedido creado cliente layout: ', pedido);
 
     const pagoPendiente = pedido.pagos?.find(
       (p) => p.pago_metodo_id === 1 && p.pago_estado_id === 2
@@ -333,14 +369,14 @@ export class ClienteLayoutComponent implements OnInit, OnDestroy {
         this.mostrarModalPago = true;
       }, 500);
     } else {
-      this.mostrarModalSeguimiento = true;
+      this.verificarPedidosActivos();
     }
   }
 
   onPagoProcesado(): void {
     this.mostrarModalPago = false;
     this.verificarPedidosActivos();
-    this.mostrarModalSeguimiento = true;
+    //this.mostrarModalSeguimiento = true;
   }
 
   cancelarPedido(): void {
@@ -675,8 +711,11 @@ export class ClienteLayoutComponent implements OnInit, OnDestroy {
     this.mostrarModalSeguimiento = true;
   }
 
-  obtenerEstadoPago():boolean{
-    return this.pedidoSeleccionado?.pagos?.some(p => p.pago_metodo_id ===1) ?? false;
+  obtenerEstadoPago(): boolean {
+    return (
+      this.pedidoSeleccionado?.pagos?.some((p) => p.pago_metodo_id === 1) ??
+      false
+    );
   }
 
   reproducirSonido(): void {
@@ -693,7 +732,6 @@ export class ClienteLayoutComponent implements OnInit, OnDestroy {
       console.error('❌ Error en reproducirSonido:', error);
     }
   }
-
 
   reproducirSonidoAlternativo(): void {
     // Beep simple como fallback

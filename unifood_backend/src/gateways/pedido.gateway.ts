@@ -6,6 +6,7 @@ import {
   OnGatewayDisconnect,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
+import { JwtService } from '@nestjs/jwt';
 
 @WebSocketGateway({
   cors: {
@@ -15,9 +16,38 @@ import { Server, Socket } from 'socket.io';
 export class PedidoGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
+  constructor(private jwtService: JwtService) {}
 
-  handleConnection(client: Socket) {
-    console.log(`Cliente conectado: ${client.id}`);
+  handleConnection(socket: Socket) {
+    try {
+      const token = socket.handshake.auth.token;
+      if (!token) {
+        console.warn('⚠️ Conexión sin token, desconectando...');
+        socket.disconnect(true);
+        return;
+      }
+
+      const payload = this.jwtService.verify(token);
+
+      // tu payload usa id_rol, no sub
+      const usuarioId = payload.id;
+      const clienteId = payload.id_rol;
+      const rol = payload.rol;
+
+      if (rol === 'cliente' && clienteId) {
+        socket.join(`cliente-${clienteId}`);
+        console.log(`✅ Cliente ${clienteId} unido a room cliente-${clienteId}`);
+      }
+
+      if (rol === 'vendedor' && clienteId) {
+        // si un vendedor también tiene id_rol = id del área o del vendedor
+        socket.join(`vendedor-area-${clienteId}`);
+        console.log(`✅ Vendedor ${clienteId} unido a room vendedor-area-${clienteId}`);
+      }
+    } catch (error) {
+      console.error('❌ Error al unir cliente a room:', error.message);
+      socket.disconnect(true);
+    }
   }
 
   handleDisconnect(client: Socket) {
@@ -86,6 +116,15 @@ export class PedidoGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.server.to(`vendedor-area-${pedido.area_venta_id}`).emit('pedidoRechazado', pedido);
     console.log(`Pedido ${pedido.id} rechazado y notificado`);
   }
+
+  // Notificar al cliente de la creacion de su pedido
+  notificarNuevoPedidoCliente(pedido: any) {
+    this.server.to(`cliente-${pedido.cliente_id}`).emit('pedidoCreado', pedido);
+    console.log(`pedido nuevo notificado para el cliente: ${pedido.cliente_id}`);
+    this.server.to(`vendedor-area-${pedido.area_venta_id}`).emit('pedidoCreado', pedido);
+  }
+
+  //{ return this.on<Pedido>('pedidoCreado');}
 
   //Notificar pedido entregado al cliente
   notificarPedidoEntregado(pedido: any): void {

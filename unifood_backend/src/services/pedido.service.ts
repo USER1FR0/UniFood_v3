@@ -98,7 +98,9 @@ export class PedidosService {
     }
 
     // Notificar por WebSocket a vendedores del área
+    this.pedidoGateway.notificarNuevoPedidoCliente(pedido);
     this.pedidoGateway.notificarNuevoPedido(pedido);
+    
 
     return pedido;
   }
@@ -507,6 +509,7 @@ export class PedidosService {
       where: { id: pedidoId },
       data: { pedido_estado_id: 3 }, // listo
       include: {
+        area_venta: true,
         cliente: true,
         pedido_productos: { include: { producto: true } },
         pagos: true,
