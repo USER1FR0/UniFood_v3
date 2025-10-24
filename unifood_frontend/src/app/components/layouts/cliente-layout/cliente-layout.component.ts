@@ -6,7 +6,7 @@ import {
   ElementRef,
   NgZone,
 } from '@angular/core';
-import { Router, RouterOutlet } from '@angular/router';
+import { Router, RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../../services/auth.service';
 import { WebsocketService } from '../../../services/websocket.service';
 import { PedidoService } from '../../../services/pedido.service';
@@ -19,7 +19,7 @@ import { ChatFloatComponent } from '../../chat-float/chat-float.component';
 
 @Component({
   selector: 'app-cliente-layout',
-  imports: [CommonModule, RouterOutlet, FormsModule, ChatFloatComponent],
+  imports: [CommonModule, RouterOutlet, FormsModule, ChatFloatComponent, RouterLink, RouterLinkActive],
   templateUrl: './cliente-layout.component.html',
   styleUrls: ['./cliente-layout.component.scss'],
 })

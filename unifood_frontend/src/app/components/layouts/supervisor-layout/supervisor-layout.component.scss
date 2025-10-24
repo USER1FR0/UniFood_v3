@@ -33,6 +33,35 @@
   display: flex;
   align-items: center;
   gap: 1.5rem;
+
+  .btn-recomendaciones {
+    padding: 0.6rem 1.2rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    i {
+      font-size: 1rem;
+    }
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+
+    &.active {
+      background: linear-gradient(135deg, #5568d3 0%, #633a8d 100%);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.5);
+    }
+  }
 }
 
 .user-menu {

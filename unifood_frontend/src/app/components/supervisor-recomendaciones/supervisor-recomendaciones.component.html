@@ -1,0 +1,244 @@
+<div class="supervisor-recomendaciones">
+  
+  <!-- Header -->
+  <div class="header">
+    <h1>📊 Gestión de Recomendaciones</h1>
+    <p class="subtitle">Administra y monitorea las recomendaciones de productos</p>
+  </div>
+
+  <!-- Notificaciones -->
+  <div *ngIf="mensaje" class="mensaje-notification">
+    {{ mensaje }}
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="cargando" class="loading-overlay">
+    <div class="spinner"></div>
+    <p>Cargando...</p>
+  </div>
+
+  <!-- Content -->
+  <div *ngIf="!cargando" class="content">
+    
+    <!-- Resumen -->
+    <div class="resumen-cards" *ngIf="resumen">
+      <div class="card">
+        <div class="card-icon">📦</div>
+        <div class="card-content">
+          <h3>{{ resumen.total_recomendaciones }}</h3>
+          <p>Total</p>
+        </div>
+      </div>
+
+      <div class="card activas">
+        <div class="card-icon">✅</div>
+        <div class="card-content">
+          <h3>{{ resumen.activas }}</h3>
+          <p>Activas</p>
+        </div>
+      </div>
+
+      <div class="card inactivas">
+        <div class="card-icon">❌</div>
+        <div class="card-content">
+          <h3>{{ resumen.inactivas }}</h3>
+          <p>Inactivas</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button 
+        class="tab" 
+        [class.active]="vistaActual === 'lista'"
+        (click)="cambiarVista('lista')"
+      >
+        📋 Lista de Recomendaciones
+      </button>
+      <button 
+        class="tab" 
+        [class.active]="vistaActual === 'estadisticas'"
+        (click)="cambiarVista('estadisticas')"
+      >
+        📈 Estadísticas
+      </button>
+    </div>
+
+    <!-- Vista Lista -->
+    <div *ngIf="vistaActual === 'lista'" class="vista-lista">
+      
+      <!-- Acciones rápidas -->
+      <div class="acciones-rapidas">
+        <h3>⚡ Acciones Rápidas</h3>
+        <div class="botones">
+          <button class="btn btn-primary" (click)="generarMasVendidos()">
+            🔥 Generar Más Vendidos
+          </button>
+          <button class="btn btn-success" (click)="generarMejorCalificados()">
+            ⭐ Generar Mejor Calificados
+          </button>
+        </div>
+      </div>
+
+      <!-- Filtros -->
+      <div class="filtros">
+        <div class="filtro-grupo">
+          <label>Tipo:</label>
+          <select [(ngModel)]="filtroTipo" class="filtro-select">
+            <option value="todos">Todos</option>
+            <option [value]="TipoRecomendacion.MAS_VENDIDO">Más Vendidos</option>
+            <option [value]="TipoRecomendacion.MEJOR_CALIFICADO">Mejor Calificados</option>
+            <option [value]="TipoRecomendacion.OFERTA">Ofertas</option>
+            <option [value]="TipoRecomendacion.MANUAL">Manuales</option>
+          </select>
+        </div>
+
+        <div class="filtro-grupo">
+          <label>Estado:</label>
+          <select [(ngModel)]="filtroActivo" class="filtro-select">
+            <option value="todos">Todos</option>
+            <option [value]="true">Activas</option>
+            <option [value]="false">Inactivas</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Tabla de recomendaciones -->
+      <div class="tabla-container">
+        <table class="tabla-recomendaciones">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Producto</th>
+              <th>Tipo</th>
+              <th>Prioridad</th>
+              <th>Estado</th>
+              <th>Fechas</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let rec of recomendacionesFiltradas; trackBy: trackByRecomendacionId">
+              <td>{{ rec.id }}</td>
+              
+              <td class="producto-cell">
+                <img 
+                  [src]="rec.producto?.imagen_url || 'assets/placeholder-product.png'" 
+                  [alt]="rec.producto?.nombre"
+                  class="producto-img"
+                  onerror="this.src='assets/placeholder-product.png'"
+                />
+                <div>
+                  <strong>{{ rec.producto?.nombre }}</strong>
+                  <br>
+                  <small>{{ formatearPrecio(rec.producto?.precio || 0) }}</small>
+                </div>
+              </td>
+              
+              <td>
+                <span 
+                  class="tipo-badge" 
+                  [style.background-color]="obtenerColorTipo(rec.tipo_recomendacion)"
+                >
+                  {{ obtenerIconoTipo(rec.tipo_recomendacion) }}
+                  {{ obtenerEtiquetaTipo(rec.tipo_recomendacion) }}
+                </span>
+              </td>
+              
+              <td class="prioridad-cell">
+                <span class="prioridad-badge">{{ rec.prioridad }}</span>
+              </td>
+              
+              <td>
+                <label class="switch">
+                  <input 
+                    type="checkbox" 
+                    [checked]="rec.activo"
+                    (change)="toggleActivo(rec)"
+                  />
+                  <span class="slider"></span>
+                </label>
+              </td>
+              
+              <td class="fechas-cell">
+                <small *ngIf="rec.fecha_inicio">
+                  Desde: {{ formatearFecha(rec.fecha_inicio) }}
+                </small>
+                <br *ngIf="rec.fecha_inicio && rec.fecha_fin" />
+                <small *ngIf="rec.fecha_fin">
+                  Hasta: {{ formatearFecha(rec.fecha_fin) }}
+                </small>
+                <small *ngIf="!rec.fecha_inicio && !rec.fecha_fin" class="sin-limite">
+                  Sin límite
+                </small>
+              </td>
+              
+              <td class="acciones-cell">
+                <button 
+                  class="btn-icon" 
+                  title="Ver estadísticas"
+                  (click)="cargarEstadisticas(rec.id); cambiarVista('estadisticas')"
+                >
+                  📊
+                </button>
+                <button 
+                  class="btn-icon btn-danger" 
+                  title="Eliminar"
+                  (click)="eliminarRecomendacion(rec.id)"
+                >
+                  🗑️
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- Estado vacío -->
+        <div *ngIf="recomendacionesFiltradas.length === 0" class="empty-state">
+          <p>📦 No hay recomendaciones que coincidan con los filtros</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Vista Estadísticas -->
+    <div *ngIf="vistaActual === 'estadisticas'" class="vista-estadisticas">
+      <h3>📈 Estadísticas de Interacciones</h3>
+      
+      <div *ngIf="estadisticas.size === 0" class="empty-state">
+        <p>Selecciona una recomendación de la lista para ver sus estadísticas</p>
+        <button class="btn btn-secondary" (click)="cambiarVista('lista')">
+          Volver a la lista
+        </button>
+      </div>
+
+      <div *ngFor="let entry of estadisticas | keyvalue" class="estadistica-card">
+        <h4>Recomendación #{{ entry.key }}</h4>
+        <div class="stats-grid">
+          <div class="stat-item">
+            <div class="stat-value">{{ entry.value.total_vistas }}</div>
+            <div class="stat-label">👁️ Vistas</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value">{{ entry.value.total_clicks }}</div>
+            <div class="stat-label">🖱️ Clicks</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value">{{ entry.value.total_agregados_carrito }}</div>
+            <div class="stat-label">🛒 Agregados</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value">{{ entry.value.total_comprados }}</div>
+            <div class="stat-label">💰 Compras</div>
+          </div>
+          <div class="stat-item conversion">
+            <div class="stat-value">{{ entry.value.tasa_conversion }}%</div>
+            <div class="stat-label">📊 Conversión</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+

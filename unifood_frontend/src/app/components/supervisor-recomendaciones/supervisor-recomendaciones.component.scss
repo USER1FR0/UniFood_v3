@@ -1,0 +1,560 @@
+.supervisor-recomendaciones {
+  padding: 2rem;
+  max-width: 1600px;
+  margin: 0 auto;
+  min-height: 100vh;
+  background: #f8f9fa;
+}
+
+// ============================================
+// HEADER
+// ============================================
+
+.header {
+  margin-bottom: 2rem;
+
+  h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #2c3e50;
+    margin: 0 0 0.5rem;
+  }
+
+  .subtitle {
+    font-size: 1.1rem;
+    color: #7f8c8d;
+    margin: 0;
+  }
+}
+
+// ============================================
+// NOTIFICACIONES
+// ============================================
+
+.mensaje-notification {
+  background: #51cf66;
+  color: white;
+  padding: 1rem 1.5rem;
+  border-radius: 8px;
+  margin-bottom: 2rem;
+  animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+// ============================================
+// LOADING
+// ============================================
+
+.loading-overlay {
+  text-align: center;
+  padding: 4rem 2rem;
+
+  p {
+    font-size: 1.2rem;
+    color: #7f8c8d;
+    margin: 1rem 0;
+  }
+}
+
+.spinner {
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #8b5cf6;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  animation: spin 1s linear infinite;
+  margin: 0 auto;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+// ============================================
+// RESUMEN CARDS
+// ============================================
+
+.resumen-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+
+  .card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: all 0.3s ease;
+
+    &:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    }
+
+    &.activas {
+      border-left: 4px solid #51cf66;
+    }
+
+    &.inactivas {
+      border-left: 4px solid #ff6b6b;
+    }
+
+    .card-icon {
+      font-size: 2.5rem;
+    }
+
+    .card-content {
+      h3 {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #2c3e50;
+        margin: 0;
+      }
+
+      p {
+        font-size: 0.9rem;
+        color: #7f8c8d;
+        margin: 0;
+      }
+    }
+  }
+}
+
+// ============================================
+// TABS
+// ============================================
+
+.tabs {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  border-bottom: 2px solid #e9ecef;
+
+  .tab {
+    padding: 1rem 1.5rem;
+    background: transparent;
+    border: none;
+    border-bottom: 3px solid transparent;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #7f8c8d;
+    cursor: pointer;
+    transition: all 0.3s ease;
+
+    &:hover {
+      color: #8b5cf6;
+    }
+
+    &.active {
+      color: #8b5cf6;
+      border-bottom-color: #8b5cf6;
+    }
+  }
+}
+
+// ============================================
+// ACCIONES RÁPIDAS
+// ============================================
+
+.acciones-rapidas {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  margin-bottom: 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+  h3 {
+    margin: 0 0 1rem;
+    color: #2c3e50;
+  }
+
+  .botones {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+}
+
+// ============================================
+// FILTROS
+// ============================================
+
+.filtros {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  margin-bottom: 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+
+  .filtro-grupo {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    min-width: 200px;
+
+    label {
+      font-weight: 600;
+      color: #2c3e50;
+    }
+
+    .filtro-select {
+      padding: 0.5rem;
+      border: 1px solid #dee2e6;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      cursor: pointer;
+
+      &:focus {
+        outline: none;
+        border-color: #8b5cf6;
+      }
+    }
+  }
+}
+
+// ============================================
+// TABLA
+// ============================================
+
+.tabla-container {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.tabla-recomendaciones {
+  width: 100%;
+  border-collapse: collapse;
+
+  thead {
+    background: #f8f9fa;
+
+    th {
+      padding: 1rem;
+      text-align: left;
+      font-weight: 600;
+      color: #495057;
+      border-bottom: 2px solid #dee2e6;
+    }
+  }
+
+  tbody {
+    tr {
+      border-bottom: 1px solid #e9ecef;
+      transition: background 0.2s ease;
+
+      &:hover {
+        background: #f8f9fa;
+      }
+
+      td {
+        padding: 1rem;
+        vertical-align: middle;
+      }
+    }
+  }
+
+  .producto-cell {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+
+    .producto-img {
+      width: 50px;
+      height: 50px;
+      border-radius: 8px;
+      object-fit: cover;
+    }
+  }
+
+  .tipo-badge {
+    display: inline-block;
+    padding: 0.4rem 0.8rem;
+    border-radius: 20px;
+    color: white;
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+
+  .prioridad-cell {
+    text-align: center;
+
+    .prioridad-badge {
+      background: #e9ecef;
+      color: #495057;
+      padding: 0.3rem 0.8rem;
+      border-radius: 20px;
+      font-weight: 700;
+    }
+  }
+
+  .fechas-cell {
+    font-size: 0.85rem;
+
+    small {
+      color: #6c757d;
+    }
+
+    .sin-limite {
+      color: #adb5bd;
+      font-style: italic;
+    }
+  }
+
+  .acciones-cell {
+    display: flex;
+    gap: 0.5rem;
+  }
+}
+
+// ============================================
+// SWITCH TOGGLE
+// ============================================
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 50px;
+  height: 24px;
+
+  input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+
+    &:checked + .slider {
+      background-color: #51cf66;
+    }
+
+    &:checked + .slider:before {
+      transform: translateX(26px);
+    }
+  }
+
+  .slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: 0.4s;
+    border-radius: 24px;
+
+    &:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: 0.4s;
+      border-radius: 50%;
+    }
+  }
+}
+
+// ============================================
+// BOTONES
+// ============================================
+
+.btn {
+  padding: 0.8rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &.btn-primary {
+    background: #ff6b6b;
+    color: white;
+
+    &:hover {
+      background: #ee5a52;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+    }
+  }
+
+  &.btn-success {
+    background: #51cf66;
+    color: white;
+
+    &:hover {
+      background: #3fbc56;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(81, 207, 102, 0.3);
+    }
+  }
+
+  &.btn-secondary {
+    background: #8b5cf6;
+    color: white;
+
+    &:hover {
+      background: #7c3aed;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+    }
+  }
+}
+
+.btn-icon {
+  background: transparent;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: #f8f9fa;
+  }
+
+  &.btn-danger:hover {
+    background: #fee;
+  }
+}
+
+// ============================================
+// ESTADÍSTICAS
+// ============================================
+
+.vista-estadisticas {
+  h3 {
+    color: #2c3e50;
+    margin-bottom: 2rem;
+  }
+
+  .estadistica-card {
+    background: white;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 2rem;
+
+    h4 {
+      color: #495057;
+      margin: 0 0 1.5rem;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 1.5rem;
+
+      .stat-item {
+        text-align: center;
+        padding: 1rem;
+        background: #f8f9fa;
+        border-radius: 8px;
+
+        &.conversion {
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          color: white;
+
+          .stat-value,
+          .stat-label {
+            color: white;
+          }
+        }
+
+        .stat-value {
+          font-size: 2rem;
+          font-weight: 700;
+          color: #2c3e50;
+          margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+          font-size: 0.9rem;
+          color: #7f8c8d;
+        }
+      }
+    }
+  }
+}
+
+// ============================================
+// EMPTY STATE
+// ============================================
+
+.empty-state {
+  text-align: center;
+  padding: 3rem 2rem;
+  color: #7f8c8d;
+
+  p {
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+  }
+}
+
+// ============================================
+// RESPONSIVE
+// ============================================
+
+@media (max-width: 768px) {
+  .supervisor-recomendaciones {
+    padding: 1rem;
+  }
+
+  .header h1 {
+    font-size: 2rem;
+  }
+
+  .resumen-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .tabs {
+    flex-direction: column;
+    gap: 0;
+
+    .tab {
+      border-bottom: 1px solid #e9ecef;
+      text-align: left;
+    }
+  }
+
+  .filtros {
+    flex-direction: column;
+  }
+
+  .tabla-container {
+    overflow-x: auto;
+  }
+
+  .acciones-rapidas .botones {
+    flex-direction: column;
+
+    .btn {
+      width: 100%;
+    }
+  }
+}
+

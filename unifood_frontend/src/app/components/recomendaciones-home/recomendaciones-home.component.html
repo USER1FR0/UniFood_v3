@@ -1,0 +1,103 @@
+<div class="recomendaciones-container">
+  <!-- Header -->
+  <div class="header">
+    <h2 class="title">🎯 Recomendaciones para ti</h2>
+    <p class="subtitle">Descubre los productos más populares y mejor calificados</p>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="cargando" class="loading-state">
+    <div class="spinner"></div>
+    <p>Cargando recomendaciones...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error && !cargando" class="error-state">
+    <p>❌ {{ error }}</p>
+    <button class="retry-btn" (click)="cargarRecomendaciones()">
+      Reintentar
+    </button>
+  </div>
+
+  <!-- Content -->
+  <div *ngIf="!cargando && !error" class="content">
+    
+    <!-- Iterar por cada tipo de recomendación -->
+    <div *ngFor="let tipoConfig of tiposRecomendacion" class="tipo-seccion">
+      <ng-container *ngIf="obtenerRecomendacionesTipo(tipoConfig.tipo).length > 0">
+        
+        <!-- Título de la sección -->
+        <div class="seccion-header" [style.border-left-color]="tipoConfig.color">
+          <h3 class="seccion-titulo">
+            <span class="icono">{{ tipoConfig.icono }}</span>
+            {{ tipoConfig.titulo }}
+          </h3>
+        </div>
+
+        <!-- Carrusel de productos -->
+        <div class="productos-carrusel">
+          <div 
+            *ngFor="let rec of obtenerRecomendacionesTipo(tipoConfig.tipo)" 
+            class="producto-card"
+            (click)="onClickRecomendacion(rec)"
+            (mouseenter)="onVistaRecomendacion(rec)"
+          >
+            <!-- Imagen del producto -->
+            <div class="producto-imagen">
+              <img 
+                [src]="rec.producto?.imagen_url || 'assets/placeholder-product.png'" 
+                [alt]="rec.producto?.nombre"
+                onerror="this.src='assets/placeholder-product.png'"
+              />
+              
+              <!-- Badge de tipo -->
+              <div class="tipo-badge" [style.background-color]="tipoConfig.color">
+                {{ tipoConfig.icono }}
+              </div>
+
+              <!-- Badge de prioridad (si es alta) -->
+              <div *ngIf="rec.prioridad > 5" class="prioridad-badge">
+                TOP {{ rec.prioridad }}
+              </div>
+            </div>
+
+            <!-- Información del producto -->
+            <div class="producto-info">
+              <h4 class="producto-nombre">{{ rec.producto?.nombre }}</h4>
+              <p class="producto-descripcion">
+                {{ rec.producto?.descripcion || 'Sin descripción' }}
+              </p>
+
+              <!-- Categoría -->
+              <div class="producto-categoria" *ngIf="rec.producto?.categoria">
+                🍽️ {{ rec.producto?.categoria?.nombre }}
+              </div>
+
+              <!-- Métricas -->
+              <div class="producto-metricas" *ngIf="rec.metricas">
+                <span class="metrica" *ngIf="rec.metricas.total_ventas > 0">
+                  🛒 {{ rec.metricas.total_ventas }} ventas
+                </span>
+                <span class="metrica" *ngIf="rec.metricas.calificacion_promedio > 0">
+                  ⭐ {{ rec.metricas.calificacion_promedio.toFixed(1) }}
+                </span>
+              </div>
+
+              <!-- Precio -->
+              <div class="producto-precio">
+                {{ formatearPrecio(rec.producto?.precio || 0) }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </ng-container>
+    </div>
+
+    <!-- Estado vacío -->
+    <div *ngIf="recomendaciones.length === 0" class="empty-state">
+      <p>📦 No hay recomendaciones disponibles en este momento</p>
+    </div>
+
+  </div>
+</div>

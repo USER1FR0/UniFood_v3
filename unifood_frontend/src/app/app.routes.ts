@@ -15,6 +15,8 @@ import { VendedorLayoutComponent } from './components/layouts/vendedor-layout/ve
 import { SupervisorLayoutComponent } from './components/layouts/supervisor-layout/supervisor-layout.component';
 import { SupervisorDashboardComponent } from './components/supervisor-dashboard/supervisor-dashboard.component';
 import { ChatComponent } from './components/chat/chat.component';
+import { RecomendacionesHomeComponent } from './components/recomendaciones-home/recomendaciones-home.component';
+import { SupervisorRecomendacionesComponent } from './components/supervisor-recomendaciones/supervisor-recomendaciones.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'lista-vendedores', pathMatch: 'full' },
@@ -31,6 +33,7 @@ export const routes: Routes = [
     children: [
       { path: '', redirectTo: 'carrito', pathMatch: 'full' },
       { path: 'carrito', component: ClientePedidoComponent },
+      { path: 'recomendaciones', component: RecomendacionesHomeComponent },
     ],
   },
 
@@ -56,6 +59,7 @@ export const routes: Routes = [
     children: [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
       { path: 'dashboard', component: SupervisorDashboardComponent },
+      { path: 'recomendaciones', component: SupervisorRecomendacionesComponent },
     ],
   },
 
