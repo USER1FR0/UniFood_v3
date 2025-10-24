@@ -1,0 +1,25 @@
+<div class="layout-container">
+  <!-- Header -->
+  <header class="header">
+    <div class="header-content">
+      <div class="logo">
+        <h1>UniFood</h1>
+        <span class="area-badge">Area de supervision</span>
+      </div>
+
+      <div class="header-actions">
+
+        <div class="user-menu">
+          <span class="user-name"> Supervisor </span>
+          <button class="btn-logout" (click)="logout()">
+            <i class="fas fa-sign-out-alt"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+  <!-- Contenido principal -->
+  <main class="main-content">
+    <router-outlet></router-outlet>
+  </main>
+</div>
