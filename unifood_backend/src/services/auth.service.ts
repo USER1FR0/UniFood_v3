@@ -45,6 +45,8 @@ export class authService {
       id_rol = cliente?.id ?? null;
       nombre_completo = cliente?.nombre_completo;
       telefono = cliente?.telefono;
+      nombre_completo = cliente?.nombre_completo;
+      telefono = cliente?.telefono;
     } else if (usuario.rol === 'vendedor') {
       const vendedor = await this.prisma.vendedor.findFirst({
         where: { usuario_id: usuario.id },
@@ -57,6 +59,17 @@ export class authService {
         },
       });
       id_rol = vendedor?.id ?? null;
+      nombre_completo = vendedor?.nombre;
+      telefono = vendedor?.telefono;
+
+      // Obtener área del vendedor
+      if (vendedor?.vendedor_areas?.[0]?.area_venta) {
+        area_venta_id = vendedor.vendedor_areas[0].area_venta.id;
+        area_venta = {
+          id: vendedor.vendedor_areas[0].area_venta.id,
+          area_venta: vendedor.vendedor_areas[0].area_venta.area_venta,
+        };
+      }
       nombre_completo = vendedor?.nombre;
       telefono = vendedor?.telefono;
 
@@ -120,11 +133,14 @@ export class authService {
       let telefono: string | undefined;
       let area_venta_id: number | undefined;
 
+
       if (usuario.rol === 'cliente') {
         const cliente = await this.prisma.cliente.findFirst({
           where: { usuario_id: usuario.id },
         });
         id_rol = cliente?.id ?? null;
+        nombre_completo = cliente?.nombre_completo;
+        telefono = cliente?.telefono;
         nombre_completo = cliente?.nombre_completo;
         telefono = cliente?.telefono;
       } else if (usuario.rol === 'vendedor') {
@@ -139,6 +155,12 @@ export class authService {
           },
         });
         id_rol = vendedor?.id ?? null;
+        nombre_completo = vendedor?.nombre;
+        telefono = vendedor?.telefono;
+
+        if (vendedor?.vendedor_areas?.[0]?.area_venta) {
+          area_venta_id = vendedor.vendedor_areas[0].area_venta.id;
+        }
         nombre_completo = vendedor?.nombre;
         telefono = vendedor?.telefono;
 

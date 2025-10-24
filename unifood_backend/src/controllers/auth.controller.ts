@@ -9,7 +9,7 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { authService } from 'src/services/auth.service';
-import { LoginDto } from 'src/models/auth.model';
+import { LoginDto, RegistroSupervisorDto } from 'src/models/auth.model';
 
 @Controller('auth')
 export class authController {
@@ -56,5 +56,12 @@ export class authController {
     return {
       mensaje: 'Sesion cerrada exitosamente',
     };
+  }
+
+  // Registrar supervisor
+  @Post('registrar-supervisor')
+  @HttpCode(HttpStatus.CREATED)
+  async registrarSupervisor(@Body() registroDto: RegistroSupervisorDto) {
+    return this.authService.registrarSupervisor(registroDto);
   }
 }
