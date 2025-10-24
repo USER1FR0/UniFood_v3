@@ -31,7 +31,7 @@ export class authService {
       throw new UnauthorizedException('Credenciales inválidas');
     }
 
-    // Obtener el id del rol (cliente, vendedor o supervisor)
+    // Obtener el id del rol (cliente o vendedor)
     let id_rol: number | null = null;
     let nombre_completo: string | undefined;
     let telefono: string | undefined;
@@ -57,11 +57,28 @@ export class authService {
         },
       });
       id_rol = vendedor?.id ?? null;
-    } else if (usuario.rol === 'supervisor') {
-      const supervisor = await this.prisma.supervisor.findFirst({
-        where: { usuario_id: usuario.id },
-      });
-      id_rol = supervisor?.id ?? null;
+      nombre_completo = vendedor?.nombre;
+      telefono = vendedor?.telefono;
+
+      // Obtener área del vendedor
+      if (vendedor?.vendedor_areas?.[0]?.area_venta) {
+        area_venta_id = vendedor.vendedor_areas[0].area_venta.id;
+        area_venta = {
+          id: vendedor.vendedor_areas[0].area_venta.id,
+          area_venta: vendedor.vendedor_areas[0].area_venta.area_venta,
+        };
+      }
+      nombre_completo = vendedor?.nombre;
+      telefono = vendedor?.telefono;
+
+      // Obtener área del vendedor
+      if (vendedor?.vendedor_areas?.[0]?.area_venta) {
+        area_venta_id = vendedor.vendedor_areas[0].area_venta.id;
+        area_venta = {
+          id: vendedor.vendedor_areas[0].area_venta.id,
+          area_venta: vendedor.vendedor_areas[0].area_venta.area_venta,
+        };
+      }
     }
 
     // Generar payload JWT
@@ -108,7 +125,7 @@ export class authService {
         throw new UnauthorizedException('Token inválido (Usuario no existe)');
       }
 
-      // Obtener el id del rol (cliente, vendedor o supervisor)
+      // Obtener el id del rol (cliente o vendedor)
       let id_rol: number | null = null;
       let nombre_completo: string | undefined;
       let telefono: string | undefined;
@@ -133,11 +150,18 @@ export class authService {
           },
         });
         id_rol = vendedor?.id ?? null;
-      } else if (usuario.rol === 'supervisor') {
-        const supervisor = await this.prisma.supervisor.findFirst({
-          where: { usuario_id: usuario.id },
-        });
-        id_rol = supervisor?.id ?? null;
+        nombre_completo = vendedor?.nombre;
+        telefono = vendedor?.telefono;
+
+        if (vendedor?.vendedor_areas?.[0]?.area_venta) {
+          area_venta_id = vendedor.vendedor_areas[0].area_venta.id;
+        }
+        nombre_completo = vendedor?.nombre;
+        telefono = vendedor?.telefono;
+
+        if (vendedor?.vendedor_areas?.[0]?.area_venta) {
+          area_venta_id = vendedor.vendedor_areas[0].area_venta.id;
+        }
       }
 
       return {

@@ -151,7 +151,7 @@ export class GeminiService {
         usuario_id: entry.usuario_id,
         mensaje_usuario: entry.mensaje_usuario,
         respuesta_gemini: entry.respuesta_gemini as Record<string, unknown>,
-        timestamp: entry.timestamp.toISOString(),
+        timestamp: entry.timestamp?.toISOString(),
         session_id: entry.session_id ?? undefined,
         metadata: entry.metadata as Record<string, unknown> | undefined,
       }));

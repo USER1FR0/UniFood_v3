@@ -273,10 +273,10 @@
             <td>
               <span
                 class="badge-pago"
-                [class.completado]="pedido.pagos?.[0]?.pago_estado_id === 1"
-                [class.pendiente]="pedido.pagos?.[0]?.pago_estado_id === 2"
+                [class.completado]="pedido?.pagos?.[0]?.pago_estado_id === 1"
+                [class.pendiente]="pedido?.pagos?.[0]?.pago_estado_id === 2"
               >
-                {{ pedido.pagos?.[0]?.pago_estado?.pago_estado || 'N/A' }}
+                {{ pedido?.pagos?.[0]?.pago_estado?.pago_estado || 'N/A' }}
               </span>
             </td>
             <td *ngIf="opciones.incluir_nombre_cliente">

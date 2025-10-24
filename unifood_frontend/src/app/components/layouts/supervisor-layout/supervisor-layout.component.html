@@ -3,14 +3,14 @@
   <header class="header">
     <div class="header-content">
       <div class="logo">
-        <h1>UniFood - Panel Supervisor</h1>
+        <h1>UniFood</h1>
+        <span class="area-badge">Area de supervision</span>
       </div>
 
       <div class="header-actions">
-        <!-- Usuario -->
+
         <div class="user-menu">
-          <span class="user-name">{{ nombreSupervisor }}</span>
-          <span class="user-role">Supervisor</span>
+          <span class="user-name"> Supervisor </span>
           <button class="btn-logout" (click)="logout()">
             <i class="fas fa-sign-out-alt"></i>
           </button>
@@ -18,10 +18,8 @@
       </div>
     </div>
   </header>
-
   <!-- Contenido principal -->
   <main class="main-content">
     <router-outlet></router-outlet>
   </main>
 </div>
-

@@ -15,6 +15,7 @@ import { VendedorLayoutComponent } from './components/layouts/vendedor-layout/ve
 import { SupervisorLayoutComponent } from './components/layouts/supervisor-layout/supervisor-layout.component';
 import { SupervisorDashboardComponent } from './components/supervisor-dashboard/supervisor-dashboard.component';
 import { ChatComponent } from './components/chat/chat.component';
+import { ReportePedidoComponent } from './components/reporte-pedido/reporte-pedido.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'lista-vendedores', pathMatch: 'full' },
@@ -31,6 +32,7 @@ export const routes: Routes = [
     children: [
       { path: '', redirectTo: 'carrito', pathMatch: 'full' },
       { path: 'carrito', component: ClientePedidoComponent },
+      { path: 'menu', component: MenuComponent },
     ],
   },
 
@@ -43,8 +45,9 @@ export const routes: Routes = [
       { path: '', redirectTo: 'pedidos', pathMatch: 'full' },
       { path: 'pedidos', component: VendedorPedidoComponent },
       { path: 'lista-vendedores', component: ListaVendedoresComponent },
-       { path: 'borrar', component: BorrarComponent },
-       {path: 'chat', component: ChatComponent},
+      { path: 'borrar', component: BorrarComponent },
+      { path: 'chat', component: ChatComponent },
+      { path: 'reportes', component: ReportePedidoComponent },
     ],
   },
 
@@ -52,9 +55,11 @@ export const routes: Routes = [
   {
     path: 'supervisor',
     canActivate: [supervisorGuard],
-    component: SupervisorLayoutComponent, 
+    component: SupervisorLayoutComponent,
     children: [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+      { path: 'lista-vendedores', component: ListaVendedoresComponent },
+      { path: 'reportes', component: ReportePedidoComponent },
       { path: 'dashboard', component: SupervisorDashboardComponent },
     ],
   },
