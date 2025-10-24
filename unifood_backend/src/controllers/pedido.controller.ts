@@ -22,7 +22,11 @@ import {
   CalificarProductoDto,
   ProcesarPagoTarjetaDto,
   AgregarCarritoDto,
+  //OpcionesTicketDto,
+  FiltrosReporteDto,
+  OpcionesReporteDto,
 } from './../models/pedido.model';
+import type { OpcionesTicketDto } from './../models/pedido.model';
 import { ComunicacionClient } from '../clients/comunicacion.client';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from 'src/services/prisma.service';
@@ -132,7 +136,6 @@ export class PedidosController {
       const disponible = await this.pagosClient.verificarDisponibilidad();
       return { disponible };
     } catch (error) {
-      console.error('⚠️ Error al verificar microservicio de pagos:', error);
       return { disponible: false };
     }
   }
@@ -338,5 +341,36 @@ export class PedidosController {
       cantidad: dto.cantidad,
       detalles: dto.detalles || null,
     };
+  }
+
+  // Obtener catálogos para filtros
+  @Get('catalogos-reportes')
+  async obtenerCatalogosPagoYEstado() {
+    return this.pedidosService.obtenerCatalogosPagoYEstado();
+  }
+
+  // Generar reporte de pedidos
+  @Post('reporte')
+  async generarReportePedidos(
+    @Body() body: { filtros: FiltrosReporteDto; opciones: OpcionesReporteDto},
+    @Request() req,
+  ) {
+    const usuario = this.verificarAuth(req.headers.authorization);
+
+    // Si es vendedor, filtrar por su área
+    const vendedorId = usuario.rol === 'vendedor' ? usuario.id_rol : undefined;
+
+    return this.pedidosService.generarReportePedidos(body.filtros, body.opciones, vendedorId);
+  }
+
+  // Generar ticket individual
+  @Post('ticket/:id')
+  async generarTicketPedido(
+    @Param('id') id: string,
+    @Body() opciones: OpcionesTicketDto,
+    @Request() req,
+  ) {
+    this.verificarAuth(req.headers.authorization);
+    return this.pedidosService.generarTicketPedido(Number(id), opciones);
   }
 }

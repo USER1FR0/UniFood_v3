@@ -58,7 +58,7 @@ export class ClienteLayoutComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     const usuario = this.authService.obtenerUsuario();
-    this.nombreCliente = usuario?.correo.split('@')[0] || 'Cliente';
+    this.nombreCliente = usuario?.nombre_completo || 'Cliente';
 
     // Suscribirse al carrito
     this.subscriptions.push(
@@ -105,7 +105,7 @@ export class ClienteLayoutComponent implements OnInit, OnDestroy {
         }
       },
       error: (err) => {
-        console.error('❌ Error al obtener pedidos activos:', err);
+        //console.error('Error al obtener pedidos activos:', err);
         this.pedidosActivos = [];
       },
     });
@@ -116,17 +116,17 @@ export class ClienteLayoutComponent implements OnInit, OnDestroy {
     this.subscriptions.push(
       this.wsService.onPedidoCreado().subscribe((pedido) => {
         this.ngZone.run(() => {
-          console.log('🆕 Nuevo pedido creado:', pedido);
+          //console.log('Nuevo pedido creado:', pedido);
 
           const index = this.pedidosActivos.findIndex(
             (p) => p.id === pedido.id
           );
           if (index === -1) {
             this.pedidosActivos.push(pedido);
-            console.log('✅ Pedido agregado a la lista:', pedido.codigo);
+            //console.log('Pedido agregado a la lista:', pedido.codigo);
           } else {
             this.pedidosActivos[index] = pedido;
-            console.log('🔁 Pedido actualizado en la lista:', pedido.codigo);
+            //console.log('Pedido actualizado en la lista:', pedido.codigo);
           }
 
           // Asegurarse de estar suscrito al nuevo pedido
@@ -150,7 +150,7 @@ export class ClienteLayoutComponent implements OnInit, OnDestroy {
     // Actualizar pedido
     this.subscriptions.push(
       this.wsService.onActualizarPedido().subscribe((pedido) => {
-        console.log('🔄 Pedido actualizado (cliente):', pedido);
+        //console.log('Pedido actualizado (cliente):', pedido);
 
         const index = this.pedidosActivos.findIndex((p) => p.id === pedido.id);
         if (index !== -1) {
@@ -234,8 +234,8 @@ export class ClienteLayoutComponent implements OnInit, OnDestroy {
     this.subscriptions.push(
       this.wsService.onPedidoRechazado().subscribe((pedido) => {
         this.ngZone.run(() => {
-          // 👈 fuerza detección de cambios
-          console.log('🚨 Pedido rechazado recibido en cliente:', pedido);
+          //fuerza detección de cambios
+          //console.log('Pedido rechazado recibido en cliente:', pedido);
 
           this.pedidosActivos = this.pedidosActivos.filter(
             (p) => p.id !== pedido.id
@@ -268,7 +268,7 @@ export class ClienteLayoutComponent implements OnInit, OnDestroy {
     this.subscriptions.push(
       this.wsService.onPedidoEntregado().subscribe((pedido) => {
         this.reproducirSonido();
-        console.log('🎉 Pedido entregado:', pedido);
+        //console.log('Pedido entregado:', pedido);
 
         // Buscar y actualizar el pedido en el array
         const index = this.pedidosActivos.findIndex((p) => p.id === pedido.id);
@@ -358,7 +358,7 @@ export class ClienteLayoutComponent implements OnInit, OnDestroy {
     this.pedidosActivos.push(pedido);
     this.pedidoSeleccionado = pedido;
     this.wsService.suscribirPedido(pedido.id);
-    console.log('Pedido creado cliente layout: ', pedido);
+    //console.log('Pedido creado cliente layout: ', pedido);
 
     const pagoPendiente = pedido.pagos?.find(
       (p) => p.pago_metodo_id === 1 && p.pago_estado_id === 2
@@ -623,7 +623,7 @@ export class ClienteLayoutComponent implements OnInit, OnDestroy {
         });
       })
       .catch((err) => {
-        console.error('Error al enviar calificaciones:', err);
+        //console.error('Error al enviar calificaciones:', err);
         Swal.fire({
           icon: 'error',
           title: 'Error',
@@ -724,12 +724,12 @@ export class ClienteLayoutComponent implements OnInit, OnDestroy {
         const audio = this.audioPendiente.nativeElement;
         audio.currentTime = 0; // Reiniciar el audio
         audio.play().catch((err) => {
-          console.warn('⚠️ No se pudo reproducir el sonido:', err);
-          //this.reproducirSonidoAlternativo();
+          //console.warn('No se pudo reproducir el sonido:', err);
+          this.reproducirSonidoAlternativo();
         });
       }
     } catch (error) {
-      console.error('❌ Error en reproducirSonido:', error);
+      console.error('Error en reproducirSonido:', error);
     }
   }
 

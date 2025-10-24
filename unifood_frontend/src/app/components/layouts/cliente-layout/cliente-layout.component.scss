@@ -714,13 +714,17 @@ textarea {
   .modal-footer {
     flex-direction: column;
   }
-}
 
+  .pedidos-grid {
+    grid-template-columns: repeat(1, 0fr);
+  }
+}
+/*
 @media (max-width: 768px) {
   .pedidos-grid {
     grid-template-columns: 1fr;
   }
-}
+}*/
 
 
 //Estilos ver detalles pedido
