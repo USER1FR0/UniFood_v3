@@ -64,20 +64,13 @@ export class LoginComponent {
           timer: 1500,
           showConfirmButton: false,
         }).then(() => {
-          if (this.authService.estaAutenticado()) {
-            if (this.authService.esSupervisor()) {
-              //this.router.navigate(['/supervisor']); // Ruta de Ejemplo Supervisor
-              console.log('es supervisor');
-            } else if (this.authService.esVendedor()) {
-              //this.router.navigate(['/vendedor']); // Ruta de Ejemplo Vendedor
-              console.log('es vendedor');
-            } else if (this.authService.esCliente()) {
-              //this.router.navigate(['/cliente']); // Ruta de Ejemplo Cliente
-              console.log('es cliente');
-            }
-
-            //Ejemplo, quitar cuando las rutas esten listas
-            this.router.navigate(['/borrar']); // si ya esta autenticado redirige (cambiar ruta)
+          // Redirigir según el rol
+          if (this.authService.esSupervisor()) {
+            this.router.navigate(['/supervisor']);
+          } else if (this.authService.esVendedor()) {
+            this.router.navigate(['/vendedor']);
+          } else if (this.authService.esCliente()) {
+            this.router.navigate(['/cliente/']);
           }
         });
       },

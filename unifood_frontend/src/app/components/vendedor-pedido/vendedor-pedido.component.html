@@ -1,0 +1,341 @@
+<div class="gestion-container">
+  <!-- Título principal -->
+  <!--div class="titulo-principal">
+    <h1>
+      <i class="fas fa-clipboard-list"></i>
+      Gestión de Pedidos
+    </h1>
+  </!--div-->
+
+  <!-- Audio para notificaciones -->
+  <audio #audioPendiente>
+    <source src="assets/sounds/notification.mp3" type="audio/mpeg" />
+  </audio>
+
+  <!-- Loading -->
+  <div class="loading-container" *ngIf="cargando">
+    <div class="spinner"></div>
+    <p>Cargando pedidos...</p>
+  </div>
+
+  <!-- Contenedor de columnas -->
+  <div class="columnas-wrapper" *ngIf="!cargando">
+    <!-- ========== COLUMNA 1: PENDIENTES ========== -->
+    <div class="columna columna-pendientes">
+      <div class="columna-header">
+        <i 
+          (click)="cargarPedidos()"
+          title="Actualizar pedidos"
+        >
+          <i class="fas fa-sync-alt" [class.spinning]="cargando"></i>
+        </i>
+        <div class="header-content">
+          <i class="fas fa-clock"></i>
+          <span class="header-title">Pendientes</span>
+        </div>
+        <span class="badge-count">{{ pedidosPendientes.length }}</span>
+      </div>
+
+      <div class="columna-body">
+        <div class="columna-vacia" *ngIf="pedidosPendientes.length === 0">
+          <i class="fas fa-check-circle"></i>
+          <p>No hay pedidos pendientes</p>
+        </div>
+
+        <div
+          class="nota-pedido pendiente"
+          *ngFor="let pedido of pedidosPendientes"
+        >
+          <!-- Cabecera de la nota -->
+          <div class="nota-header">
+            <span class="nota-codigo">#{{ pedido.codigo }}</span>
+            <span
+              class="nota-tiempo"
+              [ngClass]="obtenerColorTiempo(pedido.fecha_registro)"
+            >
+              {{ obtenerTiempoTranscurrido(pedido.fecha_registro) }}
+            </span>
+          </div>
+
+          <!-- Cliente 
+          <div class="nota-cliente">
+            <i class="fas fa-user"></i>
+            <span>{{ pedido.cliente?.nombre_completo }}</span>
+          </div>
+          <div class="nota-telefono">
+            <i class="fas fa-phone"></i>
+            <span>{{ pedido.cliente?.telefono }}</span>
+          </div>
+           -->
+
+          <!-- Productos -->
+          <div class="nota-productos">
+            <div
+              class="producto-linea"
+              *ngFor="let item of pedido.pedido_productos"
+            >
+              <span class="prod-cant">{{ item.cantidad }}</span>
+              <span class="prod-nombre">{{ item.producto?.nombre }}</span>
+              <span *ngIf="item.detalles_producto"
+                ><i class="fas fa-exclamation-circle"></i
+              ></span>
+            </div>
+          </div>
+
+          <!-- Detalles importantes -->
+          <div class="nota-detalles" *ngIf="pedido.detalles_pedido">
+            <i class="fas fa-exclamation-circle"></i>
+            <span>{{ pedido.detalles_pedido }}</span>
+          </div>
+          <div class="nota-detalles" *ngIf="!pedido.detalles_pedido">
+            <i class="fas fa-exclamation-circle"></i>
+            <span>Sin detalles adicionales</span>
+          </div>
+
+          <!-- Footer
+          <div class="nota-footer">
+            <div class="nota-total">
+              <span class="total-label">Total:</span>
+              <span class="total-monto">${{ pedido.total_pedido }}</span>
+            </div>
+            <div class="nota-pago">
+              <i
+                class="fas"
+                [ngClass]="
+                  pedido.pagos.length 
+                    ? 'fa-credit-card'
+                    : 'fa-money-bill-wave'
+                "
+              ></i>
+            </div>
+          </div>
+           -->
+
+          <!-- Acciones -->
+          <div class="nota-acciones">
+            <button
+              class="btn-icon-mini btn-ver"
+              (click)="$event.stopPropagation(); abrirDetalles(pedido)"
+              title="Ver detalles"
+            >
+              <i class="fas fa-ellipsis-h"></i>
+            </button>
+            <button
+              class="btn-icon-mini btn-rechazar"
+              (click)="$event.stopPropagation(); abrirRechazar(pedido)"
+              title="Rechazar"
+            >
+              <i class="fas fa-trash"></i>
+            </button>
+            <button
+              class="btn-icon-mini btn-aceptar"
+              (click)="aceptarPedido(pedido)"
+              title="Aceptar"
+            >
+              <i class="fas fa-check"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== COLUMNA 2: EN PROCESO ========== -->
+    <div class="columna columna-proceso">
+      <div class="columna-header">
+        <i
+          (click)="cargarPedidos()"
+          title="Actualizar pedidos"
+        >
+          <i class="fas fa-sync-alt" [class.spinning]="cargando"></i>
+        </i>
+        <div class="header-content">
+          <i class="fas fa-fire"></i>
+          <span class="header-title">En Proceso</span>
+        </div>
+        <span class="badge-count">{{ pedidosEnProceso.length }}</span>
+      </div>
+
+      <div class="columna-body">
+        <div class="columna-vacia" *ngIf="pedidosEnProceso.length === 0">
+          <i class="fas fa-hourglass-half"></i>
+          <p>No hay pedidos en proceso</p>
+        </div>
+
+        <div
+          class="nota-pedido proceso"
+          *ngFor="let pedido of pedidosEnProceso"
+        >
+          <div class="nota-header">
+            <span class="nota-codigo">#{{ pedido.codigo }}</span>
+            <span
+              class="nota-tiempo"
+              [ngClass]="obtenerColorTiempo(pedido.fecha_registro)"
+            >
+              {{ obtenerTiempoTranscurrido(pedido.fecha_registro) }}
+            </span>
+          </div>
+
+          <!--div class="nota-cliente">
+            <i class="fas fa-user"></i>
+            <span>{{ pedido.cliente?.nombre_completo }}</span>
+          </!--div>
+          <div-- class="nota-telefono">
+            <i class="fas fa-phone"></i>
+            <span>{{ pedido.cliente?.telefono }}</span>
+          </div-->
+
+          <div class="nota-productos">
+            <div
+              class="producto-linea"
+              *ngFor="let item of pedido.pedido_productos"
+            >
+              <span class="prod-cant">{{ item.cantidad }}</span>
+              <span class="prod-nombre">{{ item.producto?.nombre }}</span>
+              <div class="prod-detalles" *ngIf="item.detalles_producto">
+                <i class="fas fa-info-circle"></i>
+                <span></span>
+              </div>
+            </div>
+          </div>
+
+          <div class="nota-detalles" *ngIf="pedido.detalles_pedido">
+            <i class="fas fa-exclamation-circle"></i>
+            <span>{{ pedido.detalles_pedido }}</span>
+          </div>
+
+          <div class="nota-detalles" *ngIf="!pedido.detalles_pedido">
+            <i class="fas fa-exclamation-circle"></i>
+            <span>Sin detalles adicionales</span>
+          </div>
+
+          <!--div class="nota-footer">
+            <div class="nota-total">
+              <span class="total-label">Total:</span>
+              <span class="total-monto">${{ pedido.total_pedido }}</span>
+            </div>
+            <div class="nota-pago">
+            </div>
+          </!--div-->
+
+          <div class="nota-acciones">
+            <button
+              class="btn-icon-mini btn-ver"
+              (click)="$event.stopPropagation(); abrirDetalles(pedido)"
+              title="Ver detalles"
+            >
+              <i class="fas fa-ellipsis-h"></i>
+            </button>
+            <button
+              class="btn-icon-mini btn-listo"
+              (click)="marcarComoListo(pedido)"
+              title="Marcar listo"
+            >
+              <i class="fas fa-check-double"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== COLUMNA 3: LISTOS ========== -->
+    <div class="columna columna-listos">
+      <div class="columna-header">
+        <i
+          class="btn-refresh"
+          (click)="cargarPedidos()"
+          title="Actualizar pedidos"
+        >
+          <i class="fas fa-sync-alt" [class.spinning]="cargando"></i>
+        </i>
+        <div class="header-content">
+          <i class="fas fa-check-circle"></i>
+          <span class="header-title">Listos</span>
+        </div>
+        <span class="badge-count">{{ pedidosListos.length }}</span>
+      </div>
+
+      <div class="columna-body">
+        <div class="columna-vacia" *ngIf="pedidosListos.length === 0">
+          <i class="fas fa-clipboard-check"></i>
+          <p>No hay pedidos listos</p>
+        </div>
+
+        <div class="nota-pedido listo" *ngFor="let pedido of pedidosListos">
+          <div class="nota-header">
+            <span class="nota-codigo">#{{ pedido.codigo }}</span>
+            <span class="badge-listo">
+              <i class="fas fa-check-circle"></i>
+            </span>
+          </div>
+
+          <div class="nota-cliente destacado">
+            <div class="cliente-avatar">
+              <i class="fas fa-user-circle"></i>
+              &VerticalLine;
+            </div>
+            <div class="cliente-info">
+              <strong>{{ pedido.cliente?.nombre_completo }}</strong>
+              <p></p>
+            </div>
+            <p></p>
+            <div class="phone-avatar">
+              <div class="cliente-info">
+                <i class="fas fa-phone"></i>
+                &VerticalLine;
+                <span>{{ pedido.cliente?.telefono }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="nota-cliente destacado">
+            <div class="cliente-info">
+              <br>
+              <i class="fas fa-shopping-bag"></i>
+              &af;
+              <strong>{{ pedido.pedido_productos.length }} producto(s)</strong>
+            </div>
+          </div>
+
+          <div class="nota-footer destacado">
+            <div class="nota-total grande">
+              <span class="total-label">Total:</span>
+              <span class="total-monto">${{ pedido.total_pedido }}</span>
+            </div>
+            <div class="nota-pago">
+              <i
+                class="fas"
+                [ngClass]="estaPagado ? 'fa-credit-card' : 'fa-money-bill-wave'"
+              ></i>
+            </div>
+            <!--div
+              class="nota-pago-info"
+              [class.pagado]="pedido.pagos.length"
+            >
+              <span *ngIf="estaPagado">Ya pagado</span>
+              <span *ngIf="!estaPagado"
+                >Efectivo</span
+              >
+            </!--div-->
+          </div>
+
+          <div class="nota-acciones">
+            <button
+              class="btn-icon-mini btn-ver"
+              (click)="$event.stopPropagation(); abrirDetalles(pedido)"
+              title="Ver detalles"
+            >
+              <i class="fas fa-ellipsis-h"></i>
+            </button>
+            <button
+              class="btn-icon-mini btn-entregar"
+              (click)="$event.stopPropagation(); abrirEntregar(pedido)"
+              title="Entregar"
+            >
+              <i class="fas fa-hand-holding"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,483 @@
+<audio #audioPendiente>
+  <source src="assets/sounds/notification.mp3" type="audio/mpeg" />
+</audio>
+<div class="layout-container">
+  <!-- Header -->
+  <header class="header">
+    <div class="header-content">
+      <div class="logo">
+        <h1>UniFood</h1>
+      </div>
+      <!--button class="btn-logout" (click)="logout()">
+        <i class="fas fa-sign-out-alt"></i>
+      </!--button-->
+
+      <div class="header-actions">
+        <!-- Botón seguimiento -->
+        <button
+          class="btn-icon"
+          (click)="abrirSeguimiento()"
+          title="Ver mi pedido"
+          [class.active]="pedidosActivos"
+        >
+          <i class="fas fa-receipt"></i>
+          <span class="badge-dot" *ngIf="pedidoSeleccionado"></span>
+        </button>
+
+        <!-- Usuario -->
+        <div class="user-menu">
+          <span class="user-name">{{ nombreCliente }}</span>
+          <button class="btn-logout" (click)="logout()">
+            <i class="fas fa-sign-out-alt"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Contenido principal -->
+  <main class="main-content">
+    <router-outlet></router-outlet>
+  </main>
+
+  <!-- Botón flotante (solo si hay pedido activo) -->
+  <!-- Botón flotante (solo si hay pedidos activos) -->
+  <button
+    *ngIf="pedidosActivos.length > 0"
+    class="btn-floating"
+    (click)="abrirListaPedidos()"
+  >
+    <i class="fas fa-receipt"></i>
+    <!--span class="badge-count">{{ pedidosActivos.length }}</!--span-->
+    <span>Mis pedidos</span>
+  </button>
+
+  <!-- ========== MODALES ========== -->
+
+  <!-- Modal Lista de Pedidos -->
+  <div
+    class="modal-overlay"
+    *ngIf="mostrarListaPedidos"
+    (click)="mostrarListaPedidos = false"
+  >
+    <div
+      class="modal-container modal-lista-pedidos"
+      (click)="$event.stopPropagation()"
+    >
+      <div class="modal-header">
+        <h2><i class="fas fa-list"></i> Mis Pedidos Activos</h2>
+        <button class="btn-close" (click)="mostrarListaPedidos = false">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <div class="pedidos-grid">
+          <div
+            *ngFor="let pedido of pedidosActivos"
+            class="pedido-item"
+            [class.listo]="pedido.pedido_estado_id === 3"
+            (click)="seleccionarPedido(pedido)"
+          >
+            <!-- Estado -->
+            <div
+              class="pedido-estado"
+              [ngClass]="'estado-' + pedido.pedido_estado_id"
+            >
+              <i class="fas fa-clock" *ngIf="pedido.pedido_estado_id === 1"></i>
+              <i class="fas fa-fire" *ngIf="pedido.pedido_estado_id === 2"></i>
+              <i
+                class="fas fa-check-circle"
+                *ngIf="pedido.pedido_estado_id === 3"
+              ></i>
+            </div>
+
+            <!-- Estado texto -->
+            <div class="estado-texto">
+            <!-- Info -->
+            <div class="pedido-info">
+              <strong>#{{ pedido.codigo }}</strong>
+              <p>
+                <strong>Área: </strong>
+                <span class="area">{{
+                  pedido.area_venta?.area_venta || "Área desconocida"
+                }}</span> 
+                <p>
+                <strong>Subtotal: </strong>
+                <span class="total">${{ pedido.total_pedido }}</span>
+              </p>
+              <p>
+                <strong> Pedido: </strong>
+                <span *ngIf="pedido.pedido_estado_id === 1">Pendiente</span>
+                <span *ngIf="pedido.pedido_estado_id === 2"
+                  >En preparación</span
+                >
+                <span *ngIf="pedido.pedido_estado_id === 3" class="listo-texto">
+                  ¡Listo en el area: {{ pedido.area_venta?.area_venta }}!
+                </span>
+              </p>
+            </div>
+
+            
+              <!-- Botón ver -->
+              <button class="btn btn-ver">
+                <i class="fas fa-eye"></i>
+                Ver detalles
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Seguimiento -->
+  <div
+    class="modal-overlay"
+    *ngIf="mostrarModalSeguimiento"
+    (click)="cerrarModalSeguimiento()"
+  >
+    <div
+      class="modal-container modal-seguimiento"
+      (click)="$event.stopPropagation()"
+    >
+      <div class="modal-header">
+        <h2><i class="fas fa-receipt"></i> Seguimiento del Pedido</h2>
+        <button class="btn-close" (click)="cerrarModalSeguimiento()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Estado actual -->
+        <div
+          class="estado-section"
+          [ngClass]="'estado-' + pedidoSeleccionado?.pedido_estado_id"
+        >
+          <div class="estado-icono">
+            <i
+              class="fas fa-spinner fa-spin"
+              *ngIf="pedidoSeleccionado?.pedido_estado_id === 1"
+            ></i>
+            <i
+              class="fas fa-fire"
+              *ngIf="pedidoSeleccionado?.pedido_estado_id === 2"
+            ></i>
+            <i
+              class="fas fa-check-circle"
+              *ngIf="pedidoSeleccionado?.pedido_estado_id === 3"
+            ></i>
+            <i
+              class="fas fa-check-double"
+              *ngIf="pedidoSeleccionado?.pedido_estado_id === 4"
+            ></i>
+          </div>
+          <h3>
+            <span *ngIf="pedidoSeleccionado?.pedido_estado_id === 1"
+              >Pedido recibido</span
+            >
+            <span *ngIf="pedidoSeleccionado?.pedido_estado_id === 2"
+              >Preparando tu pedido</span
+            >
+            <span *ngIf="pedidoSeleccionado?.pedido_estado_id === 3"
+              >¡Listo para recoger!</span
+            >
+            <span *ngIf="pedidoSeleccionado?.pedido_estado_id === 4"
+              >Entregado</span
+            >
+          </h3>
+        </div>
+
+        <!-- Timeline -->
+        <div class="timeline">
+          <div
+            class="timeline-item"
+            [class.completed]="(pedidoSeleccionado?.pedido_estado_id ?? 0) >= 1"
+          >
+            <div class="timeline-marker"><i class="fas fa-check"></i></div>
+            <div class="timeline-content">
+              <strong> ----> Pedido recibido</strong>
+              <span>{{
+                pedidoSeleccionado?.fecha_registro | date : "dd/MM/yyyy HH:mm"
+              }}</span>
+            </div>
+          </div>
+
+          <div
+            class="timeline-item"
+            [class.completed]="(pedidoSeleccionado?.pedido_estado_id ?? 0) >= 2"
+          >
+            <div class="timeline-marker"><i class="fas fa-check"></i></div>
+            <div class="timeline-content">
+              <strong>----> En preparación</strong>
+              <span *ngIf="(pedidoSeleccionado?.pedido_estado_id ?? 0) >= 2"
+                >Preparando...</span
+              >
+            </div>
+          </div>
+
+          <div
+            class="timeline-item"
+            [class.completed]="(pedidoSeleccionado?.pedido_estado_id ?? 0) >= 3"
+          >
+            <div class="timeline-marker"><i class="fas fa-check"></i></div>
+            <div class="timeline-content">
+              <strong>----> Listo para recoger</strong>
+              <span *ngIf="(pedidoSeleccionado?.pedido_estado_id ?? 0) >= 3"
+                >¡Ya puedes recogerlo!</span
+              >
+            </div>
+          </div>
+
+          <div
+            class="timeline-item"
+            [class.completed]="(pedidoSeleccionado?.pedido_estado_id ?? 0) >= 4"
+          >
+            <div class="timeline-marker"><i class="fas fa-check"></i></div>
+            <div class="timeline-content">
+              <strong>----> Entregado</strong>
+              <span *ngIf="(pedidoSeleccionado?.pedido_estado_id ?? 0) >= 4">
+                {{
+                  pedidoSeleccionado?.fecha_entrega | date : "dd/MM/yyyy HH:mm"
+                }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Detalles del pedido -->
+        <div class="detalles-pedido">
+          <div class="detalle-row">
+            <span>Código:</span>
+            <strong>#{{ pedidoSeleccionado?.codigo }}</strong>
+          </div>
+          <div class="detalle-row">
+            <span>Total:</span>
+            <strong class="total"
+              >${{ pedidoSeleccionado?.total_pedido }}</strong
+            >
+          </div>
+          <div class="detalle-row">
+            <span>Estado de pago:</span>
+            <strong
+              [class.pagado]="(pedidoSeleccionado?.pagos?.length ?? 0) > 0"
+            >
+              {{ obtenerEstadoPago() ? "Pagado" : "Pago en efectivo" }}
+            </strong>
+          </div>
+        </div>
+
+        <!-- Productos -->
+        <div class="productos-pedido">
+          <h4>Productos:</h4>
+          <div
+            class="producto-item"
+            *ngFor="let item of pedidoSeleccionado?.pedido_productos"
+          >
+            <span class="cantidad">{{ item.cantidad }}x</span>
+            <span class="nombre">{{ item.producto?.nombre }}</span>
+            <span class = "nombre"> {{item.detalles_producto}} </span>
+            <span class="precio"
+              >${{ item.precio_unitario * item.cantidad }}</span
+            >
+          </div>
+          <div *ngIf ="pedidoSeleccionado?.detalles_pedido"></div>
+          <i  class="fas fa-receipt"></i><strong> Detalles adicionales:</strong>
+          <span *ngIf ="pedidoSeleccionado?.detalles_pedido">
+            {{ pedidoSeleccionado?.detalles_pedido}}</span>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button
+          *ngIf="pedidoSeleccionado?.pedido_estado_id === 1"
+          class="btn btn-danger"
+          (click)="cancelarPedido()"
+        >
+          Cancelar pedido
+        </button>
+
+        <button
+          *ngIf="
+            pedidoSeleccionado?.pedido_estado_id === 1 &&
+            (pedidoSeleccionado?.pagos?.length ?? 0) === 0
+          "
+          class="btn btn-primary"
+          (click)="cerrarModalPago()"
+        >
+          <i class="fas fa-credit-card"></i>
+          Pagar con tarjeta
+        </button>
+        <button class="btn btn-primary" (click)="cerrarModalSeguimiento()">
+          Cerrar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Pago -->
+  <div
+    class="modal-overlay"
+    *ngIf="mostrarModalPago"
+    (click)="cerrarModalPago()"
+  >
+    <div class="modal-container modal-pago" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2><i class="fas fa-credit-card"></i> Procesar Pago</h2>
+        <button class="btn-close" (click)="cerrarModalPago()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <div class="pedido-info">
+          <div class="info-row">
+            <span>Pedido:</span>
+            <strong>#{{ pedidoSeleccionado?.codigo }}</strong>
+          </div>
+          <div class="info-row">
+            <span>Total a pagar:</span>
+            <strong class="total"
+              >${{ pedidoSeleccionado?.total_pedido }}</strong
+            >
+          </div>
+        </div>
+
+        <form class="tarjeta-form">
+          <div class="form-group">
+            <label><i class="fas fa-credit-card"></i> Número de tarjeta</label>
+            <input
+              type="text"
+              [(ngModel)]="numeroTarjeta"
+              name="numeroTarjeta"
+              placeholder="1234 5678 9012 3456"
+              maxlength="19"
+              (input)="formatearNumeroTarjeta($event)"
+            />
+            />
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label><i class="fas fa-calendar"></i> Expiración</label>
+              <input
+                type="text"
+                [(ngModel)]="expiracion"
+                name="expiracion"
+                placeholder="MM/AA"
+                maxlength="5"
+                (input)="formatearExpiracion($event)"
+              />
+              />
+            </div>
+
+            <div class="form-group">
+              <label><i class="fas fa-lock"></i> CVV</label>
+              <input
+                type="password"
+                [(ngModel)]="cvv"
+                name="cvv"
+                placeholder="123"
+                maxlength="3"
+              />
+            </div>
+          </div>
+
+          <div class="seguridad-info">
+            <i class="fas fa-shield-alt"></i>
+            <p>Tu información está protegida</p>
+          </div>
+        </form>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="cerrarModalPago()">
+          Cancelar
+        </button>
+        <button class="btn btn-primary" (click)="procesarPago()">
+          <i class="fas fa-check"></i>
+          Pagar ${{ pedidoSeleccionado?.total_pedido }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Calificación -->
+  <div
+    class="modal-overlay"
+    *ngIf="mostrarModalCalificacion"
+    (click)="cerrarModalCalificacion()"
+  >
+    <div
+      class="modal-container modal-calificacion"
+      (click)="$event.stopPropagation()"
+    >
+      <div class="modal-header">
+        <h2><i class="fas fa-star"></i> ¿Qué te pareció?</h2>
+        <button class="btn-close" (click)="cerrarModalCalificacion()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <p class="intro-text">Califica los productos que desees:</p>
+
+        <!-- Mensaje si no hay productos -->
+        <div
+          class="sin-productos-calificar"
+          *ngIf="(pedidoSeleccionado?.pedido_productos?.length ?? 0) === 0"
+        >
+          <i class="fas fa-box-open"></i>
+          <p>No hay productos para calificar en este pedido.</p>
+        </div>
+
+        <div
+          class="productos-calificacion"
+          *ngIf="(pedidoSeleccionado?.pedido_productos?.length ?? 0) > 0"
+        >
+          <div class="productos-calificacion">
+            <div
+              *ngFor="
+                let item of pedidoSeleccionado?.pedido_productos;
+                let i = index
+              "
+              class="producto-calificar"
+            >
+              <h4>{{ item.producto?.nombre }}</h4>
+
+              <div class="estrellas">
+                <i
+                  *ngFor="let estrella of [1, 2, 3, 4, 5]"
+                  class="fas fa-star"
+                  [class.active]="
+                    calificaciones && calificaciones[i] >= estrella
+                  "
+                  (click)="setCalificacion(i, estrella)"
+                >
+                </i>
+              </div>
+
+              <textarea
+                *ngIf="calificaciones && calificaciones[i] > 0"
+                [(ngModel)]="comentarios[i]"
+                name="comentario_{{ i }}"
+                placeholder="Cuéntanos más (opcional)"
+                rows="3"
+              ></textarea>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn btn-secondary" (click)="cerrarModalCalificacion()">
+            Omitir
+          </button>
+          <button class="btn btn-primary" (click)="enviarCalificaciones()">
+            <i class="fas fa-paper-plane"></i>
+            Enviar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

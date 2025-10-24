@@ -1,0 +1,405 @@
+<div class="layout-container">
+  <!-- Header -->
+  <header class="header">
+    <div class="header-content">
+      <div class="logo">
+        <h1>UniFood</h1>
+        <span class="area-badge">{{ areaVendedor }}</span>
+      </div>
+
+      <div class="header-actions">
+        <!-- Indicador de conexión -->
+        <div
+          class="connection-status"
+          [class.conectado]="wsConectado"
+          [title]="wsConectado ? 'Conectado' : 'Desconectado'"
+        >
+          <i class="fas fa-circle"></i>
+        </div>
+
+        <div class="user-menu">
+          <span class="user-name">{{ nombreVendedor }}</span>
+          <button class="btn-logout" (click)="logout()">
+            <i class="fas fa-sign-out-alt"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Contenido principal -->
+  <main class="main-content">
+    <router-outlet></router-outlet>
+  </main>
+
+  <!-- ========== MODALES ========== -->
+
+  <!-- Modal Detalles del Pedido -->
+  <div
+    class="modal-overlay"
+    *ngIf="mostrarModalDetalles"
+    (click)="cerrarModales()"
+  >
+    <div
+      class="modal-container modal-detalles"
+      (click)="$event.stopPropagation()"
+    >
+      <div class="modal-header">
+        <h2><i class="fas fa-info-circle"></i> Detalles del Pedido</h2>
+        <button class="btn-close" (click)="cerrarModales()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Info general -->
+        <div class="info-section">
+          <div class="info-row">
+            <span class="label">Código:</span>
+            <span class="value">#{{ pedidoSeleccionado?.codigo }}</span>
+          </div>
+          <div class="info-row">
+            <span class="label">Cliente:</span>
+            <span class="value">{{
+              pedidoSeleccionado?.cliente?.nombre_completo
+            }}</span>
+          </div>
+          <div class="info-row">
+            <span class="label">Teléfono:</span>
+            <span class="value">{{
+              pedidoSeleccionado?.cliente?.telefono
+            }}</span>
+          </div>
+          <div class="info-row">
+            <span class="label">Hora del pedido:</span>
+            <span class="value">{{
+              pedidoSeleccionado?.fecha_registro | date : "dd/MM/yyyy HH:mm"
+            }}</span>
+          </div>
+          <div class="info-row">
+            <span class="label">Estado de pago:</span>
+            <span
+              class="value"
+              [class.pagado]="
+                pedidoSeleccionado?.pagos &&
+                (pedidoSeleccionado?.pagos?.length ?? 0) > 0
+              "
+            >
+              {{
+                pedidoSeleccionado?.pagos &&
+                (pedidoSeleccionado?.pagos?.length ?? 0) > 0
+                  ? "Pagado con tarjeta"
+                  : "Pago en efectivo"
+              }}
+            </span>
+          </div>
+          <div class="info-row">
+            <span class="label">Tiempo estimado:</span>
+            <span class="value"
+              >{{ obtenerTiempoTotal(pedidoSeleccionado!) }} minutos</span
+            >
+          </div>
+        </div>
+
+        <!-- Productos detallados -->
+        <div class="productos-section">
+          <h4><i class="fas fa-shopping-bag"></i> Productos a preparar</h4>
+          <div
+            class="sin-productos"
+            *ngIf="
+              !pedidoSeleccionado?.pedido_productos ||
+              pedidoSeleccionado?.pedido_productos?.length === 0
+            "
+          >
+            <p>No se encontraron productos en este pedido.</p>
+          </div>
+
+          <div
+            class="productos-lista"
+            *ngIf="
+              pedidoSeleccionado?.pedido_productos &&
+              (pedidoSeleccionado?.pedido_productos?.length ?? 0) > 0
+            "
+          >
+            <div
+              *ngFor="let item of pedidoSeleccionado?.pedido_productos"
+              class="producto-detalle"
+            >
+              <div class="producto-header">
+                <span class="cantidad">{{ item.cantidad }}x</span>
+                <strong>{{ item.producto?.nombre }}</strong>
+              </div>
+              <div class="producto-info">
+                <div class="info-item">
+                  <i class="fas fa-clock"></i>
+                  <span>{{ item.producto?.tiempo_preparacion }} min</span>
+                </div>
+                <div class="info-item">
+                  <i class="fas fa-fire"></i>
+                  <span>{{ item.producto?.calorias }} cal</span>
+                </div>
+              </div>
+              <div
+                class="producto-ingredientes"
+                *ngIf="item.producto?.ingredientes"
+              >
+                <strong>Ingredientes:</strong>
+                <span>{{ obtenerIngredientes(item) }}</span>
+              </div>
+              <div
+                class="producto-detalles-especiales"
+                *ngIf="item.detalles_producto"
+              >
+                <i class="fas fa-exclamation-circle"></i>
+                <strong>IMPORTANTE:</strong> {{ item.detalles_producto }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Detalles del pedido -->
+        <div
+          class="detalles-section"
+          *ngIf="
+            pedidoSeleccionado?.detalles_pedido &&
+            (pedidoSeleccionado?.detalles_pedido?.trim()?.length ?? 0) > 0
+          "
+        >
+          <h4>
+            <i class="fas fa-comment-dots"></i> Detalles adicionales del cliente
+          </h4>
+          <p>{{ pedidoSeleccionado?.detalles_pedido }}</p>
+        </div>
+
+        <!-- Total -->
+        <div class="total-section">
+          <span class="label">Total del pedido:</span>
+          <span class="value">${{ pedidoSeleccionado?.total_pedido }}</span>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-primary" (click)="cerrarModales()">
+          <i class="fas fa-check"></i>
+          Entendido
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Rechazar Pedido -->
+  <div
+    class="modal-overlay"
+    *ngIf="mostrarModalRechazar"
+    (click)="cerrarModales()"
+  >
+    <div
+      class="modal-container modal-rechazar"
+      (click)="$event.stopPropagation()"
+    >
+      <div class="modal-header">
+        <h2><i class="fas fa-times-circle"></i> Rechazar Pedido</h2>
+        <button
+          class="btn-close"
+          (click)="cerrarModales()"
+          [disabled]="procesando"
+        >
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Info del pedido -->
+        <div class="pedido-info">
+          <p><strong>Pedido:</strong> #{{ pedidoSeleccionado?.codigo }}</p>
+          <p>
+            <strong>Cliente:</strong>
+            {{ pedidoSeleccionado?.cliente?.nombre_completo }}
+          </p>
+          <p><strong>Total:</strong> ${{ pedidoSeleccionado?.total_pedido }}</p>
+        </div>
+
+        <!-- Advertencia -->
+        <div class="advertencia">
+          <i class="fas fa-exclamation-triangle"></i>
+          <p>
+            El cliente será notificado del rechazo. Si pagó con tarjeta, se
+            procesará el reembolso automáticamente.
+          </p>
+        </div>
+
+        <!-- Motivos comunes -->
+        <div class="motivos-section">
+          <label>Selecciona o escribe el motivo del rechazo:</label>
+          <div class="motivos-grid">
+            <button
+              class="motivo-btn"
+              [class.active]="
+                motivoRechazo === 'No tenemos ingredientes suficientes'
+              "
+              (click)="
+                seleccionarMotivoComun('No tenemos ingredientes suficientes')
+              "
+              [disabled]="procesando"
+            >
+              No tenemos ingredientes suficientes
+            </button>
+            <button
+              class="motivo-btn"
+              [class.active]="motivoRechazo === 'Producto agotado'"
+              (click)="seleccionarMotivoComun('Producto agotado')"
+              [disabled]="procesando"
+            >
+              Producto agotado
+            </button>
+            <button
+              class="motivo-btn"
+              [class.active]="
+                motivoRechazo === 'Tiempo de preparación muy largo'
+              "
+              (click)="
+                seleccionarMotivoComun('Tiempo de preparación muy largo')
+              "
+              [disabled]="procesando"
+            >
+              Tiempo de preparación muy largo
+            </button>
+            <button
+              class="motivo-btn"
+              [class.active]="motivoRechazo === 'Problema técnico'"
+              (click)="seleccionarMotivoComun('Problema técnico')"
+              [disabled]="procesando"
+            >
+              Problema técnico
+            </button>
+            <button
+              class="motivo-btn"
+              (click)="seleccionarMotivoComun('Otro motivo')"
+              [disabled]="procesando"
+            >
+              Otro motivo
+            </button>
+          </div>
+        </div>
+
+        <!-- Campo de texto -->
+        <div class="motivo-custom">
+          <label>Motivo detallado:</label>
+          <textarea
+            [(ngModel)]="motivoRechazo"
+            placeholder="Escribe el motivo del rechazo..."
+            rows="4"
+            [disabled]="procesando"
+          ></textarea>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button
+          class="btn btn-secondary"
+          (click)="cerrarModales()"
+          [disabled]="procesando"
+        >
+          Cancelar
+        </button>
+        <button
+          class="btn btn-danger"
+          (click)="confirmarRechazo()"
+          [disabled]="procesando || !motivoRechazo.trim()"
+        >
+          <i class="fas fa-spinner fa-spin" *ngIf="procesando"></i>
+          <i class="fas fa-times-circle" *ngIf="!procesando"></i>
+          {{ procesando ? "Rechazando..." : "Rechazar pedido" }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Entregar Pedido -->
+  <div
+    class="modal-overlay"
+    *ngIf="mostrarModalEntregar"
+    (click)="cerrarModales()"
+  >
+    <div
+      class="modal-container modal-entregar"
+      (click)="$event.stopPropagation()"
+    >
+      <div class="modal-header">
+        <h2><i class="fas fa-hand-holding"></i> Entregar Pedido</h2>
+        <button
+          class="btn-close"
+          (click)="cerrarModales()"
+          [disabled]="procesando"
+        >
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Info del pedido -->
+        <div class="pedido-info">
+          <div class="info-row">
+            <span>Pedido:</span>
+            <strong>#{{ pedidoSeleccionado?.codigo }}</strong>
+          </div>
+          <div class="info-row">
+            <span>Cliente:</span>
+            <strong>{{ pedidoSeleccionado?.cliente?.nombre_completo }}</strong>
+          </div>
+          <div class="info-row total">
+            <span>Total:</span>
+            <strong>${{ pedidoSeleccionado?.total_pedido }}</strong>
+          </div>
+        </div>
+
+        <!-- Estado de pago -->
+        <div class="estado-pago" [class.pagado]="estaPagado()">
+          <i class="fas fa-check-circle" *ngIf="estaPagado()"></i>
+          <i class="fas fa-money-bill-wave" *ngIf="!estaPagado()"></i>
+          <div class="estado-texto">
+            <strong *ngIf="estaPagado()">Pagado con tarjeta</strong>
+            <strong *ngIf="!estaPagado()">Pago en efectivo</strong>
+            <p *ngIf="estaPagado()">
+              El cliente ya pagó. Puedes entregar el pedido.
+            </p>
+            <p *ngIf="!estaPagado()">
+              Recuerda cobrar ${{ pedidoSeleccionado?.total_pedido }} al
+              cliente.
+            </p>
+          </div>
+        </div>
+
+        <!-- Productos resumen -->
+        <div class="productos-resumen">
+          <h4>Productos del pedido:</h4>
+          <ul>
+            <li *ngFor="let item of pedidoSeleccionado?.pedido_productos">
+              <span class="cantidad">{{ item.cantidad }}x</span>
+              <span class="nombre">{{ item.producto?.nombre }}</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button
+          class="btn btn-secondary"
+          (click)="cerrarModales()"
+          [disabled]="procesando"
+        >
+          Cancelar
+        </button>
+        <button
+          class="btn btn-success"
+          (click)="confirmarEntrega()"
+          [disabled]="procesando"
+        >
+          <i class="fas fa-spinner fa-spin" *ngIf="procesando"></i>
+          <i class="fas fa-check" *ngIf="!procesando"></i>
+          {{ procesando ? "Entregando..." : "Confirmar entrega" }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
