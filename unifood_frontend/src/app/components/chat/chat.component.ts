@@ -64,11 +64,8 @@ export class ChatComponent implements OnInit, OnDestroy {
 
     this.chatService.onRecommendations().subscribe((recommendations: ProductRecommendation[]) => {
       this.recommendations = recommendations;
-      // Mostrar recomendaciones si están disponibles
-      if (recommendations && recommendations.length > 0) {
-        this.showRecommendations = true;
-        this.addRecommendationsToChat(recommendations);
-      }
+      // NO mostrar recomendaciones automáticamente
+      // El usuario decide si quiere verlas
     });
 
     this.chatService.onConnectionStatus().subscribe((status: boolean) => {
@@ -108,6 +105,9 @@ export class ChatComponent implements OnInit, OnDestroy {
   private handleBotResponse(response: ChatResponse): void {
     this.isLoading = false;
     
+    // Verificar si hay recomendaciones
+    const hasRecommendations = response.recomendaciones && response.recomendaciones.length > 0;
+    
     const botMessage: ChatMessage = {
       id: Date.now(),
       content: response.respuesta,
@@ -115,10 +115,16 @@ export class ChatComponent implements OnInit, OnDestroy {
       timestamp: new Date(response.timestamp),
       sessionId: response.sessionId,
       recommendations: response.recomendaciones || [],
-      showRecommendations: false // No mostrar automáticamente
+      showRecommendations: false // El usuario decide si las expande
     };
 
     this.messages.push(botMessage);
+    
+    // Si hay recomendaciones, guardarlas pero NO mostrar modal automáticamente
+    if (hasRecommendations) {
+      this.recommendations = response.recomendaciones || [];
+    }
+    
     this.scrollToBottom();
   }
 
@@ -194,7 +200,20 @@ export class ChatComponent implements OnInit, OnDestroy {
   }
 
   selectRecommendation(recommendation: ProductRecommendation): void {
-    const message = `Me interesa el ${recommendation.nombre}. ¿Puedes darme más detalles?`;
+    // Construir mensaje más específico con contexto del producto
+    let message = `Cuéntame más sobre el ${recommendation.nombre}`;
+    
+    // Agregar información que ya tenemos para dar contexto
+    if (recommendation.precio) {
+      message += ` que cuesta $${recommendation.precio}`;
+    }
+    
+    if (recommendation.categoria) {
+      message += ` de la categoría ${recommendation.categoria}`;
+    }
+    
+    message += '. Quiero saber sus ingredientes, preparación y por qué me lo recomiendas específicamente.';
+    
     this.newMessage = message;
     this.sendMessage();
   }
@@ -215,6 +234,10 @@ export class ChatComponent implements OnInit, OnDestroy {
 
   toggleRecommendations(): void {
     this.showRecommendations = !this.showRecommendations;
+  }
+
+  toggleMessageRecommendations(message: ChatMessage): void {
+    message.showRecommendations = !message.showRecommendations;
   }
 
   loadChatHistory(): void {

@@ -1,12 +1,11 @@
 import { Component, OnInit } from '@angular/core';
 import { RouterOutlet, Router } from '@angular/router';
 import { AuthService } from './services/auth.service';
-import { ChatFloatComponent } from './components/chat-float/chat-float.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, ChatFloatComponent],
+  imports: [RouterOutlet],
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],
 })
@@ -36,6 +35,8 @@ export class AppComponent implements OnInit {
           this.router.navigate(['/cliente']);
         } else if (usuario?.rol === 'vendedor') {
           this.router.navigate(['/vendedor']);
+        } else if (usuario?.rol === 'supervisor') {
+          this.router.navigate(['/supervisor']);
         } else {
           this.router.navigate(['/login']);
         }

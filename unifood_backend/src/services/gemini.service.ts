@@ -92,7 +92,7 @@ export class GeminiService {
       this.cacheService.getConversation(sessionId, userId),
     ]);
 
-    const prompt = this.buildPrompt(
+    const prompt = await this.buildPrompt(
       sanitizedMessage,
       userContext,
       products,
@@ -198,20 +198,25 @@ export class GeminiService {
 
   private buildSystemInstruction(): string {
     return [
-      'Eres un asistente de UniFood especializado en recomendar alimentos.',
+      'Eres un asistente de UniFood especializado en recomendar alimentos de manera interactiva.',
       'Debes analizar historial de pedidos, preferencias y disponibilidad actual.',
       'Responde siempre en JSON valido con la estructura solicitada.',
       'Evita recomendaciones que no existan en el catalogo proporcionado.',
-      'Incluye justificacion breve dentro de la respuesta cuando sea util.',
+      'SISTEMA DE MENÚ INTERACTIVO:',
+      '- Si el usuario pregunta "¿Qué hay en el menú?" o similar, muestra opciones numeradas:',
+      '  1. Postres, 2. Tortas, 3. Antojitos, 4. Bebidas Frías, 5. Bebidas Calientes, 6. Menú completo, 7. Más populares, 8. Mejor calificados',
+      '- Si el usuario responde con un número (1-8), filtra productos según la opción elegida.',
+      '- Si el usuario pregunta sobre un producto específico, da detalles SOLO de ese producto sin mostrar recomendaciones adicionales.',
+      '- Personaliza tus respuestas según el historial y preferencias del usuario.',
     ].join(' ');
   }
 
-  private buildPrompt(
+  private async buildPrompt(
     message: string,
     context: UserContext,
     products: any[],
     cachedConversation: any,
-  ): string {
+  ): Promise<string> {
     const productLines = products
       .map(
         (product) =>
@@ -230,21 +235,242 @@ export class GeminiService {
           .join('\n')
       : '';
 
-    return [
+    // Detectar el tipo de consulta
+    const queryType = this.detectQueryType(message, products, cachedConversation);
+    
+    const instructions = [
       'Contexto del usuario:',
       JSON.stringify(context),
-      'Catalogo disponible:',
+      'Catalogo disponible (todas las categorías):',
       productLines,
       previousMessages ? `Conversacion reciente:\n${previousMessages}` : '',
       'Instrucciones:',
       `- Mensaje del usuario: "${message}"`,
       '- Devuelve solo JSON valido sin texto adicional.',
-      '- Campo respuesta debe ser texto amigable.',
-      '- Campo recomendaciones es un arreglo de maximo tres opciones.',
-      '- Usa los IDs de producto proporcionados; evita duplicados.',
-    ]
-      .filter(Boolean)
-      .join('\n');
+      '- Campo respuesta debe ser texto amigable y conversacional.',
+    ];
+
+    switch (queryType.type) {
+      case 'menu_request':
+        instructions.push(
+          '- El usuario quiere ver el menú. Responde así:',
+          '- "¡Claro! ¿Qué te gustaría ver? Elige una opción:"',
+          '- "1️⃣ Postres 🍰"',
+          '- "2️⃣ Tortas 🥪"',
+          '- "3️⃣ Antojitos 🌮"',
+          '- "4️⃣ Bebidas Frías 🥤"',
+          '- "5️⃣ Bebidas Calientes ☕"',
+          '- "6️⃣ Ver todo el menú 📋"',
+          '- "7️⃣ Los más populares ⭐"',
+          '- "8️⃣ Mejor calificados 🏆"',
+          '- NO incluyas recomendaciones en este paso.',
+          '- Espera a que el usuario elija una opción.',
+        );
+        break;
+
+      case 'category_selection':
+        const categoryFilter = queryType.data;
+        const filteredProducts = await this.filterProductsByCategory(products, categoryFilter);
+        const filteredLines = filteredProducts
+          .map(p => `ID:${p.id}|Nombre:${p.nombre}|Precio:${p.precio}|Categoria:${p.categoria?.nombre || 'Sin categoría'}`)
+          .join('\n');
+        
+        instructions.push(
+          `- El usuario eligió ver: ${categoryFilter}`,
+          `- Productos filtrados:\n${filteredLines}`,
+          '- Muestra estos productos de manera amigable.',
+          '- Incluye SOLO productos de esta categoría en las recomendaciones.',
+          '- Máximo 3 recomendaciones.',
+        );
+        break;
+
+      case 'specific_product':
+        instructions.push(
+          '- El usuario está preguntando sobre un PRODUCTO ESPECÍFICO.',
+          '- Da detalles detallados SOLO de ese producto (ingredientes, preparación, beneficios).',
+          '- NO incluyas recomendaciones en el campo "recomendaciones" (déjalo vacío o null).',
+          '- Enfócate en explicar por qué ese producto es una buena elección.',
+        );
+        break;
+
+      default: // general_query
+        instructions.push(
+          '- Campo recomendaciones es un arreglo de máximo tres opciones.',
+          '- Usa los IDs de producto proporcionados; evita duplicados.',
+          '- Personaliza según las preferencias del usuario.',
+        );
+    }
+
+    return instructions.filter(Boolean).join('\n');
+  }
+
+  private detectQueryType(message: string, products: any[], conversation: any): { type: string; data?: any } {
+    const lowerMessage = message.toLowerCase().trim();
+    
+    // 1. Detectar solicitud de menú
+    const menuKeywords = ['menú', 'menu', 'qué hay', 'que hay', 'opciones', 'qué tienen', 'que tienen', 'qué venden', 'que venden'];
+    if (menuKeywords.some(keyword => lowerMessage.includes(keyword))) {
+      return { type: 'menu_request' };
+    }
+
+    // 2. Detectar selección por número (1-8)
+    const numberMatch = lowerMessage.match(/^(\d+)$/);
+    if (numberMatch) {
+      const option = parseInt(numberMatch[1]);
+      const categoryMap: Record<number, string> = {
+        1: 'Postres',
+        2: 'Tortas',
+        3: 'Antojitos',
+        4: 'Bebidas Frías',
+        5: 'Bebidas Calientes',
+        6: 'all', // Menú completo
+        7: 'popular', // Más populares
+        8: 'rated', // Mejor calificados
+      };
+      
+      if (categoryMap[option]) {
+        return { type: 'category_selection', data: categoryMap[option] };
+      }
+    }
+
+    // 3. Detectar selección por nombre de categoría
+    const categoryKeywords = {
+      'Postres': ['postre', 'postres', 'dulce', 'dulces', 'pastel', 'pasteles'],
+      'Tortas': ['torta', 'tortas', 'sandwich', 'sandwiches'],
+      'Antojitos': ['antojito', 'antojitos', 'taco', 'tacos', 'quesadilla', 'quesadillas'],
+      'Bebidas Frías': ['bebida fría', 'bebidas frías', 'refresco', 'refrescos', 'agua', 'jugo'],
+      'Bebidas Calientes': ['bebida caliente', 'bebidas calientes', 'café', 'cafes', 'té', 'te'],
+    };
+
+    for (const [category, keywords] of Object.entries(categoryKeywords)) {
+      if (keywords.some(keyword => lowerMessage.includes(keyword))) {
+        return { type: 'category_selection', data: category };
+      }
+    }
+
+    // 4. Detectar consulta sobre producto específico
+    const specificKeywords = [
+      'cuéntame más sobre',
+      'cuéntame sobre',
+      'dime sobre',
+      'háblame de',
+      'háblame sobre',
+      'información de',
+      'información sobre',
+      'detalles de',
+      'detalles sobre',
+      'ingredientes de',
+      'ingredientes del',
+      'cómo se prepara',
+      'qué lleva el',
+      'qué lleva la',
+      'qué contiene',
+    ];
+
+    const hasSpecificKeyword = specificKeywords.some(keyword => lowerMessage.includes(keyword));
+    const mentionsProduct = products.some(product => lowerMessage.includes(product.nombre.toLowerCase()));
+
+    if (hasSpecificKeyword || mentionsProduct) {
+      return { type: 'specific_product' };
+    }
+
+    // 5. Consulta general
+    return { type: 'general_query' };
+  }
+
+  private async filterProductsByCategory(products: any[], category: string): Promise<any[]> {
+    if (category === 'all') {
+      return products; // Retornar todos
+    }
+
+    if (category === 'popular') {
+      return await this.getMostPopularProducts();
+    }
+
+    if (category === 'rated') {
+      return await this.getBestRatedProducts();
+    }
+
+    // Filtrar por categoría específica
+    return products.filter(product => 
+      product.categoria?.nombre === category
+    );
+  }
+
+  private async getMostPopularProducts(): Promise<any[]> {
+    try {
+      // Obtener productos más pedidos basados en la cantidad de pedidos
+      const popularProducts = await this.prismaService.$queryRaw`
+        SELECT 
+          p.id,
+          p.nombre,
+          p.precio,
+          p.descripcion,
+          p.imagen_url,
+          c.nombre as categoria_nombre,
+          COUNT(pp.producto_id) as total_pedidos
+        FROM producto p
+        LEFT JOIN categoria c ON p.categoria_id = c.id
+        LEFT JOIN pedido_producto pp ON p.producto_id = pp.producto_id
+        WHERE p.estado = true
+        GROUP BY p.id, p.nombre, p.precio, p.descripcion, p.imagen_url, c.nombre
+        ORDER BY total_pedidos DESC
+        LIMIT 5
+      `;
+
+      return (popularProducts as any[]).map(p => ({
+        id: p.id,
+        nombre: p.nombre,
+        precio: p.precio,
+        descripcion: p.descripcion,
+        imagen_url: p.imagen_url,
+        categoria: { nombre: p.categoria_nombre },
+        total_pedidos: p.total_pedidos,
+      }));
+    } catch (error) {
+      this.logger.warn('Error al obtener productos populares, usando fallback');
+      const allProducts = await this.getAvailableProducts();
+      return allProducts.slice(0, 5);
+    }
+  }
+
+  private async getBestRatedProducts(): Promise<any[]> {
+    try {
+      // Obtener productos mejor calificados
+      const ratedProducts = await this.prismaService.$queryRaw`
+        SELECT 
+          p.id,
+          p.nombre,
+          p.precio,
+          p.descripcion,
+          p.imagen_url,
+          c.nombre as categoria_nombre,
+          AVG(cp.calificacion) as calificacion_promedio,
+          COUNT(cp.id) as total_calificaciones
+        FROM producto p
+        LEFT JOIN categoria c ON p.categoria_id = c.id
+        LEFT JOIN calificacion_producto cp ON p.producto_id = cp.producto_id
+        WHERE p.estado = true
+        GROUP BY p.id, p.nombre, p.precio, p.descripcion, p.imagen_url, c.nombre
+        HAVING COUNT(cp.id) > 0
+        ORDER BY calificacion_promedio DESC, total_calificaciones DESC
+        LIMIT 5
+      `;
+
+      return (ratedProducts as any[]).map(p => ({
+        id: p.id,
+        nombre: p.nombre,
+        precio: p.precio,
+        descripcion: p.descripcion,
+        imagen_url: p.imagen_url,
+        categoria: { nombre: p.categoria_nombre },
+        calificacion_promedio: p.calificacion_promedio,
+      }));
+    } catch (error) {
+      this.logger.warn('Error al obtener productos mejor calificados, usando fallback');
+      const allProducts = await this.getAvailableProducts();
+      return allProducts.slice(0, 5);
+    }
   }
 
   private parseGeminiResponse(text: string): GeminiJsonPayload | null {

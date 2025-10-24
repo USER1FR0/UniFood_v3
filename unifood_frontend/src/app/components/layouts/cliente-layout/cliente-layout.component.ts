@@ -15,10 +15,11 @@ import Swal from 'sweetalert2';
 import { Subscription } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ChatFloatComponent } from '../../chat-float/chat-float.component';
 
 @Component({
   selector: 'app-cliente-layout',
-  imports: [CommonModule, RouterOutlet, FormsModule],
+  imports: [CommonModule, RouterOutlet, FormsModule, ChatFloatComponent],
   templateUrl: './cliente-layout.component.html',
   styleUrls: ['./cliente-layout.component.scss'],
 })

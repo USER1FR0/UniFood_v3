@@ -1,0 +1,27 @@
+<div class="layout-container">
+  <!-- Header -->
+  <header class="header">
+    <div class="header-content">
+      <div class="logo">
+        <h1>UniFood - Panel Supervisor</h1>
+      </div>
+
+      <div class="header-actions">
+        <!-- Usuario -->
+        <div class="user-menu">
+          <span class="user-name">{{ nombreSupervisor }}</span>
+          <span class="user-role">Supervisor</span>
+          <button class="btn-logout" (click)="logout()">
+            <i class="fas fa-sign-out-alt"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Contenido principal -->
+  <main class="main-content">
+    <router-outlet></router-outlet>
+  </main>
+</div>
+

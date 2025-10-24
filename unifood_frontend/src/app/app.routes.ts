@@ -4,6 +4,7 @@ import { BorrarComponent } from './components/borrar/borrar.component';
 import { authGuard } from './guards/auth.guard';
 import { clienteGuard } from './guards/cliente.guard';
 import { vendedorGuard } from './guards/vendedor.guard';
+import { supervisorGuard } from './guards/supervisor.guard';
 import { ClientePedidoComponent } from './components/cliente-pedido/cliente-pedido.component';
 import { VendedorPedidoComponent } from './components/vendedor-pedido/vendedor-pedido.component';
 import { MenuComponent } from './components/menu/menu.component';
@@ -11,6 +12,8 @@ import { ListaVendedoresComponent } from './components/lista-vendedores/lista-ve
 import { CrearVendedorComponent } from './components/crear-vendedor/crear-vendedor.component';
 import { ClienteLayoutComponent } from './components/layouts/cliente-layout/cliente-layout.component';
 import { VendedorLayoutComponent } from './components/layouts/vendedor-layout/vendedor-layout.component';
+import { SupervisorLayoutComponent } from './components/layouts/supervisor-layout/supervisor-layout.component';
+import { SupervisorDashboardComponent } from './components/supervisor-dashboard/supervisor-dashboard.component';
 import { ChatComponent } from './components/chat/chat.component';
 
 export const routes: Routes = [
@@ -48,10 +51,11 @@ export const routes: Routes = [
   // ========== SUPERVISOR ==========
   {
     path: 'supervisor',
-    component: VendedorLayoutComponent, 
+    canActivate: [supervisorGuard],
+    component: SupervisorLayoutComponent, 
     children: [
-      { path: '', redirectTo: 'lista-vendedores', pathMatch: 'full' },
-      { path: 'lista-vendedores', component: ListaVendedoresComponent },
+      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+      { path: 'dashboard', component: SupervisorDashboardComponent },
     ],
   },
 
