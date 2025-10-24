@@ -1,0 +1,545 @@
+// Variables (usa las mismas de tu proyecto)
+$primary: #5B9A97;
+$secondary: #E9C46A;
+$danger: #E76F51;
+$success: #2A9D8F;
+$warning: #F4A261;
+$text-primary: #264653;
+$text-secondary: #7A8A8B;
+$bg-light: #F8F9FA;
+$card-bg: #FFFFFF;
+
+.reporte-container {
+  padding: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+// Header
+.reporte-header {
+  margin-bottom: 2rem;
+
+  .header-content {
+    h1 {
+      color: $text-primary;
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+
+      i {
+        color: $primary;
+      }
+    }
+
+    .subtitle {
+      color: $text-secondary;
+      font-size: 1rem;
+
+      strong {
+        color: $text-primary;
+      }
+    }
+
+    .badge-rol {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      border-radius: 12px;
+      background: $secondary;
+      color: $text-primary;
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-transform: capitalize;
+
+      &.supervisor {
+        background: $primary;
+        color: white;
+      }
+    }
+  }
+}
+
+// Card de filtros
+.filtros-card {
+  background: $card-bg;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 2rem;
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid $bg-light;
+
+    i {
+      color: $primary;
+      font-size: 1.25rem;
+    }
+
+    h2 {
+      font-size: 1.25rem;
+      color: $text-primary;
+      margin: 0;
+    }
+  }
+
+  .filtros-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .filtro-group {
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+      color: $text-primary;
+      font-weight: 500;
+      font-size: 0.9rem;
+
+      i {
+        color: $primary;
+        margin-right: 0.25rem;
+      }
+    }
+
+    .input-field {
+      width: 100%;
+      padding: 0.75rem;
+      border: 2px solid #E0E0E0;
+      border-radius: 8px;
+      font-size: 1rem;
+      transition: all 0.3s;
+
+      &:focus {
+        outline: none;
+        border-color: $primary;
+        box-shadow: 0 0 0 3px rgba($primary, 0.1);
+      }
+    }
+  }
+}
+
+// Opciones
+.opciones-section {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: $bg-light;
+  border-radius: 8px;
+
+  h3 {
+    font-size: 1rem;
+    color: $text-primary;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    i {
+      color: $primary;
+    }
+  }
+
+  .opciones-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 0.75rem;
+  }
+
+  .checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    color: $text-primary;
+    font-size: 0.9rem;
+
+    input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+      accent-color: $primary;
+    }
+
+    &:hover {
+      color: $primary;
+    }
+  }
+}
+
+// Botones de acción
+.filtros-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+}
+
+.btn {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.3s;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  &.btn-primary {
+    background: $primary;
+    color: white;
+
+    &:hover:not(:disabled) {
+      background: darken($primary, 10%);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba($primary, 0.3);
+    }
+  }
+
+  &.btn-secondary {
+    background: $text-secondary;
+    color: white;
+
+    &:hover:not(:disabled) {
+      background: darken($text-secondary, 10%);
+    }
+  }
+
+  &.btn-success {
+    background: $success;
+    color: white;
+
+    &:hover:not(:disabled) {
+      background: darken($success, 10%);
+    }
+  }
+
+  &.btn-excel {
+    background: #217346;
+    color: white;
+
+    &:hover:not(:disabled) {
+      background: darken(#217346, 10%);
+    }
+  }
+}
+
+// Resumen del reporte
+.resumen-card {
+  background: $card-bg;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 2rem;
+
+  .resumen-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid $bg-light;
+
+    h2 {
+      font-size: 1.25rem;
+      color: $text-primary;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin: 0;
+
+      i {
+        color: $primary;
+      }
+    }
+
+    .fecha-generacion {
+      color: $text-secondary;
+      font-size: 0.9rem;
+
+      i {
+        margin-right: 0.25rem;
+      }
+    }
+  }
+
+  .filtros-aplicados {
+    margin-bottom: 1.5rem;
+
+    h3 {
+      font-size: 1rem;
+      color: $text-primary;
+      margin-bottom: 0.75rem;
+    }
+
+    .filtros-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      padding: 0.5rem 1rem;
+      background: $bg-light;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      color: $text-primary;
+
+      i {
+        color: $primary;
+      }
+    }
+  }
+
+  .estadisticas {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .stat-card {
+    background: $bg-light;
+    padding: 1.25rem;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+
+    i {
+      font-size: 2rem;
+      color: $primary;
+    }
+
+    .stat-content {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .stat-label {
+      font-size: 0.85rem;
+      color: $text-secondary;
+    }
+
+    .stat-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: $text-primary;
+    }
+
+    &.total {
+      i {
+        color: $success;
+      }
+
+      .stat-value {
+        color: $success;
+      }
+    }
+  }
+
+  .descarga-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+  }
+}
+
+// Tabla
+.tabla-card {
+  background: $card-bg;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+  .tabla-header {
+    margin-bottom: 1rem;
+
+    h2 {
+      font-size: 1.25rem;
+      color: $text-primary;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin: 0;
+
+      i {
+        color: $primary;
+      }
+    }
+  }
+
+  .tabla-wrapper {
+    overflow-x: auto;
+  }
+
+  .tabla-pedidos {
+    width: 100%;
+    border-collapse: collapse;
+
+    thead {
+      background: $bg-light;
+
+      th {
+        padding: 1rem;
+        text-align: left;
+        font-weight: 600;
+        color: $text-primary;
+        font-size: 0.9rem;
+        white-space: nowrap;
+      }
+    }
+
+    tbody {
+      tr {
+        border-bottom: 1px solid $bg-light;
+        transition: background 0.2s;
+
+        &:hover {
+          background: rgba($primary, 0.05);
+        }
+
+        td {
+          padding: 1rem;
+          color: $text-primary;
+          font-size: 0.9rem;
+
+          &.precio {
+            font-weight: 600;
+            color: $success;
+          }
+
+          &.detalles-cell {
+            max-width: 200px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+          }
+        }
+      }
+    }
+  }
+
+  .badge-estado,
+  .badge-pago {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+
+  .badge-estado {
+    &.pendiente {
+      background: rgba($warning, 0.2);
+      color: darken($warning, 20%);
+    }
+
+    &.en-proceso {
+      background: rgba($secondary, 0.2);
+      color: darken($secondary, 30%);
+    }
+
+    &.listo {
+      background: rgba($primary, 0.2);
+      color: darken($primary, 20%);
+    }
+
+    &.entregado {
+      background: rgba($success, 0.2);
+      color: darken($success, 20%);
+    }
+  }
+
+  .badge-pago {
+    &.completado {
+      background: rgba($success, 0.2);
+      color: darken($success, 20%);
+    }
+
+    &.pendiente {
+      background: rgba($danger, 0.2);
+      color: darken($danger, 20%);
+    }
+  }
+
+  .btn-icon {
+    background: $primary;
+    color: white;
+    border: none;
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s;
+
+    &:hover {
+      background: darken($primary, 10%);
+      transform: scale(1.1);
+    }
+  }
+}
+
+// Sin resultados
+.sin-resultados {
+  text-align: center;
+  padding: 3rem;
+  background: $card-bg;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+  i {
+    font-size: 4rem;
+    color: $text-secondary;
+    margin-bottom: 1rem;
+  }
+
+  h3 {
+    color: $text-primary;
+    margin-bottom: 0.5rem;
+  }
+
+  p {
+    color: $text-secondary;
+  }
+}
+
+// Responsive
+@media (max-width: 768px) {
+  .reporte-container {
+    padding: 1rem;
+  }
+
+  .filtros-grid,
+  .opciones-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .estadisticas {
+    grid-template-columns: 1fr;
+  }
+
+  .filtros-actions,
+  .descarga-actions {
+    flex-direction: column;
+
+    .btn {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+}

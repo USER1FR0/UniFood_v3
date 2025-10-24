@@ -87,21 +87,4 @@ export class AuthService {
     }
     return null;
   }
-
-  // AL FINAL DE LA CLASE AuthService, agregar:
-
-// Método para debug
-verificarEstadoAuth(): void {
-  const token = localStorage.getItem('token');
-  const usuario = localStorage.getItem('usuario');
-  
-  console.log('📊 Estado de autenticación:');
-  console.log('  - Token en localStorage:', token ? 'SÍ' : 'NO');
-  console.log('  - Usuario en localStorage:', usuario ? 'SÍ' : 'NO');
-  console.log('  - Token completo:', token);
-  
-  if (usuario) {
-    console.log('  - Usuario:', JSON.parse(usuario));
-  }
-}
 }

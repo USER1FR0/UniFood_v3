@@ -50,12 +50,6 @@ export class ClientePedidoComponent implements OnInit {
 
     if (this.carritosPorArea.length === 0) {
       this.areaSeleccionada = null;
-      Swal.fire({
-        icon: 'info',
-        title: 'Carrito vacío',
-        text: 'Agrega productos para continuar',
-        confirmButtonColor: '#5B9A97',
-      });
       return;
     } else if (this.carritosPorArea.length === 1) {
       this.areaSeleccionada = this.carritosPorArea[0];

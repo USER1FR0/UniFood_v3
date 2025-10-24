@@ -11,7 +11,11 @@ import { ListaVendedoresComponent } from './components/lista-vendedores/lista-ve
 import { CrearVendedorComponent } from './components/crear-vendedor/crear-vendedor.component';
 import { ClienteLayoutComponent } from './components/layouts/cliente-layout/cliente-layout.component';
 import { VendedorLayoutComponent } from './components/layouts/vendedor-layout/vendedor-layout.component';
+<<<<<<< HEAD
 import { ChatComponent } from './components/chat/chat.component';
+=======
+import { ReportePedidoComponent } from './components/reporte-pedido/reporte-pedido.component';
+>>>>>>> 8e1e7b2 (feat/ Generar Reportes de pedidos)
 
 export const routes: Routes = [
   { path: '', redirectTo: 'lista-vendedores', pathMatch: 'full' },
@@ -24,7 +28,7 @@ export const routes: Routes = [
   {
     path: 'cliente',
     canActivate: [clienteGuard],
-    component: ClienteLayoutComponent, 
+    component: ClienteLayoutComponent,
     children: [
       { path: '', redirectTo: 'carrito', pathMatch: 'full' },
       { path: 'carrito', component: ClientePedidoComponent },
@@ -35,20 +39,25 @@ export const routes: Routes = [
   {
     path: 'vendedor',
     canActivate: [vendedorGuard],
-    component: VendedorLayoutComponent, 
+    component: VendedorLayoutComponent,
     children: [
       { path: '', redirectTo: 'pedidos', pathMatch: 'full' },
       { path: 'pedidos', component: VendedorPedidoComponent },
       { path: 'lista-vendedores', component: ListaVendedoresComponent },
+<<<<<<< HEAD
        { path: 'borrar', component: BorrarComponent },
        {path: 'chat', component: ChatComponent},
+=======
+      { path: 'borrar', component: BorrarComponent },
+      { path: 'reportes', component: ReportePedidoComponent },
+>>>>>>> 8e1e7b2 (feat/ Generar Reportes de pedidos)
     ],
   },
 
   // ========== SUPERVISOR ==========
   {
     path: 'supervisor',
-    component: VendedorLayoutComponent, 
+    component: VendedorLayoutComponent,
     children: [
       { path: '', redirectTo: 'lista-vendedores', pathMatch: 'full' },
       { path: 'lista-vendedores', component: ListaVendedoresComponent },

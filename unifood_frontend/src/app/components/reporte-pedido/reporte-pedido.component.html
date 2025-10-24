@@ -1,0 +1,315 @@
+<div class="reporte-container">
+  <!-- Header -->
+  <div class="reporte-header">
+    <div class="header-content">
+      <h2><i class="fas fa-chart-line"></i> Reportes de Pedidos</h2>
+      <p class="subtitle">
+        Area de Venta: <strong>{{ areaVenta }}</strong>
+        <br>
+        <span class="badge-rol" [class.supervisor]="esSupervisor">{{
+          rolUsuario
+        }}</span>
+      </p>
+    </div>
+  </div>
+
+  <!-- Filtros -->
+  <div class="filtros-card">
+    <div class="card-header">
+      <i class="fas fa-filter"></i>
+      <h2>Filtros de Búsqueda</h2>
+    </div>
+
+    <div class="filtros-grid">
+      <!-- Rango de fechas -->
+      <div class="filtro-group">
+        <label><i class="fas fa-calendar"></i> Fecha Inicio:</label>
+        <input
+          type="date"
+          [(ngModel)]="filtros.fecha_inicio"
+          class="input-field"
+        />
+      </div>
+
+      <div class="filtro-group">
+        <label><i class="fas fa-calendar"></i> Fecha Fin:</label>
+        <input
+          type="date"
+          [(ngModel)]="filtros.fecha_fin"
+          class="input-field"
+        />
+      </div>
+
+      <!-- Método de pago -->
+      <div class="filtro-group">
+        <label><i class="fas fa-credit-card"></i> Método de Pago:</label>
+        <select [(ngModel)]="filtros.pago_metodo_id" class="input-field">
+          <option [value]="undefined">Todos</option>
+          <option *ngFor="let metodo of metodosPago" [value]="metodo.id">
+            {{ metodo.pago_metodo }}
+          </option>
+        </select>
+      </div>
+
+      <!-- Estado del pedido -->
+      <div class="filtro-group">
+        <label><i class="fas fa-info-circle"></i> Estado del Pedido:</label>
+        <select [(ngModel)]="filtros.pedido_estado_id" class="input-field">
+          <option [value]="undefined">Todos</option>
+          <option *ngFor="let estado of estadosPedido" [value]="estado.id">
+            {{ estado.estado }}
+          </option>
+        </select>
+      </div>
+
+      <!-- Área de venta (solo para supervisor) -->
+      <div class="filtro-group" *ngIf="esSupervisor">
+        <label><i class="fas fa-store"></i> Área de Venta:</label>
+        <select [(ngModel)]="filtros.area_venta_id" class="input-field">
+          <option [value]="undefined">Todas</option>
+          <option *ngFor="let area of areasVenta" [value]="area.id">
+            {{ area.area_venta }}
+          </option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Opciones de campos -->
+    <div class="opciones-section">
+      <h3><i class="fas fa-cog"></i> Campos Opcionales</h3>
+      <div class="opciones-grid">
+        <label class="checkbox-label">
+          <input
+            type="checkbox"
+            [(ngModel)]="opciones.incluir_nombre_cliente"
+          />
+          <span>Nombre del cliente</span>
+        </label>
+        <label class="checkbox-label">
+          <input
+            type="checkbox"
+            [(ngModel)]="opciones.incluir_correo_cliente"
+          />
+          <span>Correo del cliente</span>
+        </label>
+        <label class="checkbox-label">
+          <input
+            type="checkbox"
+            [(ngModel)]="opciones.incluir_telefono_cliente"
+          />
+          <span>Teléfono del cliente</span>
+        </label>
+        <label class="checkbox-label">
+          <input
+            type="checkbox"
+            [(ngModel)]="opciones.incluir_detalles_pedido"
+          />
+          <span>Detalles del pedido</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Botones de acción -->
+    <div class="filtros-actions">
+      <button
+        class="btn btn-secondary"
+        (click)="limpiarFiltros()"
+        [disabled]="cargando"
+      >
+        <i class="fas fa-eraser"></i>
+        Limpiar
+      </button>
+      <button
+        class="btn btn-primary"
+        (click)="generarReporte()"
+        [disabled]="cargando"
+      >
+        <i class="fas fa-search" *ngIf="!cargando"></i>
+        <i class="fas fa-spinner fa-spin" *ngIf="cargando"></i>
+        {{ cargando ? "Generando..." : "Generar Reporte" }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Resumen del reporte -->
+  <div class="resumen-card" *ngIf="reporteGenerado">
+    <div class="resumen-header">
+      <h2><i class="fas fa-file-alt"></i> Resumen del Ventas</h2>
+      <span class="fecha-generacion">
+        <i class="fas fa-clock"></i>
+        {{ obtenerFechaActual() }}
+      </span>
+    </div>
+
+    <div class="resumen-content">
+      <div class="filtros-aplicados">
+        <h3>Filtros Aplicados:</h3>
+        <div class="filtros-tags">
+          <span class="tag" *ngIf="filtros.fecha_inicio">
+            <i class="fas fa-calendar"></i>
+            Del: {{ filtros.fecha_inicio }}
+          </span>
+          <span class="tag" *ngIf="filtros.fecha_fin">
+            <i class="fas fa-calendar"></i>
+            Al: {{ filtros.fecha_fin }}
+          </span>
+          <span class="tag" *ngIf="filtros.pago_metodo_id">
+            <i class="fas fa-credit-card"></i>
+            {{ nombreMetodoFiltrado }}
+          </span>
+          <span class="tag" *ngIf="filtros.pedido_estado_id">
+            <i class="fas fa-info-circle"></i>
+            {{ nombreEstadoFiltrado }}
+          </span>
+          <span class="tag" *ngIf="filtros.area_venta_id">
+            <i class="fas fa-store"></i>
+            {{ obtenerNombreArea(filtros.area_venta_id) }}
+          </span>
+          <span
+            class="tag"
+            *ngIf="
+              !filtros.fecha_inicio &&
+              !filtros.fecha_fin &&
+              !filtros.pago_metodo_id &&
+              !filtros.pedido_estado_id &&
+              !filtros.area_venta_id
+            "
+          >
+            <i class="fas fa-globe"></i>
+            Sin filtros (todos los pedidos)
+          </span>
+        </div>
+      </div>
+
+      <div class="estadisticas">
+        <div class="stat-card">
+          <i class="fas fa-receipt"></i>
+          <div class="stat-content">
+            <span class="stat-label">Total de Pedidos</span>
+            <span class="stat-value">{{ pedidos.length }}</span>
+          </div>
+        </div>
+        <div class="stat-card total">
+          <i class="fas fa-dollar-sign"></i>
+          <div class="stat-content">
+            <span class="stat-label">Total de Ventas</span>
+            <span class="stat-value">${{ totalVentas.toFixed(2) }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Botones de descarga -->
+    <div class="descarga-actions">
+      <button
+        class="btn btn-success"
+        (click)="descargarCSV()"
+        [disabled]="pedidos.length === 0"
+      >
+        <i class="fas fa-file-csv"></i>
+        Descargar CSV
+      </button>
+      <button
+        class="btn btn-excel"
+        (click)="descargarExcel()"
+        [disabled]="pedidos.length === 0"
+      >
+        <i class="fas fa-file-excel"></i>
+        Descargar Excel
+      </button>
+    </div>
+  </div>
+
+  <!-- Tabla de resultados -->
+  <div class="tabla-card" *ngIf="reporteGenerado && pedidos.length > 0">
+    <div class="tabla-header">
+      <h2><i class="fas fa-table"></i> Pedidos Encontrados</h2>
+    </div>
+
+    <div class="tabla-wrapper">
+      <table class="tabla-pedidos">
+        <thead>
+          <tr>
+            <th>Código</th>
+            <th>Fecha Registro</th>
+            <th>Fecha Entrega</th>
+            <th>Total</th>
+            <th>Estado Pedido</th>
+            <th>Estado Pago</th>
+            <th *ngIf="opciones.incluir_nombre_cliente">Cliente</th>
+            <th *ngIf="opciones.incluir_correo_cliente">Correo</th>
+            <th *ngIf="opciones.incluir_telefono_cliente">Teléfono</th>
+            <th *ngIf="opciones.incluir_detalles_pedido">Detalles</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let pedido of pedidos">
+            <td>
+              <strong>{{ pedido.codigo }}</strong>
+            </td>
+            <td>{{ formatearFecha(pedido.fecha_registro) }}</td>
+            <td>
+              {{
+                pedido.fecha_entrega
+                  ? formatearFecha(pedido.fecha_entrega)
+                  : "N/A"
+              }}
+            </td>
+            <td class="precio">
+              ${{ pedido.total_pedido | number : "1.2-2" }}
+            </td>
+            <td>
+              <span
+                class="badge-estado"
+                [class.pendiente]="pedido.pedido_estado_id === 1"
+                [class.en-proceso]="pedido.pedido_estado_id === 2"
+                [class.listo]="pedido.pedido_estado_id === 3"
+                [class.entregado]="pedido.pedido_estado_id === 4"
+              >
+                {{ pedido.pedido_estado?.estado || "N/A" }}
+              </span>
+            </td>
+            <td>
+              <span
+                class="badge-pago"
+                [class.completado]="pedido.pagos?.[0]?.pago_estado_id === 1"
+                [class.pendiente]="pedido.pagos?.[0]?.pago_estado_id === 2"
+              >
+                {{ pedido.pagos?.[0]?.pago_estado?.pago_estado || 'N/A' }}
+              </span>
+            </td>
+            <td *ngIf="opciones.incluir_nombre_cliente">
+              {{ pedido.cliente?.nombre_completo || "N/A" }}
+            </td>
+            <td *ngIf="opciones.incluir_correo_cliente">
+              {{ pedido.cliente?.usuario?.correo_electronico || "N/A" }}
+            </td>
+            <td *ngIf="opciones.incluir_telefono_cliente">
+              {{ pedido.cliente?.telefono || "N/A" }}
+            </td>
+            <td *ngIf="opciones.incluir_detalles_pedido" class="detalles-cell">
+              {{ pedido.detalles_pedido || "N/A" }}
+            </td>
+            <td>
+              <button
+                class="btn-icon"
+                (click)="descargarTicket(pedido)"
+                title="Descargar ticket"
+              >
+                <i class="fas fa-download"></i>
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Mensaje sin resultados -->
+  <div class="sin-resultados" *ngIf="reporteGenerado && pedidos.length === 0">
+    <i class="fas fa-inbox"></i>
+    <h3>No se encontraron pedidos</h3>
+    <p>Intenta ajustar los filtros de búsqueda</p>
+  </div>
+</div>

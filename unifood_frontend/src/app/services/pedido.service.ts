@@ -15,6 +15,13 @@ import {
   CarritoPorArea,
   Producto,
   AgregarCarritoDto,
+  CatalogoMetodoPago,
+  CatalogoEstadoPedido,
+  CatalogoAreaVenta,
+  FiltrosReporte,
+  OpcionesReporte,
+  ReporteResponse,
+  OpcionesTicket,
 } from '../models/pedido.model';
 
 @Injectable({
@@ -272,7 +279,6 @@ export class PedidoService {
       .pipe(
         map((response) => response.disponible),
         catchError((err) => {
-          console.error('Error al verificar microservicio:', err);
           return of(false);
         })
       );
@@ -292,5 +298,37 @@ export class PedidoService {
 
     // Guardar en localStorage
     localStorage.setItem('carrito', JSON.stringify(itemsRestantes));
+  }
+
+  //Funciones para reportes
+  // Obtener catálogos
+  obtenerCatalogosReportes(): Observable<{
+    metodosPago: CatalogoMetodoPago[];
+    estadosPedido: CatalogoEstadoPedido[];
+    areasVenta: CatalogoAreaVenta[];
+  }> {
+    return this.http.get<any>(`${this.apiUrl}/catalogos-reportes`);
+  }
+
+  // Generar reporte
+  generarReporte(
+    filtros: FiltrosReporte,
+    opciones: OpcionesReporte
+  ): Observable<ReporteResponse> {
+    return this.http.post<ReporteResponse>(`${this.apiUrl}/reporte`, {
+      filtros,
+      opciones,
+    });
+  }
+
+  // Generar ticket
+  generarTicket(
+    pedidoId: number,
+    opciones: OpcionesTicket
+  ): Observable<Pedido> {
+    return this.http.post<Pedido>(
+      `${this.apiUrl}/ticket/${pedidoId}`,
+      opciones
+    );
   }
 }

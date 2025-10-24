@@ -64,7 +64,7 @@ export class VendedorPedidoComponent implements OnInit, OnDestroy {
       next: (pedidos) => {
         this.pedidosPendientes = pedidos;
       },
-      error: (err) => console.error('Error al cargar pendientes:', err),
+      error: (err) => console.error('Error al cargar pedidos w pendientes:', err),
     });
 
     // Cargar en proceso
@@ -82,7 +82,7 @@ export class VendedorPedidoComponent implements OnInit, OnDestroy {
         this.cargando = false;
       },
       error: (err) => {
-        console.error('Error al cargar listos:', err);
+        //console.error('Error al cargar listos:', err);
         this.cargando = false;
       },
     });
@@ -93,7 +93,6 @@ export class VendedorPedidoComponent implements OnInit, OnDestroy {
     // Nuevo pedido
     this.subscriptions.push(
       this.wsService.onNuevoPedido().subscribe((pedido) => {
-        console.log('🆕 Nuevo pedido recibido:', pedido);
 
         // Verificar que no exista ya en la lista
         const existe = this.pedidosPendientes.some((p) => p.id === pedido.id);
@@ -147,12 +146,11 @@ export class VendedorPedidoComponent implements OnInit, OnDestroy {
         const audio = this.audioPendiente.nativeElement;
         audio.currentTime = 0; // Reiniciar el audio
         audio.play().catch((err) => {
-          console.warn('⚠️ No se pudo reproducir el sonido:', err);
           this.reproducirSonidoAlternativo();
         });
       }
     } catch (error) {
-      console.error('❌ Error en reproducirSonido:', error);
+      console.error('Error en reproducirSonido:', error);
     }
   }
 
@@ -184,7 +182,6 @@ export class VendedorPedidoComponent implements OnInit, OnDestroy {
   }
 
   actualizarPedidoEnLista(pedido: Pedido): void {
-    console.log('🔄 Actualizando pedido en lista:', pedido);
 
     // Eliminar de todas las listas
     this.eliminarPedidoDeListas(pedido.id);
@@ -192,16 +189,19 @@ export class VendedorPedidoComponent implements OnInit, OnDestroy {
     // Agregar a la lista correspondiente según estado
     if (pedido.pedido_estado_id === 1) {
       this.pedidosPendientes.unshift(pedido); // Agregar al inicio
+      return;
     } else if (pedido.pedido_estado_id === 2) {
       this.pedidosEnProceso.unshift(pedido);
+      return;
     } else if (pedido.pedido_estado_id === 3) {
       this.pedidosListos.unshift(pedido);
+      return;
     } else if (pedido.pedido_estado_id === 4) {
       // Entregado - eliminar de todas las listas
-      console.log('✅ Pedido entregado, eliminado de listas');
+      return;
     } else if (pedido.pedido_estado_id === 5 || pedido.pedido_estado_id === 6) {
       // Cancelado o rechazado - eliminar de todas las listas
-      console.log('❌ Pedido cancelado/rechazado, eliminado de listas');
+      return;
     }
   }
 
@@ -512,7 +512,6 @@ export class VendedorPedidoComponent implements OnInit, OnDestroy {
     // Actualizar pedidos cada 30 segundos como respaldo
     this.pollingInterval = setInterval(() => {
       if (!this.cargando) {
-        console.log('🔄 Actualizando pedidos (polling)...');
         this.cargarPedidos();
       }
     }, 300000); // 30 segundos

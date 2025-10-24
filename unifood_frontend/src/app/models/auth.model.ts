@@ -10,9 +10,16 @@ export interface LoginResponse {
 
 export interface Usuario {
   id: number;
-  id_rol: number | null;  // ← Agregar esta línea
+  id_rol: number | null;
   correo: string;
-  rol: 'supervisor' | 'vendedor' | 'cliente';
+  rol: string;
+  nombre_completo?: string;
+  telefono?: string;
+  area_venta_id?: number;
+  area_venta: {
+    id: number;
+    area_venta: string;
+  };
 }
 
 export interface JwtPayload {
