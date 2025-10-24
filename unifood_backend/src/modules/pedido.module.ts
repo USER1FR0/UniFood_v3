@@ -6,7 +6,8 @@ import { PedidosService } from "src/services/pedido.service";
 import { PedidoGateway } from "src/gateways/pedido.gateway";
 import { PagosClient } from "src/clients/pagos.client";
 import { ComunicacionClient } from "src/clients/comunicacion.client";
-import { Prisma, PrismaClient } from "generated/prisma";
+import { PrismaClient } from "@prisma/client";
+
 
 
 

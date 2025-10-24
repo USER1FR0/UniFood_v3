@@ -1,11 +1,12 @@
 import { Component, OnInit } from '@angular/core';
 import { RouterOutlet, Router } from '@angular/router';
 import { AuthService } from './services/auth.service';
+import { ChatFloatComponent } from './components/chat-float/chat-float.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet],
+  imports: [RouterOutlet, ChatFloatComponent],
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],
 })

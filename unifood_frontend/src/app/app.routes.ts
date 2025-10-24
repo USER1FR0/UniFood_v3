@@ -11,6 +11,7 @@ import { ListaVendedoresComponent } from './components/lista-vendedores/lista-ve
 import { CrearVendedorComponent } from './components/crear-vendedor/crear-vendedor.component';
 import { ClienteLayoutComponent } from './components/layouts/cliente-layout/cliente-layout.component';
 import { VendedorLayoutComponent } from './components/layouts/vendedor-layout/vendedor-layout.component';
+import { ChatComponent } from './components/chat/chat.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'lista-vendedores', pathMatch: 'full' },
@@ -40,6 +41,7 @@ export const routes: Routes = [
       { path: 'pedidos', component: VendedorPedidoComponent },
       { path: 'lista-vendedores', component: ListaVendedoresComponent },
        { path: 'borrar', component: BorrarComponent },
+       {path: 'chat', component: ChatComponent},
     ],
   },
 

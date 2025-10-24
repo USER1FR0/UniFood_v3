@@ -8,6 +8,7 @@ import { ConfigModule } from '@nestjs/config';
 import { authModule } from './modules/auth.module';
 import { PrismaModule } from './modules/prisma.module';
 import { PedidosModule } from './modules/pedido.module';
+import { ChatModule } from './modules/chat.module';
 
 @Module({
   imports: [
@@ -19,7 +20,8 @@ import { PedidosModule } from './modules/pedido.module';
     RecursoModule, // Ejemplo de módulo importado
     VendedoresModule,
     PrismaModule,
-    PedidosModule
+    PedidosModule,
+    ChatModule,
   ],
   controllers: [AppController],
   providers: [AppService],
