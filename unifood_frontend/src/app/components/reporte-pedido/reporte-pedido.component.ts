@@ -73,7 +73,11 @@ export class ReportePedidoComponent implements OnInit {
         usuario.nombre_completo || usuario.correo.split('@')[0];
       this.rolUsuario = usuario.rol;
       this.esSupervisor = usuario.rol === 'supervisor';
-      this.areaVenta = usuario.area_venta.area_venta;
+      if (usuario.area_venta){
+      this.areaVenta = usuario.area_venta.area_venta || 'Supervision';
+      }else{
+        this.areaVenta='Supervision'
+      }
     }
   }
 

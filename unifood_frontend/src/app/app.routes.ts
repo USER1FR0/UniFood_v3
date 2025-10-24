@@ -45,8 +45,8 @@ export const routes: Routes = [
       { path: '', redirectTo: 'pedidos', pathMatch: 'full' },
       { path: 'pedidos', component: VendedorPedidoComponent },
       { path: 'lista-vendedores', component: ListaVendedoresComponent },
-       { path: 'borrar', component: BorrarComponent },
-       {path: 'chat', component: ChatComponent},
+      { path: 'borrar', component: BorrarComponent },
+      { path: 'chat', component: ChatComponent },
       { path: 'reportes', component: ReportePedidoComponent },
     ],
   },
@@ -60,8 +60,7 @@ export const routes: Routes = [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
       { path: 'lista-vendedores', component: ListaVendedoresComponent },
       { path: 'reportes', component: ReportePedidoComponent },
-            { path: 'dashboard', component: SupervisorDashboardComponent },
-
+      { path: 'dashboard', component: SupervisorDashboardComponent },
     ],
   },
 
