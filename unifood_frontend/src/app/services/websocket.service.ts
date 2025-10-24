@@ -16,13 +16,11 @@ export class WebsocketService {
 
   conectar(): void {
     if (this.conectado) {
-      console.log('🟢 WebSocket ya conectado');
       return;
     }
 
     const token = this.authService.obtenerToken();
     if (!token) {
-      console.warn('⚠️ No hay token disponible para conectar WebSocket');
       return;
     }
 
@@ -36,19 +34,17 @@ export class WebsocketService {
 
     this.socket.on('connect', () => {
       this.ngZone.run(() => {
-        //console.log('✅ WebSocket conectado:', this.socket?.id);
         this.conectado = true;
-        this.reRegisterBufferedListeners(); // 👈 reatacha todos los eventos
+        this.reRegisterBufferedListeners(); 
       });
     });
 
     this.socket.on('disconnect', (reason) => {
-      console.warn('🔴 WebSocket desconectado:', reason);
       this.conectado = false;
     });
 
     this.socket.on('connect_error', (err) =>
-      console.error('❌ Error al conectar WebSocket:', err)
+      console.error('Error al conectar WebSocket:', err)
     );
   }
 
@@ -56,7 +52,6 @@ export class WebsocketService {
     this.socket?.disconnect();
     this.socket = null;
     this.conectado = false;
-    console.log('🔌 WebSocket desconectado manualmente');
   }
 
   estaConectado(): boolean {
@@ -103,7 +98,6 @@ export class WebsocketService {
       this.socket.off(name); // evita duplicados
       this.socket.on(name, callback);
     }
-    console.log('🔁 Listeners restaurados después de reconexión');
   }
 
   /**
@@ -111,7 +105,7 @@ export class WebsocketService {
    */
   emit(evento: string, data?: any): void {
     if (!this.socket) {
-      console.warn('⚠️ No se puede emitir, socket no conectado');
+      console.warn('No se puede emitir, socket no conectado (f5)');
       return;
     }
     this.socket.emit(evento, data);
@@ -146,12 +140,10 @@ export class WebsocketService {
 
   suscribirPedido(pedidoId: number) {
     this.emit('suscribirPedido', pedidoId);
-    console.log(`📌 Suscrito al pedido ${pedidoId}`);
   }
 
   suscribirArea(areaId: number) {
     this.emit('suscribirArea', areaId);
-    console.log(`📌 Suscrito al área ${areaId}`);
   }
 
   /**
@@ -159,11 +151,9 @@ export class WebsocketService {
    */
   suscribirVendedor(payload: { areaId: number }): void {
     if (!this.socket) {
-      console.error('Socket no está conectado');
       return;
     }
 
     this.socket.emit('suscribirVendedor', payload);
-    console.log(`📌 Vendedor suscrito al área: ${payload.areaId}`);
   }
 }

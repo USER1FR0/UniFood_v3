@@ -13,6 +13,9 @@ import {
   EntregarPedidoDto,
   CalificarProductoDto,
   ProcesarPagoTarjetaDto,
+  FiltrosReporteDto,
+  OpcionesReporteDto,
+  OpcionesTicketDto,
 } from '../models/pedido.model';
 import { PedidoGateway } from './../gateways/pedido.gateway';
 
@@ -100,7 +103,6 @@ export class PedidosService {
     // Notificar por WebSocket a vendedores del área
     this.pedidoGateway.notificarNuevoPedidoCliente(pedido);
     this.pedidoGateway.notificarNuevoPedido(pedido);
-    
 
     return pedido;
   }
@@ -149,7 +151,6 @@ export class PedidosService {
       throw new BadRequestException('El pedido no tiene un total válido');
     }
 
-    console.log(`💳 Procesando pago con tarjeta para pedido ${pedido.codigo}`);
 
     // Procesar pago con el microservicio
     try {
@@ -159,8 +160,8 @@ export class PedidosService {
         tarjeta: dto.datos_tarjeta,
       });
 
-      console.log(`✅ Pago procesado exitosamente con el microservicio`);
 
+      
       // Actualizar el pago pendiente a completado
       await this.prisma.pago.update({
         where: { id: pagoPendiente.id },
@@ -170,7 +171,6 @@ export class PedidosService {
         },
       });
 
-      console.log(`✅ Pago actualizado en BD: ${pagoPendiente.id}`);
 
       // Obtener pedido actualizado con el pago completado
       const pedidoActualizado = await this.prisma.pedido.findUnique({
@@ -192,7 +192,6 @@ export class PedidosService {
       // Notificar a vendedores y cliente que el pago fue procesado
       if (pedidoActualizado) {
         this.pedidoGateway.notificarCambioPedido(pedidoActualizado);
-        console.log(`🔔 Notificación de pago procesado enviada`);
       }
 
       return {
@@ -201,7 +200,6 @@ export class PedidosService {
         transaccion: resultadoPago,
       };
     } catch (error) {
-      console.error(`❌ Error al procesar el pago:`, error);
 
       // Opcional: Marcar el pago como fallido
       await this.prisma.pago
@@ -245,9 +243,7 @@ export class PedidosService {
 
     // Log para debugging
     if (pedidos) {
-      console.log(`📦 Pedido activo para cliente ${clienteId}`);
     } else {
-      console.log(`ℹ️ No hay pedidos activos para cliente ${clienteId}`);
     }
 
     return pedidos;
@@ -273,7 +269,6 @@ export class PedidosService {
       );
 
       if (pagoTarjetaCompletado) {
-        console.log(`🔄 Solicitando reembolso para pago ${pagoTarjetaCompletado.id}`);
         await this.pagosClient.cancelarPago(pagoTarjetaCompletado.id.toString());
 
         // Actualizar estado del pago a cancelado
@@ -439,7 +434,6 @@ export class PedidosService {
       );
 
       if (pagoTarjetaCompletado) {
-        console.log(`🔄 Solicitando reembolso para pago ${pagoTarjetaCompletado.id}`);
         await this.pagosClient.cancelarPago(pagoTarjetaCompletado.id.toString());
 
         // Actualizar estado del pago a cancelado
@@ -660,5 +654,163 @@ export class PedidosService {
       },
       orderBy: { fecha_registro: 'desc' },
     });
+  }
+
+  //Funciones necesarias para generar reportes de los pedidos
+  async obtenerCatalogosPagoYEstado() {
+    const [metodosPago, estadosPedido, areasVenta] = await Promise.all([
+      this.prisma.pago_metodo.findMany({
+        select: { id: true, pago_metodo: true },
+        orderBy: { id: 'asc' },
+      }),
+      this.prisma.pedido_estado.findMany({
+        select: { id: true, estado: true },
+        orderBy: { id: 'asc' },
+      }),
+      this.prisma.area_venta.findMany({
+        where: { status: true },
+        select: { id: true, area_venta: true },
+        orderBy: { area_venta: 'asc' },
+      }),
+    ]);
+
+    return {
+      metodosPago,
+      estadosPedido,
+      areasVenta,
+    };
+  }
+
+  // Generar reporte de pedidos
+  async generarReportePedidos(
+    filtros: FiltrosReporteDto,
+    opciones: OpcionesReporteDto,
+    vendedorId?: number,
+  ) {
+    const where: any = {};
+
+    // Filtro por rango de fechas
+    if (filtros.fecha_inicio || filtros.fecha_fin) {
+      where.fecha_registro = {};
+      if (filtros.fecha_inicio) {
+        where.fecha_registro.gte = new Date(filtros.fecha_inicio);
+      }
+      if (filtros.fecha_fin) {
+        // Agregar 1 día para incluir todo el día final
+        const fechaFin = new Date(filtros.fecha_fin);
+        fechaFin.setDate(fechaFin.getDate() + 1);
+        where.fecha_registro.lt = fechaFin;
+      }
+    }
+
+    // Filtro por método de pago
+    if (filtros.pago_metodo_id) {
+      where.pagos = {
+        some: { pago_metodo_id: Number(filtros.pago_metodo_id) },
+      };
+    }
+
+    // Filtro por estado del pedido
+    if (filtros.pedido_estado_id) {
+      where.pedido_estado_id = Number(filtros.pedido_estado_id);
+    }
+
+    // Filtro por área de venta
+    if (filtros.area_venta_id) {
+      where.area_venta_id = Number(filtros.area_venta_id);
+    }
+
+    // Si es vendedor, filtrar por su área asignada
+    if (vendedorId) {
+      const vendedorAreas = await this.prisma.vendedor_area.findMany({
+        where: {
+          vendedor_id: vendedorId,
+          estatus: true,
+        },
+        select: { area_id: true },
+      });
+
+      const areaIds = vendedorAreas.map((va) => va.area_id).filter(Boolean);
+
+      if (areaIds.length > 0) {
+        where.area_venta_id = { in: areaIds };
+      } else {
+        // Si no tiene áreas asignadas, retornar vacío
+        return { pedidos: [], totalVentas: 0 };
+      }
+    }
+
+
+    const pedidos = await this.prisma.pedido.findMany({
+      where,
+      include: {
+        cliente:
+          opciones.incluir_nombre_cliente ||
+          opciones.incluir_correo_cliente ||
+          opciones.incluir_telefono_cliente
+            ? { include: { usuario: true } }
+            : false,
+        pedido_estado: true,
+        area_venta: true,
+        pagos: {
+          include: {
+            pago_metodo: true,
+            pago_estado: true,
+          },
+          orderBy: { fecha: 'desc' },
+          take: 1, // Solo el pago más reciente
+        },
+      },
+      orderBy: { fecha_registro: 'desc' },
+    });
+
+    // Calcular total de ventas
+    const totalVentas = pedidos.reduce((sum, p) => {
+      return sum + Number(p.total_pedido || 0);
+    }, 0);
+
+
+    return {
+      pedidos,
+      totalVentas,
+    };
+  }
+
+  // Generar ticket de un pedido individual
+  async generarTicketPedido(pedidoId: number, opciones: OpcionesTicketDto) {
+    const pedido = await this.prisma.pedido.findUnique({
+      where: { id: pedidoId },
+      include: {
+        cliente: { include: { usuario: true } },
+        pedido_productos: {
+          include: {
+            producto: true,
+          },
+        },
+        area_venta: true,
+        pedido_estado: true,
+        pagos: {
+          include: {
+            pago_metodo: true,
+            pago_estado: true,
+          },
+          orderBy: { fecha: 'desc' },
+          take: 1,
+        },
+        producto_calificaciones: opciones.incluir_calificaciones
+          ? {
+              include: {
+                producto: true,
+              },
+            }
+          : false,
+      },
+    });
+
+    if (!pedido) {
+      throw new NotFoundException('Pedido no encontrado');
+    }
+
+    return pedido;
   }
 }

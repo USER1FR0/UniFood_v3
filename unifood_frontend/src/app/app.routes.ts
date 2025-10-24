@@ -27,7 +27,7 @@ export const routes: Routes = [
   {
     path: 'cliente',
     canActivate: [clienteGuard],
-    component: ClienteLayoutComponent, 
+    component: ClienteLayoutComponent,
     children: [
       { path: '', redirectTo: 'carrito', pathMatch: 'full' },
       { path: 'carrito', component: ClientePedidoComponent },
@@ -38,7 +38,7 @@ export const routes: Routes = [
   {
     path: 'vendedor',
     canActivate: [vendedorGuard],
-    component: VendedorLayoutComponent, 
+    component: VendedorLayoutComponent,
     children: [
       { path: '', redirectTo: 'pedidos', pathMatch: 'full' },
       { path: 'pedidos', component: VendedorPedidoComponent },

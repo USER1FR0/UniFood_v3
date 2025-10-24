@@ -131,3 +131,46 @@ export class AgregarCarritoDto {
   @IsOptional()
   detalles?: string;
 }
+
+//Modelos para la generacion de reportes cawn
+// ORM
+//dTO para los filtros del reporte
+// DTO para filtros de reporte
+export interface FiltrosReporteDto {
+  fecha_inicio?: string;
+  fecha_fin?: string;
+  pago_metodo_id?: number;
+  pedido_estado_id?: number;
+  area_venta_id?: number;
+}
+
+
+//Para el reporte general
+export interface OpcionesReporteDto {
+  incluir_nombre_cliente?: boolean;
+  incluir_correo_cliente?: boolean;
+  incluir_telefono_cliente?: boolean;
+  incluir_detalles_pedido?: boolean;
+}
+
+//Para cada pedido individual
+export interface OpcionesTicketDto {
+  incluir_descripcion_producto?: boolean;
+  incluir_detalles_producto?: boolean;
+  incluir_calificaciones?: boolean;
+}
+
+export interface CatalogoMetodoPago {
+  id: number;
+  pago_metodo: string;
+}
+
+export interface CatalogoEstadoPedido {
+  id: number;
+  estado: string;
+}
+
+export interface CatalogoAreaVenta {
+  id: number;
+  area_venta: string;
+}

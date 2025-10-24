@@ -11,9 +11,9 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const token = authService.obtenerToken();
   
   // Debug logs
-  //console.log('🔑 Interceptor ejecutándose');
-  //console.log('📍 URL:', req.url);
-  //console.log('🎫 Token:', token ? 'Existe' : 'No existe');
+  //console.log('Interceptor ejecutándose');
+  //console.log('URL:', req.url);
+  //console.log(' Token:', token ? 'Existe' : 'No existe');
 
   let clonedReq = req;
   

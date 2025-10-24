@@ -46,8 +46,8 @@ export class VendedorLayoutComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     const usuario = this.authService.obtenerUsuario();
-    this.nombreVendedor = usuario?.correo.split('@')[0] || 'Vendedor';
-    this.areaVendedor = 'Área 1'; // Ajustar según el área del vendedor
+    this.nombreVendedor = usuario?.nombre_completo || 'Vendedor';
+    this.areaVendedor = 'Área de Venta: ' + usuario?.area_venta.area_venta || 'Área' + usuario?.area_venta.area_venta; // Ajustar según el área del vendedor
 
     // Conectar WebSocket
     this.wsService.conectar();
@@ -77,12 +77,10 @@ export class VendedorLayoutComponent implements OnInit, OnDestroy {
     this.pedidoService.obtenerMiArea().subscribe({
       next: (response) => {
         const areaId = response.area_venta_id;
-        this.areaVendedor = `Área ${areaId}`;
+        //this.areaVendedor = `Área ${areaId}`;
         this.wsService.suscribirVendedor({ areaId });
-        console.log(`🔌 Vendedor suscrito al área ${areaId}`);
       },
       error: (err) => {
-        console.error('❌ Error al obtener área del vendedor:', err);
         // Usar área por defecto
         this.wsService.suscribirVendedor({ areaId: 1 });
       },
@@ -111,14 +109,13 @@ export class VendedorLayoutComponent implements OnInit, OnDestroy {
     const audio = new Audio('assets/sounds/notification.mp3');
     audio
       .play()
-      .catch((err) => console.log('Error al reproducir sonido:', err));
+      .catch((err) => console.error('Error al reproducir sonido:', err));
   }
 
   // ========== MÉTODOS PARA MODALES ==========
 
   abrirDetalles(pedido: Pedido): void {
     if (!pedido || !pedido.pedido_productos) {
-      console.error('❌ Pedido incompleto:', pedido);
       Swal.fire(
         'Error',
         'No se pudieron cargar los detalles del pedido',
@@ -138,7 +135,7 @@ export class VendedorLayoutComponent implements OnInit, OnDestroy {
 
   abrirRechazar(pedido: Pedido): void {
     if (!pedido) {
-      console.error('❌ Pedido no válido');
+      //console.error('Pedido no válido');
       return;
     }
     this.pedidoSeleccionado = pedido;
@@ -148,7 +145,6 @@ export class VendedorLayoutComponent implements OnInit, OnDestroy {
 
   abrirEntregar(pedido: Pedido): void {
     if (!pedido || !pedido.cliente) {
-      console.error('❌ Pedido o cliente incompleto:', pedido);
       Swal.fire('Error', 'No se puede entregar este pedido', 'error');
       return;
     }

@@ -33,14 +33,28 @@ export class authService {
 
     // Obtener el id del rol (cliente, vendedor o supervisor)
     let id_rol: number | null = null;
+    let nombre_completo: string | undefined;
+    let telefono: string | undefined;
+    let area_venta_id: number | undefined;
+    let area_venta: any | undefined;
+
     if (usuario.rol === 'cliente') {
       const cliente = await this.prisma.cliente.findFirst({
         where: { usuario_id: usuario.id },
       });
       id_rol = cliente?.id ?? null;
+      nombre_completo = cliente?.nombre_completo;
+      telefono = cliente?.telefono;
     } else if (usuario.rol === 'vendedor') {
       const vendedor = await this.prisma.vendedor.findFirst({
         where: { usuario_id: usuario.id },
+        include: {
+          vendedor_areas: {
+            where: { estatus: true },
+            include: { area_venta: true },
+            take: 1,
+          },
+        },
       });
       id_rol = vendedor?.id ?? null;
     } else if (usuario.rol === 'supervisor') {
@@ -56,6 +70,9 @@ export class authService {
       id_rol: id_rol,
       correo: usuario.correo_electronico,
       rol: usuario.rol,
+      nombre_completo,
+      telefono,
+      area_venta_id,
     };
 
     // Generar Token JWT
@@ -69,6 +86,10 @@ export class authService {
         id_rol: id_rol,
         correo: usuario.correo_electronico,
         rol: usuario.rol,
+        nombre_completo,
+        telefono,
+        area_venta_id,
+        area_venta,
       },
     };
   }
@@ -89,14 +110,27 @@ export class authService {
 
       // Obtener el id del rol (cliente, vendedor o supervisor)
       let id_rol: number | null = null;
+      let nombre_completo: string | undefined;
+      let telefono: string | undefined;
+      let area_venta_id: number | undefined;
+
       if (usuario.rol === 'cliente') {
         const cliente = await this.prisma.cliente.findFirst({
           where: { usuario_id: usuario.id },
         });
         id_rol = cliente?.id ?? null;
+        nombre_completo = cliente?.nombre_completo;
+        telefono = cliente?.telefono;
       } else if (usuario.rol === 'vendedor') {
         const vendedor = await this.prisma.vendedor.findFirst({
           where: { usuario_id: usuario.id },
+          include: {
+            vendedor_areas: {
+              where: { estatus: true },
+              include: { area_venta: true },
+              take: 1,
+            },
+          },
         });
         id_rol = vendedor?.id ?? null;
       } else if (usuario.rol === 'supervisor') {
@@ -111,6 +145,9 @@ export class authService {
         id_rol: id_rol,
         correo: usuario.correo_electronico,
         rol: usuario.rol,
+        nombre_completo,
+        telefono,
+        area_venta_id,
       };
     } catch (error) {
       throw new UnauthorizedException('Token inválido');
