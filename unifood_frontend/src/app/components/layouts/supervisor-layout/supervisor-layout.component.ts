@@ -1,14 +1,14 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { Router, RouterOutlet } from '@angular/router';
+import { Router, RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../../services/auth.service';
 import Swal from 'sweetalert2';
 
 
 @Component({
   selector: 'app-supervisor-layout',
-  imports: [RouterOutlet],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive],
   templateUrl: './supervisor-layout.component.html',
-  styleUrl: './../vendedor-layout/vendedor-layout.component.scss'
+  styleUrl: './supervisor-layout.component.scss'
 })
 export class SupervisorLayoutComponent {
 

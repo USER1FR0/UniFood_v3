@@ -7,11 +7,37 @@
         <span class="area-badge">Area de supervision</span>
       </div>
 
-      <div class="header-actions">
+      <nav class="nav-menu">
+        <button 
+          class="nav-btn" 
+          routerLink="/supervisor/dashboard" 
+          routerLinkActive="active"
+          [routerLinkActiveOptions]="{exact: false}">
+          <i class="fas fa-tachometer-alt"></i>
+          <span>Dashboard</span>
+        </button>
+        <button 
+          class="nav-btn" 
+          routerLink="/supervisor/lista-vendedores" 
+          routerLinkActive="active"
+          [routerLinkActiveOptions]="{exact: false}">
+          <i class="fas fa-store"></i>
+          <span>Vendedores</span>
+        </button>
+        <button 
+          class="nav-btn" 
+          routerLink="/supervisor/reportes" 
+          routerLinkActive="active"
+          [routerLinkActiveOptions]="{exact: false}">
+          <i class="fas fa-chart-bar"></i>
+          <span>Reportes</span>
+        </button>
+      </nav>
 
+      <div class="header-actions">
         <div class="user-menu">
           <span class="user-name"> Supervisor </span>
-          <button class="btn-logout" (click)="logout()">
+          <button class="btn-logout" (click)="logout()" title="Cerrar sesión">
             <i class="fas fa-sign-out-alt"></i>
           </button>
         </div>
