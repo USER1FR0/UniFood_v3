@@ -7,5 +7,4 @@ export const environment = {
     //wsUrl: 'http://localhost:3000'// probar en local
     wsUrl: 'http://192.168.0.112:3000'// probar en LAN
     //192.168.0.112
-
 }
