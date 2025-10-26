@@ -171,12 +171,21 @@ $danger: #E76F51;
     padding: 1rem;
   }
 
-  .logo h1 {
-    font-size: 1.2rem;
+  .nav-menu {
+    gap: 0.25rem;
   }
 
-  .user-name {
-    display: none;
+  .nav-btn {
+    padding: 0.6rem 1rem;
+    font-size: 0.85rem;
+
+    span {
+      display: none;
+    }
+
+    i {
+      font-size: 1.2rem;
+    }
   }
 
   .main-content {
