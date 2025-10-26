@@ -9,6 +9,7 @@ import {
   Min,
   IsObject,
 } from 'class-validator';
+import { Type } from 'class-transformer';
 
 // ============================================
 // ENUMS
@@ -178,19 +179,23 @@ export class FiltrosRecomendacionDto {
   @IsOptional()
   tipo?: TipoRecomendacion;
 
+  @Type(() => Boolean)
   @IsBoolean({ message: 'El estado activo debe ser un booleano' })
   @IsOptional()
   activo?: boolean;
 
+  @Type(() => Number)
   @IsInt({ message: 'El límite debe ser un número entero' })
   @Min(1, { message: 'El límite debe ser mayor a 0' })
   @IsOptional()
   limit?: number;
 
+  @Type(() => Boolean)
   @IsBoolean({ message: 'incluir_producto debe ser un booleano' })
   @IsOptional()
   incluir_producto?: boolean;
 
+  @Type(() => Boolean)
   @IsBoolean({ message: 'incluir_metricas debe ser un booleano' })
   @IsOptional()
   incluir_metricas?: boolean;

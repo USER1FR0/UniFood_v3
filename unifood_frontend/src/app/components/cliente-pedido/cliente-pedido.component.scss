@@ -14,6 +14,13 @@ $danger: #E76F51;
   margin: 0 auto;
 }
 
+// ========== SECCIÓN RECOMENDACIONES ==========
+.recomendaciones-section {
+  margin-bottom: 2rem;
+  padding-bottom: 2rem;
+  border-bottom: 2px solid rgba($text-secondary, 0.1);
+}
+
 // ========== TÍTULO SECCIÓN ==========
 .titulo-seccion {
   display: flex;

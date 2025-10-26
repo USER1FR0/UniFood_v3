@@ -11,10 +11,11 @@ import { CommonModule } from '@angular/common';
 import { RouterOutlet } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
+import { RecomendacionesHomeComponent } from '../recomendaciones-home/recomendaciones-home.component';
 
 @Component({
   selector: 'app-cliente-pedido',
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RecomendacionesHomeComponent],
   templateUrl: './cliente-pedido.component.html',
   styleUrls: ['./cliente-pedido.component.scss'],
 })

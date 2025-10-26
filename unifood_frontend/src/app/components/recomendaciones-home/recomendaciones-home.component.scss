@@ -1,31 +1,187 @@
+// Variables de colores (consistentes con el layout)
+$primary: #5B9A97;
+$secondary: #F4D8A8;
+$background: #F9F4E8;
+$card-bg: #FFFFFF;
+$text-primary: #4A5859;
+$text-secondary: #7A8A8B;
+$success: #6BBF59;
+$warning: #F4A261;
+$hot-red: #E76F51;
+
 .recomendaciones-container {
-  padding: 2rem;
-  max-width: 1400px;
-  margin: 0 auto;
-  background: #f8f9fa;
-  min-height: 100vh;
+  width: 100%;
+  background: transparent;
+  margin-bottom: 2rem;
 }
 
 // ============================================
-// HEADER
+// BANNER DE OFERTAS ESPECIALES
 // ============================================
 
-.header {
+.banner-ofertas {
+  position: relative;
+  margin-bottom: 2.5rem;
+  padding: 2.5rem 2rem;
+  background: linear-gradient(135deg, $primary 0%, darken($primary, 10%) 100%);
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba($primary, 0.3);
+  overflow: hidden;
+  animation: bannerSlideIn 0.6s ease-out;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -10%;
+    width: 300px;
+    height: 300px;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+    border-radius: 50%;
+  }
+}
+
+@keyframes bannerSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.banner-content {
+  position: relative;
+  z-index: 2;
   text-align: center;
-  margin-bottom: 3rem;
+}
 
-  .title {
-    font-size: 2.5rem;
-    font-weight: 700;
-    color: #2c3e50;
-    margin: 0 0 0.5rem;
+.banner-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1.25rem;
+  background: rgba(255, 255, 255, 0.95);
+  color: $hot-red;
+  border-radius: 50px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 1rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  animation: badgePulse 2s ease-in-out infinite;
+
+  i {
+    font-size: 1rem;
+    animation: boltShake 1s ease-in-out infinite;
+  }
+}
+
+@keyframes badgePulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+@keyframes boltShake {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-10deg); }
+  75% { transform: rotate(10deg); }
+}
+
+.banner-titulo {
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: white;
+  margin: 0 0 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.banner-subtitulo {
+  font-size: 1.1rem;
+  color: rgba(255, 255, 255, 0.95);
+  margin: 0 0 1.5rem;
+  font-weight: 400;
+}
+
+.banner-detalles {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.detalle-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: white;
+  font-size: 0.95rem;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.15);
+  padding: 0.6rem 1.2rem;
+  border-radius: 50px;
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.25);
+    transform: translateY(-2px);
   }
 
-  .subtitle {
+  i {
     font-size: 1.1rem;
-    color: #7f8c8d;
-    margin: 0;
+    color: $secondary;
   }
+}
+
+.banner-decoration {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.circle {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.circle-1 {
+  width: 120px;
+  height: 120px;
+  top: -40px;
+  left: 10%;
+  animation: float 6s ease-in-out infinite;
+}
+
+.circle-2 {
+  width: 80px;
+  height: 80px;
+  bottom: -20px;
+  right: 15%;
+  animation: float 4s ease-in-out infinite 1s;
+}
+
+.circle-3 {
+  width: 60px;
+  height: 60px;
+  top: 50%;
+  right: 5%;
+  animation: float 5s ease-in-out infinite 0.5s;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-20px); }
 }
 
 // ============================================
@@ -36,48 +192,53 @@
 .error-state,
 .empty-state {
   text-align: center;
-  padding: 4rem 2rem;
+  padding: 3rem 2rem;
+  background: $card-bg;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 
   p {
-    font-size: 1.2rem;
-    color: #7f8c8d;
+    font-size: 1.1rem;
+    color: $text-secondary;
     margin: 1rem 0;
   }
 }
 
 .spinner {
-  border: 4px solid #f3f3f3;
-  border-top: 4px solid #8b5cf6;
-  border-radius: 50%;
   width: 50px;
   height: 50px;
-  animation: spin 1s linear infinite;
-  margin: 0 auto;
+  border: 4px solid rgba($primary, 0.2);
+  border-top: 4px solid $primary;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto 1rem;
 }
 
 @keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 .retry-btn {
-  padding: 0.8rem 1.5rem;
-  background: #8b5cf6;
+  padding: 0.75rem 1.75rem;
+  background: $primary;
   color: white;
   border: none;
   border-radius: 8px;
   font-size: 1rem;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
+  text-transform: uppercase;
 
   &:hover {
-    background: #7c3aed;
+    background: darken($primary, 8%);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+    box-shadow: 0 4px 12px rgba($primary, 0.3);
+  }
+
+  i {
+    margin-right: 0.5rem;
   }
 }
 
@@ -90,160 +251,314 @@
 }
 
 .seccion-header {
-  border-left: 4px solid #8b5cf6;
-  padding-left: 1rem;
-  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.75rem;
+  padding: 1.25rem 1.5rem;
+  background: $card-bg;
+  border-radius: 14px;
+  border-left: 5px solid $primary;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: translateX(5px);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+  }
 
   .seccion-titulo {
-    font-size: 1.8rem;
-    font-weight: 600;
-    color: #2c3e50;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: $text-primary;
     margin: 0;
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
 
-    .icono {
-      font-size: 2rem;
+.badge-tipo {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: $primary;
+    color: white;
+    box-shadow: 0 3px 12px rgba($primary, 0.35);
+    transition: all 0.3s ease;
+
+    i {
+      font-size: 1.3rem;
     }
+  }
   }
 }
 
 // ============================================
-// CARRUSEL DE PRODUCTOS
+// GRID DE PRODUCTOS - ESTILO E-COMMERCE
 // ============================================
 
 .productos-carrusel {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1.5rem;
-  padding: 1rem 0;
+  gap: 1.75rem;
 }
 
 // ============================================
-// TARJETA DE PRODUCTO
+// TARJETA DE PRODUCTO - ESTILO SUBWAY/COMERCIAL
 // ============================================
 
 .producto-card {
-  background: white;
-  border-radius: 12px;
+  background: $card-bg;
+  border-radius: 18px;
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.09);
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
+  position: relative;
+  border: 2px solid transparent;
 
   &:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    transform: translateY(-10px) scale(1.02);
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.16);
+    border-color: $primary;
+
+    .producto-imagen {
+      &::after {
+        opacity: 0.2;
+      }
+
+      img {
+        transform: scale(1.1);
+      }
+    }
+
+    .btn-agregar {
+      background: darken($success, 8%);
+      transform: scale(1.08);
+      box-shadow: 0 6px 16px rgba($success, 0.45);
+    }
   }
 }
 
 .producto-imagen {
   position: relative;
   width: 100%;
-  height: 200px;
+  height: 220px;
   overflow: hidden;
-  background: #e9ecef;
+  background: linear-gradient(135deg, rgba($secondary, 0.2) 0%, rgba($primary, 0.1) 100%);
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(to bottom, transparent 50%, rgba(0,0,0,0.4) 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
 
   img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform 0.3s ease;
+    transition: transform 0.4s ease;
   }
 
-  &:hover img {
-    transform: scale(1.1);
-  }
-
-  .tipo-badge {
+  // Badge circular de precio/oferta (estilo Subway)
+  .badge-precio-circular {
     position: absolute;
-    top: 10px;
-    right: 10px;
-    padding: 0.5rem;
+    top: 16px;
+    left: 16px;
+    width: 70px;
+    height: 70px;
     border-radius: 50%;
-    font-size: 1.5rem;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-    animation: pulse 2s infinite;
+    background: linear-gradient(135deg, $success 0%, darken($success, 8%) 100%);
+    color: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    box-shadow: 0 5px 16px rgba(0, 0, 0, 0.3);
+    z-index: 2;
+    animation: badge-pulse 2.5s infinite;
+    border: 3px solid white;
+
+    .precio-numero {
+      font-size: 1.6rem;
+      line-height: 1;
+      margin-bottom: 2px;
+    }
+
+    .precio-moneda {
+      font-size: 0.65rem;
+      opacity: 0.95;
+      font-weight: 600;
+    }
   }
 
-  .prioridad-badge {
+  // Badge de "HOT" o tipo
+  .badge-hot {
     position: absolute;
-    top: 10px;
-    left: 10px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    top: 15px;
+    right: 15px;
+    padding: 0.4rem 1rem;
+    background: $hot-red;
     color: white;
-    padding: 0.3rem 0.8rem;
-    border-radius: 20px;
+    border-radius: 50px;
     font-size: 0.75rem;
     font-weight: 700;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    box-shadow: 0 2px 8px rgba($hot-red, 0.4);
+    z-index: 2;
+  }
+
+  // Badge de prioridad TOP
+  .badge-top {
+    position: absolute;
+    bottom: 15px;
+    left: 15px;
+    padding: 0.35rem 0.85rem;
+    background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+    color: #333;
+    border-radius: 50px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 8px rgba(255, 215, 0, 0.5);
+    z-index: 2;
   }
 }
 
-@keyframes pulse {
-  0%, 100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.1);
-  }
+@keyframes badge-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
 }
 
 .producto-info {
-  padding: 1.2rem;
+  padding: 1.25rem;
 
   .producto-nombre {
-    font-size: 1.2rem;
-    font-weight: 600;
-    color: #2c3e50;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: $text-primary;
     margin: 0 0 0.5rem;
     overflow: hidden;
     text-overflow: ellipsis;
-    white-space: nowrap;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    min-height: 2.8em;
+    line-height: 1.4;
   }
 
   .producto-descripcion {
-    font-size: 0.9rem;
-    color: #7f8c8d;
-    margin: 0 0 0.8rem;
+    font-size: 0.875rem;
+    color: $text-secondary;
+    margin: 0 0 1rem;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
-    min-height: 2.6em;
+    min-height: 2.5em;
+    line-height: 1.4;
   }
 
+  // Categoría con icono
   .producto-categoria {
-    display: inline-block;
-    background: #e9ecef;
-    color: #495057;
-    padding: 0.3rem 0.8rem;
-    border-radius: 20px;
-    font-size: 0.85rem;
-    margin-bottom: 0.8rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: rgba($primary, 0.1);
+    color: $primary;
+    padding: 0.35rem 0.85rem;
+    border-radius: 50px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+
+    i {
+      font-size: 0.9rem;
+    }
   }
 
+  // Métricas (ventas y calificación)
   .producto-metricas {
     display: flex;
-    gap: 1rem;
-    margin-bottom: 0.8rem;
-    flex-wrap: wrap;
+    gap: 1.25rem;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid rgba($text-secondary, 0.08);
 
     .metrica {
       display: flex;
       align-items: center;
-      gap: 0.3rem;
-      font-size: 0.85rem;
-      color: #6c757d;
+      gap: 0.4rem;
+      font-size: 0.875rem;
+      color: $text-secondary;
+      font-weight: 600;
+
+      i {
+        font-size: 1rem;
+        color: $primary;
+      }
+
+      .star-icon {
+        color: $warning;
+      }
     }
   }
 
+  // Precio destacado
   .producto-precio {
-    font-size: 1.5rem;
+    font-size: 2rem;
+    font-weight: 800;
+    color: $primary;
+    margin: 0 0 1rem;
+    letter-spacing: -0.5px;
+  }
+
+  // Botón de agregar (estilo Subway)
+  .btn-agregar {
+    width: 100%;
+    padding: 0.85rem;
+    background: $success;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
     font-weight: 700;
-    color: #8b5cf6;
-    margin-top: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 3px 8px rgba($success, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+
+    i {
+      font-size: 1.1rem;
+    }
+
+    &:hover {
+      background: darken($success, 5%);
+      transform: translateY(-2px);
+      box-shadow: 0 5px 12px rgba($success, 0.4);
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
   }
 }
 
@@ -253,30 +568,79 @@
 
 @media (max-width: 1200px) {
   .productos-carrusel {
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
   }
 }
 
 @media (max-width: 768px) {
   .recomendaciones-container {
-    padding: 1rem;
+    margin-bottom: 1.5rem;
   }
 
-  .header .title {
-    font-size: 2rem;
+  .banner-ofertas {
+    padding: 2rem 1.5rem;
+    margin-bottom: 2rem;
   }
 
-  .header .subtitle {
+  .banner-titulo {
+    font-size: 1.75rem;
+  }
+
+  .banner-subtitulo {
     font-size: 1rem;
   }
 
-  .productos-carrusel {
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  .banner-detalles {
     gap: 1rem;
   }
 
-  .seccion-header .seccion-titulo {
-    font-size: 1.5rem;
+  .detalle-item {
+    font-size: 0.85rem;
+    padding: 0.5rem 1rem;
+  }
+
+  .productos-carrusel {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 1.25rem;
+  }
+
+  .seccion-header {
+    padding: 0.85rem 1rem;
+
+    .seccion-titulo {
+      font-size: 1.25rem;
+
+      .badge-tipo {
+        width: 36px;
+        height: 36px;
+        font-size: 1.2rem;
+      }
+    }
+  }
+
+  .producto-imagen {
+    height: 200px;
+
+    .badge-precio-circular {
+      width: 58px;
+      height: 58px;
+
+      .precio-numero {
+        font-size: 1.3rem;
+      }
+    }
+  }
+
+  .producto-info {
+    padding: 1rem;
+
+    .producto-nombre {
+      font-size: 1.05rem;
+    }
+
+    .producto-precio {
+      font-size: 1.75rem;
+    }
   }
 }
 
@@ -285,8 +649,48 @@
     grid-template-columns: 1fr;
   }
 
+  .banner-ofertas {
+    padding: 1.5rem 1rem;
+  }
+
+  .banner-titulo {
+    font-size: 1.5rem;
+  }
+
+  .banner-detalles {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
   .producto-imagen {
-    height: 180px;
+    height: 240px;
   }
 }
 
+// ============================================
+// ANIMACIONES PROFESIONALES
+// ============================================
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.producto-card {
+  animation: fadeInUp 0.5s ease-out;
+  animation-fill-mode: both;
+}
+
+// Delay escalonado para las tarjetas
+.producto-card:nth-child(1) { animation-delay: 0.05s; }
+.producto-card:nth-child(2) { animation-delay: 0.1s; }
+.producto-card:nth-child(3) { animation-delay: 0.15s; }
+.producto-card:nth-child(4) { animation-delay: 0.2s; }
+.producto-card:nth-child(5) { animation-delay: 0.25s; }
+.producto-card:nth-child(6) { animation-delay: 0.3s; }
