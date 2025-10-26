@@ -8,12 +8,19 @@
       </div>
 
       <div class="header-actions">
-
         <div class="user-menu">
           <span class="user-name"> Supervisor </span>
-          <button class="btn-logout" (click)="logout()">
-            <i class="fas fa-sign-out-alt"></i>
-          </button>
+          <div class="menu-container">
+            <button class="btn-menu" (click)="abrirMenu()">
+              <i class="fas fa-bars"></i>
+            </button>
+
+            <div class="dropdown-menu" [class.open]="menuAbierto">
+              <button (click)="irADashboard()"><i class="fas fa-chart-simple"></i>&af; Dashboard</button>
+              <button (click)="irAReportes()"><i class ="fas fa-receipt"></i>&af; Reportes</button>
+              <button (click)="logout()"><i class="fas fa-sign-out-alt"></i>&af; Cerrar sesión</button>
+            </div>
+          </div>
         </div>
       </div>
     </div>

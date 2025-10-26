@@ -27,9 +27,16 @@
         <!-- Usuario -->
         <div class="user-menu">
           <span class="user-name">{{ nombreCliente }}</span>
-          <button class="btn-logout" (click)="logout()">
-            <i class="fas fa-sign-out-alt"></i>
-          </button>
+          <div class="menu-container">
+            <button class="btn-menu" (click)="abrirMenu()">
+              <i class="fas fa-bars"></i>
+            </button>
+
+            <div class="dropdown-menu" [class.open]="menuAbierto">
+              <button (click)="irAPedidos()"><i class="fas fa-chart-simple"></i>&af; Pedidos</button>
+              <button (click)="logout()"><i class="fas fa-sign-out-alt"></i>&af; Cerrar sesión</button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -49,7 +56,6 @@
   >
     <i class="fas fa-receipt"></i>
     <!--span class="badge-count">{{ pedidosActivos.length }}</!--span-->
-    <span>Mis pedidos</span>
   </button>
 
   <!-- ========== MODALES ========== -->

@@ -460,7 +460,7 @@ export class ReportePedidoComponent implements OnInit {
 
   obtenerNombreArea(id?: number): string {
     if (!id) return 'Todas';
-    const area = this.areasVenta.find((a) => a.id === id);
+    const area = this.areasVenta.find((a) => a.id.toString() === id.toString());
     return area?.area_venta || 'N/A';
   }
 }

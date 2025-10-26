@@ -24,11 +24,13 @@ import { ChatFloatComponent } from '../../chat-float/chat-float.component';
   styleUrls: ['./cliente-layout.component.scss'],
 })
 export class ClienteLayoutComponent implements OnInit, OnDestroy {
+  
   nombreCliente: string = '';
   cantidadCarrito: number = 0;
   pedidosActivos: Pedido[] = [];
   pedidoSeleccionado: Pedido | null = null;
   mostrarListaPedidos = false;
+  menuAbierto = false;
 
   //Estado pago
   estaPagado: boolean = false;
@@ -759,5 +761,13 @@ export class ClienteLayoutComponent implements OnInit, OnDestroy {
     } catch (e) {
       console.error('No se pudo reproducir sonido alternativo:', e);
     }
+  }
+
+  irAPedidos(): void {
+    this.router.navigate(['/cliente/pedidos']);
+  }
+
+   abrirMenu(){
+    this.menuAbierto = !this.menuAbierto;
   }
 }

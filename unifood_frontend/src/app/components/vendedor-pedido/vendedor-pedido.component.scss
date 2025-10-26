@@ -331,3 +331,85 @@ $listo: #27ae60;
 .fa-sync-alt{
   cursor: pointer;
 }
+
+//Menu opciones
+// ======= Botones =======
+.btn-reportes,
+.btn-logout,
+.btn-menu {
+  background: transparent;
+  border: 2px solid white;
+  padding: 0.5rem 1rem;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1rem;
+  color: $text-secondary;
+
+  i {
+    font-size: 1.1rem;
+  }
+}
+
+.btn-reportes:hover {
+  background: white;
+  color: #0bff5c;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.btn-logout:hover {
+  background: white;
+  color: #2ea4ff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.btn-menu:hover {
+  background: white;
+  color: $primary;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+// ======= Dropdown menu =======
+.menu-container {
+  position: relative;
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: 50px;
+  right: 0;
+  background: $card-bg;
+  border-radius: 10px;
+  min-width: 180px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  display: none;
+  flex-direction: column;
+  z-index: 200;
+  overflow: hidden;
+  border: 1px solid rgba($text-secondary, 0.15);
+}
+
+.dropdown-menu.open {
+  display: flex;
+}
+
+.dropdown-menu button {
+  background: none;
+  border: none;
+  text-align: left;
+  padding: 0.75rem 1rem;
+  font-size: 0.95rem;
+  color: $text-primary;
+  cursor: pointer;
+  transition: background 0.2s;
+
+  &:hover {
+    background: rgba($primary, 0.1);
+  }
+}

@@ -22,6 +22,7 @@ import { FormsModule } from '@angular/forms';
 export class VendedorLayoutComponent implements OnInit, OnDestroy {
   nombreVendedor: string = '';
   areaVendedor: string = '';
+  menuAbierto = false;
 
   // Control de modales
   mostrarModalDetalles = false;
@@ -336,5 +337,26 @@ export class VendedorLayoutComponent implements OnInit, OnDestroy {
     }
 
     return 'N/A';
+  }
+
+  irAChat(): void {
+    this.router.navigate(['/vendedor/chat']);
+  }
+
+  irAReportes(): void {
+    this.router.navigate(['/vendedor/reportes']);
+  }
+
+  irAVendedores(): void {
+    this.router.navigate(['/vendedor/lista-vendedores']);
+  }
+
+  irAPedidos(): void {
+    this.router.navigate(['/vendedor/pedidos']);
+  }
+
+
+   abrirMenu(){
+    this.menuAbierto = !this.menuAbierto;
   }
 }
