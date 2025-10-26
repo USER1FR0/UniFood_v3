@@ -5,7 +5,7 @@ import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-supervisor-layout',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [RouterOutlet],
   templateUrl: './supervisor-layout.component.html',
   styleUrl: './supervisor-layout.component.scss',
 })
