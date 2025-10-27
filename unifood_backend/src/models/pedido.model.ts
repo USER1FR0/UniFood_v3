@@ -6,9 +6,24 @@ import {
   IsOptional,
   ValidateNested,
   IsEnum,
-  Min
+  Min,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+
+// Datos de tarjeta si el metodo de pago es tarjeta
+export class DatosTarjetaDto {
+  @IsString()
+  @IsNotEmpty()
+  numero: string;
+
+  @IsString()
+  @IsNotEmpty()
+  cvv: string;
+
+  @IsString()
+  @IsNotEmpty()
+  expiracion: string; // MM/AA
+}
 
 // DTO para crear un pedido
 export class CrearPedidoDto {
@@ -28,6 +43,11 @@ export class CrearPedidoDto {
   @IsEnum(['efectivo', 'tarjeta'])
   @IsNotEmpty()
   metodo_pago: 'efectivo' | 'tarjeta';
+
+  @ValidateNested()
+  @Type(() => DatosTarjetaDto)
+  @IsOptional()
+  datos_tarjeta?: DatosTarjetaDto;
 }
 
 // Productos de un pedido
@@ -49,22 +69,7 @@ export class ProductoPedidoDto {
   detalles_producto?: string;
 }
 
-// Datos de tarjeta si el metodo de pago es tarjeta
-export class DatosTarjetaDto {
-  @IsString()
-  @IsNotEmpty()
-  numero: string;
-
-  @IsString()
-  @IsNotEmpty()
-  cvv: string;
-
-  @IsString()
-  @IsNotEmpty()
-  expiracion: string; // MM/AA
-}
-
-//PAgo con tarjeta 
+//PAgo con tarjeta
 export class ProcesarPagoTarjetaDto {
   @ValidateNested()
   @Type(() => DatosTarjetaDto)
@@ -143,7 +148,6 @@ export interface FiltrosReporteDto {
   pedido_estado_id?: number;
   area_venta_id?: number;
 }
-
 
 //Para el reporte general
 export interface OpcionesReporteDto {

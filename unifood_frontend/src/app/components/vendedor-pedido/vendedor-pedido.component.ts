@@ -90,7 +90,6 @@ export class VendedorPedidoComponent implements OnInit, OnDestroy {
 
   escucharWebSockets(): void {
     // Nuevo pedido
-    // Nuevo pedido
     this.subscriptions.push(
       this.wsService.onNuevoPedido().subscribe((pedido) => {
 
@@ -340,11 +339,12 @@ export class VendedorPedidoComponent implements OnInit, OnDestroy {
 
   abrirDetalles(pedido: Pedido): void {
 
-    let metodoPago = '';
+    let metodoPago = 'N/A';
+    //console.log('Pedido Actual',pedido);
 
     if (pedido.pagos?.find((p) => p.pago_metodo_id === 1)) {
       metodoPago = 'Tarjeta';
-    }else{
+    }else if(pedido.pagos?.find((p) => p.pago_metodo_id === 2)){
       metodoPago = 'Efectivo';
     }
     // Este método debe llamar al método del layout padre
@@ -393,6 +393,12 @@ export class VendedorPedidoComponent implements OnInit, OnDestroy {
   }
 
   abrirRechazar(pedido: Pedido): void {
+    let motivo = "Tu reembolso se vera reflejado en tu cuenta."
+    let isReembolso = false;
+
+    if(pedido.pagos.some((p)=> p.pago_metodo_id === 1)){
+      isReembolso = true;
+    }
     Swal.fire({
       title: 'Rechazar pedido',
       input: 'textarea',
@@ -404,6 +410,8 @@ export class VendedorPedidoComponent implements OnInit, OnDestroy {
       confirmButtonColor: '#E76F51',
     }).then((result) => {
       if (result.isConfirmed && result.value) {
+
+
         this.pedidoService
           .rechazarPedido(pedido.id, { motivo: result.value })
           .subscribe({
@@ -431,11 +439,28 @@ export class VendedorPedidoComponent implements OnInit, OnDestroy {
     });
   }
 
+  verificarMetodoPago(pedido: Pedido):boolean{
+    // true: tarjeta
+    //false: efectivo
+    return pedido.pagos?.some((p) => p.pago_metodo_id === 1);
+  }
+
   abrirEntregar(pedido: Pedido): void {
-    this.estaPagado = pedido.pagos.some((p) => p.pago_estado_id === 1);
+    this.estaPagado = this.verificarMetodoPago(pedido);
 
     if (this.estaPagado) {
-      this.confirmarEntrega(pedido, 1, undefined);
+      Swal.fire({
+        title: 'Pedido listo para entrega?',
+        //html: `<p style="font-size: 1.2rem;"><strong>Total: $${pedido.total_pedido}</strong></p><p>¿Ya cobraste al cliente?</p>`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Sí,listo.',
+        cancelButtonText: 'No',
+        confirmButtonColor: '#5B9A97',
+      }).then((result)=>{
+        this.confirmarEntrega(pedido,1, Number(pedido.total_pedido));
+      })
+      //this.confirmarEntrega(pedido, 1, undefined);
     } else {
       Swal.fire({
         title: 'Cobrar en efectivo',

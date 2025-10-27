@@ -22,7 +22,7 @@ export interface AreaVenta {
   area_venta: string;
 }
 
-export interface Usuario{
+export interface Usuario {
   id: number;
   correo_electronico: string;
   rol: string;
@@ -36,8 +36,6 @@ export interface Vendedor {
   usuario?: Usuario;
   area_venta?: AreaVenta;
 }
-
-
 
 export interface Cliente {
   id: number;
@@ -128,6 +126,11 @@ export interface CrearPedidoDto {
   detalles_pedido?: string;
   area_venta_id: number;
   metodo_pago: 'efectivo' | 'tarjeta';
+  datos_tarjeta?: {
+    numero: string;
+    cvv: string;
+    expiracion: string;
+  };
 }
 
 export interface ProductoPedidoDto {

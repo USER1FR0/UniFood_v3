@@ -99,22 +99,7 @@ export class PedidosController {
     return this.pedidosService.crear(dto, usuario.id_rol);
   }
 
-  // NUEVO ENDPOINT: Procesar pago con tarjeta después de crear el pedido
-  @Post(':id/procesar-pago')
-  @HttpCode(HttpStatus.OK)
-  async procesarPago(@Param('id') id: string, @Body() dto: ProcesarPagoTarjetaDto, @Request() req) {
-    const usuario = this.verificarAuth(req.headers.authorization);
-
-    if (usuario.rol !== 'cliente') {
-      throw new UnauthorizedException('Solo los clientes pueden procesar pagos');
-    }
-
-    if (!usuario.id_rol) {
-      throw new UnauthorizedException('Cliente no encontrado para este usuario');
-    }
-
-    return this.pedidosService.procesarPagoPendiente(+id, usuario.id_rol, dto);
-  }
+ 
 
   @Get('mis-pedidos-activos')
   async obtenerMisPedidosActivos(@Request() req) {

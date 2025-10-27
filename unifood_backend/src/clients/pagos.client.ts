@@ -14,31 +14,34 @@ interface ProcesarPagoDto {
 
 @Injectable()
 export class PagosClient {
-  private readonly baseUrl = process.env.PAGOS_SERVICE_URL || 'http://localhost:4000';
+  private readonly baseUrl = process.env.PAGOS_SERVICE_URL || 'http://localhost:5000';
 
   constructor(private readonly httpService: HttpService) {}
 
   async procesarPago(datos: ProcesarPagoDto) {
-    try {
-      const response = await firstValueFrom(
-        this.httpService.post(`${this.baseUrl}/pagos/procesar`, datos),
-      );
-      return response.data;
-    } catch (error) {
-      throw new Error(`Error al procesar pago: ${error.message}`);
-    }
+  try {
+    const response = await firstValueFrom(
+      this.httpService.post(`${this.baseUrl}/pagos/procesar`, datos),
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error al procesar pago:', error.response?.data || error.message);
+    throw new Error(error.response?.data?.message || 'Error al procesar pago');
   }
+}
 
-  async cancelarPago(transaccionId: string) {
-    try {
-      const response = await firstValueFrom(
-        this.httpService.post(`${this.baseUrl}/pagos/cancelar`, { transaccionId }),
-      );
-      return response.data;
-    } catch (error) {
-      throw new Error(`Error al cancelar pago: ${error.message}`);
-    }
+
+  async reembolsarPago(pagoId: number, motivo?: string) {
+  try {
+    const response = await firstValueFrom(
+      this.httpService.post(`${this.baseUrl}/pagos/reembolsar`, { pagoId, motivo }),
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error al reembolsar pago:', error.response?.data || error.message);
+    throw new Error(error.response?.data?.message || 'Error al reembolsar pago');
   }
+}
 
   async verificarDisponibilidad(): Promise<boolean> {
     try {
