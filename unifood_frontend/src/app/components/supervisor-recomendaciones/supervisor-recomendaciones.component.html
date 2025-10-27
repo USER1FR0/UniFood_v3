@@ -70,14 +70,69 @@
       
       <!-- Acciones rápidas -->
       <div class="acciones-rapidas">
-        <h3>Generación Automática</h3>
-        <div class="botones">
-          <button class="btn btn-primary" (click)="generarMasVendidos()">
-            Generar Más Vendidos
+        <div class="header-acciones">
+          <h3>Gestión de Recomendaciones</h3>
+          <button class="btn btn-catalog" (click)="abrirCatalogoProductos()">
+            <i class="fas fa-plus-circle"></i> Agregar desde Catálogo
           </button>
-          <button class="btn btn-success" (click)="generarMejorCalificados()">
-            Generar Mejor Calificados
-          </button>
+        </div>
+        
+        <div class="seccion-generacion">
+          <div class="header-generacion">
+            <h4>Generación Automática</h4>
+            <div class="chatbot-status">
+              <span 
+                class="status-indicator" 
+                [class.conectado]="chatbotDisponible"
+                [class.desconectado]="!chatbotDisponible"
+                [class.verificando]="verificandoChatbot"
+                [title]="chatbotDisponible ? 'Microservicio conectado' : 'Microservicio desconectado'"
+              >
+                <i 
+                  class="fas" 
+                  [ngClass]="verificandoChatbot ? 'fa-spinner fa-spin' : (chatbotDisponible ? 'fa-check-circle' : 'fa-times-circle')"
+                ></i>
+                {{ verificandoChatbot ? 'Verificando...' : (chatbotDisponible ? 'Chatbot Conectado' : 'Chatbot Desconectado') }}
+              </span>
+              <button 
+                class="btn-refresh" 
+                (click)="verificarEstadoChatbot()"
+                [disabled]="verificandoChatbot"
+                title="Refrescar estado del chatbot"
+              >
+                <i class="fas fa-sync-alt" [class.fa-spin]="verificandoChatbot"></i>
+              </button>
+            </div>
+          </div>
+          <div class="botones">
+            <button 
+              class="btn btn-primary" 
+              (click)="generarMasVendidos()"
+              [disabled]="!chatbotDisponible || cargando"
+              [class.btn-disabled]="!chatbotDisponible"
+              [title]="!chatbotDisponible ? 'Microservicio no disponible' : 'Generar recomendaciones con IA'"
+            >
+              <i class="fas fa-fire"></i> Generar Más Vendidos
+            </button>
+            <button 
+              class="btn btn-success" 
+              (click)="generarMejorCalificados()"
+              [disabled]="!chatbotDisponible || cargando"
+              [class.btn-disabled]="!chatbotDisponible"
+              [title]="!chatbotDisponible ? 'Microservicio no disponible' : 'Generar recomendaciones con IA'"
+            >
+              <i class="fas fa-star"></i> Generar Mejor Calificados
+            </button>
+            <button 
+              class="btn btn-ai" 
+              (click)="generarConIA()" 
+              [disabled]="!chatbotDisponible || cargando"
+              [class.btn-disabled]="!chatbotDisponible"
+              [title]="!chatbotDisponible ? 'Microservicio no disponible' : 'Generar recomendaciones con IA'"
+            >
+              <i class="fas fa-robot"></i> Generar con IA (Chatbot)
+            </button>
+          </div>
         </div>
       </div>
 
@@ -137,13 +192,23 @@
               </td>
               
               <td>
-                <span 
-                  class="tipo-badge" 
-                  [style.background-color]="obtenerColorTipo(rec.tipo_recomendacion)"
-                >
-                  {{ obtenerIconoTipo(rec.tipo_recomendacion) }}
-                  {{ obtenerEtiquetaTipo(rec.tipo_recomendacion) }}
-                </span>
+                <div class="badges-container">
+                  <span 
+                    class="tipo-badge" 
+                    [style.background-color]="obtenerColorTipo(rec.tipo_recomendacion)"
+                  >
+                    {{ obtenerIconoTipo(rec.tipo_recomendacion) }}
+                    {{ obtenerEtiquetaTipo(rec.tipo_recomendacion) }}
+                  </span>
+                  <span 
+                    class="origen-badge"
+                    [style.background-color]="obtenerColorBadge(rec)"
+                    [title]="esRecomendacionIA(rec) ? 'Generada por Inteligencia Artificial' : 
+                             rec.metadata?.creado_manualmente ? 'Creada manualmente' : 'Generada automáticamente'"
+                  >
+                    {{ obtenerBadgeRecomendacion(rec) }}
+                  </span>
+                </div>
               </td>
               
               <td class="prioridad-cell">
@@ -237,6 +302,183 @@
           </div>
         </div>
       </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Modal Catálogo de Productos -->
+<div class="modal-overlay" *ngIf="mostrarModalCatalogo" (click)="cerrarCatalogo()">
+  <div class="modal-catalogo" (click)="$event.stopPropagation()">
+    
+    <!-- Header del Modal -->
+    <div class="modal-header">
+      <h2><i class="fas fa-store"></i> Catálogo de Productos</h2>
+      <button class="btn-cerrar" (click)="cerrarCatalogo()" title="Cerrar">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <!-- Buscador -->
+    <div class="modal-search">
+      <i class="fas fa-search"></i>
+      <input 
+        type="text" 
+        [(ngModel)]="busquedaProducto"
+        (input)="filtrarProductos()"
+        placeholder="Buscar productos por nombre, categoría..."
+        class="search-input"
+      />
+    </div>
+
+    <!-- Contenido: Grid de Productos y Panel de Configuración -->
+    <div class="modal-content-grid">
+      
+      <!-- Lista de Productos -->
+      <div class="productos-container">
+        <div class="productos-grid">
+          <div 
+            *ngFor="let producto of productosPaginados" 
+            class="producto-card"
+            [class.selected]="productoSeleccionado?.id === producto.id"
+            (click)="seleccionarProducto(producto)"
+          >
+          <div class="producto-img-container">
+            <img 
+              *ngIf="producto.imagen_url" 
+              [src]="producto.imagen_url" 
+              [alt]="producto.nombre"
+              class="producto-img"
+            />
+            <div class="producto-placeholder" *ngIf="!producto.imagen_url">
+              <i class="fas fa-utensils"></i>
+            </div>
+            <div class="producto-overlay">
+              <div class="producto-check" *ngIf="productoSeleccionado?.id === producto.id">
+                <i class="fas fa-check-circle"></i>
+              </div>
+            </div>
+          </div>
+          <div class="producto-nombre">
+            <span>{{ producto.nombre }}</span>
+          </div>
+        </div>
+
+          <div *ngIf="productosPaginados.length === 0" class="no-resultados">
+            <i class="fas fa-search"></i>
+            <p>No se encontraron productos</p>
+          </div>
+        </div>
+
+        <!-- Controles de Paginación -->
+        <div class="paginacion" *ngIf="totalPaginas > 1">
+          <button 
+            class="btn-pagina" 
+            (click)="paginaAnterior()" 
+            [disabled]="paginaActual === 1"
+            title="Página anterior"
+          >
+            <i class="fas fa-chevron-left"></i>
+          </button>
+
+          <div class="paginas-numeros">
+            <span class="pagina-info">
+              Página {{ paginaActual }} de {{ totalPaginas }}
+            </span>
+            <span class="productos-info">
+              ({{ productosFiltrados.length }} productos)
+            </span>
+          </div>
+
+          <button 
+            class="btn-pagina" 
+            (click)="paginaSiguiente()" 
+            [disabled]="paginaActual === totalPaginas"
+            title="Página siguiente"
+          >
+            <i class="fas fa-chevron-right"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Panel de Configuración -->
+      <div class="config-panel">
+        <div class="config-section">
+          <h3><i class="fas fa-cog"></i> Configuración</h3>
+
+          <div *ngIf="productoSeleccionado" class="producto-seleccionado-info">
+            <div class="preview-img-container">
+              <img 
+                *ngIf="productoSeleccionado.imagen_url" 
+                [src]="productoSeleccionado.imagen_url" 
+                [alt]="productoSeleccionado.nombre"
+              />
+              <div class="preview-placeholder" *ngIf="!productoSeleccionado.imagen_url">
+                <i class="fas fa-utensils"></i>
+              </div>
+            </div>
+            <div>
+              <strong>{{ productoSeleccionado.nombre }}</strong>
+              <p>{{ formatearPrecio(productoSeleccionado.precio) }}</p>
+            </div>
+          </div>
+
+          <div *ngIf="!productoSeleccionado" class="no-seleccion">
+            <i class="fas fa-hand-pointer"></i>
+            <p>Selecciona un producto del catálogo</p>
+          </div>
+
+          <div class="form-group">
+            <label>Tipo de Recomendación:</label>
+            <select [(ngModel)]="nuevaRecomendacion.tipo_recomendacion" class="form-control">
+              <option [value]="TipoRecomendacion.MAS_VENDIDO">🔥 Más Vendido</option>
+              <option [value]="TipoRecomendacion.MEJOR_CALIFICADO">⭐ Mejor Calificado</option>
+              <option [value]="TipoRecomendacion.OFERTA">💰 Oferta</option>
+              <option [value]="TipoRecomendacion.MANUAL">📌 Manual</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Prioridad (1-10):</label>
+            <input 
+              type="number" 
+              [(ngModel)]="nuevaRecomendacion.prioridad"
+              min="1"
+              max="10"
+              class="form-control"
+            />
+            <small>Mayor número = mayor prioridad</small>
+          </div>
+
+          <div class="form-group">
+            <label>Fecha Inicio (opcional):</label>
+            <input 
+              type="date" 
+              [(ngModel)]="nuevaRecomendacion.fecha_inicio"
+              class="form-control"
+            />
+          </div>
+
+          <div class="form-group">
+            <label>Fecha Fin (opcional):</label>
+            <input 
+              type="date" 
+              [(ngModel)]="nuevaRecomendacion.fecha_fin"
+              class="form-control"
+            />
+          </div>
+
+          <button 
+            class="btn btn-crear-recomendacion" 
+            (click)="crearRecomendacionDesdeProducto()"
+            [disabled]="!productoSeleccionado"
+          >
+            <i class="fas fa-plus-circle"></i>
+            Crear Recomendación
+          </button>
+        </div>
+      </div>
+
     </div>
 
   </div>

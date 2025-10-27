@@ -193,6 +193,30 @@ export class RecomendacionService {
     );
   }
 
+  /**
+   * Generar recomendaciones inteligentes usando el microservicio del chatbot
+   * Este método usa IA para análisis más precisos
+   */
+  generarRecomendacionesConIA(limite?: number): Observable<any> {
+    let params = new HttpParams();
+    if (limite) {
+      params = params.set('limite', limite.toString());
+    }
+
+    return this.http.post(
+      `${this.apiUrl}/generar/inteligentes`,
+      {},
+      { params }
+    );
+  }
+
+  /**
+   * Verificar si el microservicio del chatbot está disponible
+   */
+  verificarEstadoChatbot(): Observable<any> {
+    return this.http.get(`${this.apiUrl}/chatbot/estado`);
+  }
+
   // ============================================
   // MÉTODOS AUXILIARES
   // ============================================

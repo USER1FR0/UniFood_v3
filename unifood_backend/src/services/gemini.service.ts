@@ -45,6 +45,8 @@ export class GeminiService {
   ];
   private model: any = null;
   private geminiApiKey?: string;
+  private geminiApiKeys: string[] = [];
+  private currentApiKeyIndex = 0;
   private currentModelIndex = 0;
 
   constructor(
@@ -62,10 +64,31 @@ export class GeminiService {
       3,
     );
 
-    this.geminiApiKey = this.configService.get<string>('GEMINI_API_KEY');
+    // Soporte para múltiples API keys (nuevo formato)
+    const apiKeysString = this.configService.get<string>('GEMINI_API_KEYS');
+    if (apiKeysString) {
+      this.geminiApiKeys = apiKeysString
+        .split(',')
+        .map(key => key.trim())
+        .filter(key => key.length > 0);
+      
+      if (this.geminiApiKeys.length > 0) {
+        this.geminiApiKey = this.geminiApiKeys[0];
+        this.logger.log(`🔑 Loaded ${this.geminiApiKeys.length} Gemini API key(s) for rotation`);
+      }
+    }
 
+    // Fallback al formato antiguo (una sola key)
     if (!this.geminiApiKey) {
-      this.logger.warn('Gemini API key missing. Running in fallback mode.');
+      this.geminiApiKey = this.configService.get<string>('GEMINI_API_KEY');
+      if (this.geminiApiKey) {
+        this.geminiApiKeys = [this.geminiApiKey];
+        this.logger.log('🔑 Loaded single Gemini API key (legacy format)');
+      }
+    }
+
+    if (!this.geminiApiKey || this.geminiApiKeys.length === 0) {
+      this.logger.warn('⚠️  Gemini API key missing. Running in fallback mode.');
       return;
     }
 
@@ -1010,6 +1033,24 @@ export class GeminiService {
           usageMetadata,
         };
       } catch (error: any) {
+        // 1. Primero intentar rotar API key si hay error de cuota
+        if (this.isQuotaExceededError(error)) {
+          const rotated = this.rotateToNextApiKey();
+          if (rotated) {
+            this.logger.warn(
+              `⚠️  API key quota exceeded. Rotated to next key (${this.currentApiKeyIndex + 1}/${this.geminiApiKeys.length})`,
+            );
+            continue; // Reintentar con la nueva key
+          } else {
+            this.logger.error(
+              `❌ All API keys exhausted or only one key available. Quota limit reached.`,
+            );
+            // No continuar, ir directamente a fallback
+            return null;
+          }
+        }
+
+        // 2. Luego manejar errores de modelo no disponible o sobrecargado
         if (this.isModelNotFoundError(error) || this.isModelOverloadedError(error)) {
           const switched = this.switchToNextModel();
           if (switched) {
@@ -1025,6 +1066,7 @@ export class GeminiService {
           }
         }
 
+        // 3. Cualquier otro error
         this.logger.error(
           `Gemini inference failed: ${error.message}`,
           error.stack,
@@ -1077,6 +1119,45 @@ export class GeminiService {
       message.includes('overloaded') ||
       message.includes('try again later')
     );
+  }
+
+  private isQuotaExceededError(error: any): boolean {
+    if (!error) {
+      return false;
+    }
+
+    const message = String(error.message ?? '').toLowerCase();
+    return (
+      message.includes('429') ||
+      message.includes('too many requests') ||
+      message.includes('quota exceeded') ||
+      message.includes('rate limit')
+    );
+  }
+
+  private rotateToNextApiKey(): boolean {
+    if (this.geminiApiKeys.length <= 1) {
+      // Solo hay una key, no se puede rotar
+      return false;
+    }
+
+    const previousIndex = this.currentApiKeyIndex;
+    this.currentApiKeyIndex = (this.currentApiKeyIndex + 1) % this.geminiApiKeys.length;
+    
+    // Si volvimos a la primera key, significa que intentamos todas
+    if (this.currentApiKeyIndex === 0 && previousIndex !== 0) {
+      this.logger.warn(`🔄 All ${this.geminiApiKeys.length} API keys exhausted. Resetting to first key.`);
+      // Nota: No retornamos false aquí porque queremos reintentar con la primera key
+      // después de un ciclo completo (quizás los límites ya se refrescaron)
+    }
+
+    this.geminiApiKey = this.geminiApiKeys[this.currentApiKeyIndex];
+    this.logger.log(`🔑 Rotated to API key ${this.currentApiKeyIndex + 1}/${this.geminiApiKeys.length}`);
+    
+    // Reinicializamos el modelo con la nueva key
+    this.initializeModel(this.geminiModelName);
+    
+    return true;
   }
 
   private normalizeModelName(model: string): string {

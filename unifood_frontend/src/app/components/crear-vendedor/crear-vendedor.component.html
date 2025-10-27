@@ -3,160 +3,239 @@
     
     <!-- Header -->
     <div class="crear-vendedor-header">
-      <h1>Nuevo Vendedor</h1>
-      <p>Completa la información para registrar un nuevo vendedor</p>
+      <div class="header-icon">
+        <i class="fas fa-user-plus"></i>
+      </div>
+      <h1>Registrar Nuevo Vendedor</h1>
+      <p>Completa la información para crear un nuevo vendedor en el sistema</p>
     </div>
 
     <!-- Formulario -->
     <form [formGroup]="vendedorForm" (ngSubmit)="onSubmit()" class="vendedor-form">
       
-      <!-- Fila 1: Nombre y Teléfono -->
-      <div class="form-row">
-        <div class="form-group" [class.error]="isValidField('nombre')">
-          <label for="nombre">Nombre Completo *</label>
-          <input 
-            type="text" 
-            id="nombre"
-            formControlName="nombre"
-            placeholder="Ej: María González Rodríguez"
-            [class.invalid]="isValidField('nombre')"
-            [disabled]="cargando"
-          >
-          <div class="error-message" *ngIf="isValidField('nombre')">
-            {{ getErrorMessage('nombre') }}
-          </div>
+      <!-- Sección de Credenciales -->
+      <div class="form-section">
+        <div class="section-header">
+          <i class="fas fa-key"></i>
+          <h3>Credenciales de Acceso</h3>
         </div>
-
-        <div class="form-group" [class.error]="isValidField('telefono')">
-          <label for="telefono">Teléfono *</label>
-          <input 
-            type="tel" 
-            id="telefono"
-            formControlName="telefono"
-            placeholder="Ej: 555-123-4567"
-            [class.invalid]="isValidField('telefono')"
-            [disabled]="cargando"
-          >
-          <div class="error-message" *ngIf="isValidField('telefono')">
-            {{ getErrorMessage('telefono') }}
+        
+        <div class="form-row">
+          <div class="form-group" [class.error]="isValidField('correo_electronico')">
+            <label for="correo_electronico">
+              <i class="fas fa-envelope"></i>
+              Correo Electrónico *
+            </label>
+            <input 
+              type="email" 
+              id="correo_electronico"
+              formControlName="correo_electronico"
+              placeholder="ejemplo@unifood.edu"
+              [class.invalid]="isValidField('correo_electronico')"
+              [disabled]="cargando"
+            >
+            <div class="error-message" *ngIf="isValidField('correo_electronico')">
+              {{ getErrorMessage('correo_electronico') }}
+            </div>
           </div>
-        </div>
-      </div>
 
-      <!-- Fila 2: Email y Número de Empleado -->
-      <div class="form-row">
-        <div class="form-group" [class.error]="isValidField('email')">
-          <label for="email">Correo Electrónico *</label>
-          <input 
-            type="email" 
-            id="email"
-            formControlName="email"
-            placeholder="Ej: maria.gonzalez@unifood.edu"
-            [class.invalid]="isValidField('email')"
-            [disabled]="cargando"
-          >
-          <div class="error-message" *ngIf="isValidField('email')">
-            {{ getErrorMessage('email') }}
-          </div>
-        </div>
-
-        <div class="form-group" [class.error]="isValidField('num_empleado')">
-          <label for="num_empleado">Número de Empleado *</label>
-          <input 
-            type="number" 
-            id="num_empleado"
-            formControlName="num_empleado"
-            placeholder="Ej: 1001"
-            min="1"
-            max="99999"
-            [class.invalid]="isValidField('num_empleado')"
-            [disabled]="cargando"
-          >
-          <div class="error-message" *ngIf="isValidField('num_empleado')">
-            {{ getErrorMessage('num_empleado') }}
-          </div>
-        </div>
-      </div>
-
-      <!-- Fila 3: Género y Edad -->
-      <div class="form-row">
-        <div class="form-group" [class.error]="isValidField('genero')">
-          <label for="genero">Género *</label>
-          <select 
-            id="genero"
-            formControlName="genero"
-            [class.invalid]="isValidField('genero')"
-            [disabled]="cargando"
-          >
-            <option value="">Selecciona un género</option>
-            <option *ngFor="let genero of generos" [value]="genero">
-              {{ genero }}
-            </option>
-          </select>
-          <div class="error-message" *ngIf="isValidField('genero')">
-            {{ getErrorMessage('genero') }}
-          </div>
-        </div>
-
-        <div class="form-group" [class.error]="isValidField('edad')">
-          <label for="edad">Edad *</label>
-          <input 
-            type="number" 
-            id="edad"
-            formControlName="edad"
-            placeholder="Ej: 28"
-            min="18"
-            max="100"
-            [class.invalid]="isValidField('edad')"
-            [disabled]="cargando"
-          >
-          <div class="error-message" *ngIf="isValidField('edad')">
-            {{ getErrorMessage('edad') }}
-          </div>
-        </div>
-      </div>
-
-      <!-- Fila 4: Usuario ID y Estatus -->
-      <div class="form-row">
-        <div class="form-group" [class.error]="isValidField('usuario_id')">
-          <label for="usuario_id">ID de Usuario *</label>
-          <input 
-            type="number" 
-            id="usuario_id"
-            formControlName="usuario_id"
-            placeholder="Ej: 101"
-            min="1"
-            [class.invalid]="isValidField('usuario_id')"
-            [disabled]="cargando"
-          >
-          <div class="error-message" *ngIf="isValidField('usuario_id')">
-            {{ getErrorMessage('usuario_id') }}
-          </div>
-        </div>
-
-        <div class="form-group estatus-group">
-          <label for="estatus">Estatus del Vendedor</label>
-          <div class="estatus-options">
-            <label class="estatus-option">
+          <div class="form-group" [class.error]="isValidField('contrasena')">
+            <label for="contrasena">
+              <i class="fas fa-lock"></i>
+              Contraseña *
+            </label>
+            <div class="password-container">
               <input 
-                type="radio" 
-                formControlName="estatus"
-                value="true"
+                [type]="mostrarContrasena ? 'text' : 'password'"
+                id="contrasena"
+                formControlName="contrasena"
+                placeholder="Mínimo 6 caracteres"
+                [class.invalid]="isValidField('contrasena')"
                 [disabled]="cargando"
               >
-              <span class="radio-custom"></span>
-              <span class="estatus-text activo">Activo</span>
+              <button type="button" class="btn-toggle-password" 
+                      (click)="togglePasswordVisibility()"
+                      [disabled]="cargando">
+                <i [class]="mostrarContrasena ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
+              </button>
+            </div>
+            <div class="error-message" *ngIf="isValidField('contrasena')">
+              {{ getErrorMessage('contrasena') }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sección de Información Personal -->
+      <div class="form-section">
+        <div class="section-header">
+          <i class="fas fa-id-card"></i>
+          <h3>Información Personal</h3>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group" [class.error]="isValidField('nombre')">
+            <label for="nombre">
+              <i class="fas fa-user"></i>
+              Nombre Completo *
             </label>
-            <label class="estatus-option">
-              <input 
-                type="radio" 
-                formControlName="estatus"
-                value="false"
-                [disabled]="cargando"
-              >
-              <span class="radio-custom"></span>
-              <span class="estatus-text inactivo">Inactivo</span>
+            <input 
+              type="text" 
+              id="nombre"
+              formControlName="nombre"
+              placeholder="María González Rodríguez"
+              [class.invalid]="isValidField('nombre')"
+              [disabled]="cargando"
+            >
+            <div class="error-message" *ngIf="isValidField('nombre')">
+              {{ getErrorMessage('nombre') }}
+            </div>
+          </div>
+
+          <div class="form-group" [class.error]="isValidField('telefono')">
+            <label for="telefono">
+              <i class="fas fa-phone"></i>
+              Teléfono *
             </label>
+            <input 
+              type="tel" 
+              id="telefono"
+              formControlName="telefono"
+              placeholder="555-123-4567"
+              [class.invalid]="isValidField('telefono')"
+              [disabled]="cargando"
+            >
+            <div class="error-message" *ngIf="isValidField('telefono')">
+              {{ getErrorMessage('telefono') }}
+            </div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group" [class.error]="isValidField('email')">
+            <label for="email">
+              <i class="fas fa-at"></i>
+              Email de Contacto *
+            </label>
+            <input 
+              type="email" 
+              id="email"
+              formControlName="email"
+              placeholder="maria.gonzalez@unifood.edu"
+              [class.invalid]="isValidField('email')"
+              [disabled]="cargando"
+            >
+            <div class="error-message" *ngIf="isValidField('email')">
+              {{ getErrorMessage('email') }}
+            </div>
+          </div>
+
+          <div class="form-group" [class.error]="isValidField('num_empleado')">
+            <label for="num_empleado">
+              <i class="fas fa-id-badge"></i>
+              Número de Empleado *
+            </label>
+            <input 
+              type="number" 
+              id="num_empleado"
+              formControlName="num_empleado"
+              placeholder="1001"
+              min="1"
+              max="99999"
+              [class.invalid]="isValidField('num_empleado')"
+              [disabled]="cargando"
+            >
+            <div class="error-message" *ngIf="isValidField('num_empleado')">
+              {{ getErrorMessage('num_empleado') }}
+            </div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group" [class.error]="isValidField('genero')">
+            <label for="genero">
+              <i class="fas fa-venus-mars"></i>
+              Género *
+            </label>
+            <select 
+              id="genero"
+              formControlName="genero"
+              [class.invalid]="isValidField('genero')"
+              [disabled]="cargando"
+            >
+              <option value="">Selecciona un género</option>
+              <option *ngFor="let genero of generos" [value]="genero">
+                {{ genero }}
+              </option>
+            </select>
+            <div class="error-message" *ngIf="isValidField('genero')">
+              {{ getErrorMessage('genero') }}
+            </div>
+          </div>
+
+          <div class="form-group" [class.error]="isValidField('edad')">
+            <label for="edad">
+              <i class="fas fa-birthday-cake"></i>
+              Edad *
+            </label>
+            <input 
+              type="number" 
+              id="edad"
+              formControlName="edad"
+              placeholder="28"
+              min="18"
+              max="100"
+              [class.invalid]="isValidField('edad')"
+              [disabled]="cargando"
+            >
+            <div class="error-message" *ngIf="isValidField('edad')">
+              {{ getErrorMessage('edad') }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sección de Estatus -->
+      <div class="form-section">
+        <div class="section-header">
+          <i class="fas fa-toggle-on"></i>
+          <h3>Configuración de Cuenta</h3>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group estatus-group">
+            <label>
+              <i class="fas fa-user-check"></i>
+              Estatus del Vendedor
+            </label>
+            <div class="estatus-options">
+              <label class="estatus-option" [class.selected]="vendedorForm.get('estatus')?.value === 'Activo'">
+                <input 
+                  type="radio" 
+                  formControlName="estatus"
+                  value="Activo"
+                  [disabled]="cargando"
+                >
+                <span class="radio-custom"></span>
+                <span class="estatus-text activo">
+                  <i class="fas fa-check-circle"></i>
+                  Activo
+                </span>
+              </label>
+              <label class="estatus-option" [class.selected]="vendedorForm.get('estatus')?.value === 'Inactivo'">
+                <input 
+                  type="radio" 
+                  formControlName="estatus"
+                  value="Inactivo"
+                  [disabled]="cargando"
+                >
+                <span class="radio-custom"></span>
+                <span class="estatus-text inactivo">
+                  <i class="fas fa-times-circle"></i>
+                  Inactivo
+                </span>
+              </label>
+            </div>
           </div>
         </div>
       </div>
@@ -169,6 +248,7 @@
           (click)="onCancel()"
           [disabled]="cargando"
         >
+          <i class="fas fa-times"></i>
           Cancelar
         </button>
         
@@ -178,6 +258,7 @@
           (click)="onClear()"
           [disabled]="cargando"
         >
+          <i class="fas fa-broom"></i>
           Limpiar
         </button>
         
@@ -186,8 +267,9 @@
           class="btn-crear"
           [disabled]="cargando || vendedorForm.invalid"
         >
-          <span *ngIf="!cargando">➕ Crear Vendedor</span>
-          <span *ngIf="cargando">⏳ Creando...</span>
+          <i class="fas fa-user-plus" *ngIf="!cargando"></i>
+          <i class="fas fa-spinner fa-spin" *ngIf="cargando"></i>
+          {{ cargando ? 'Creando...' : 'Crear Vendedor' }}
         </button>
       </div>
 
@@ -195,7 +277,7 @@
 
     <!-- Información de Campos Requeridos -->
     <div class="form-info">
-      <p>* Campos obligatorios</p>
+      <p><i class="fas fa-info-circle"></i> Todos los campos marcados con * son obligatorios</p>
     </div>
 
   </div>

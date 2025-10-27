@@ -21,14 +21,14 @@ export class DatabaseService {
         p.precio,
         p.imagen_url,
         c.nombre as categoria,
-        COUNT(pp.id) as total_ventas,
-        COALESCE(AVG(pc.calificacion), 0)::numeric(3,2) as promedio_calificacion,
+        COUNT(DISTINCT pp.id) as total_ventas,
+        COALESCE(AVG(pc.resena), 0)::numeric(3,2) as promedio_calificacion,
         COUNT(DISTINCT pc.id) as total_resenas
       FROM producto p
       LEFT JOIN categoria c ON p.categoria_id = c.id
       LEFT JOIN pedido_producto pp ON p.id = pp.producto_id
       LEFT JOIN producto_calificacion pc ON p.id = pc.producto_id
-      WHERE p.activo = true
+      WHERE p.estado = true
       GROUP BY p.id, c.nombre
       ORDER BY total_ventas DESC, promedio_calificacion DESC
       LIMIT $1
@@ -36,9 +36,10 @@ export class DatabaseService {
     
     try {
       const result = await pool.query(query, [limite]);
+      console.log(`✅ Ranking de ventas obtenido: ${result.rows.length} productos`);
       return result.rows;
     } catch (error) {
-      console.error('Error en obtenerRankingVentas:', error);
+      console.error('❌ Error en obtenerRankingVentas:', error);
       throw new Error('Error al obtener ranking de ventas');
     }
   }
@@ -57,14 +58,14 @@ export class DatabaseService {
         p.precio,
         p.imagen_url,
         c.nombre as categoria,
-        COALESCE(AVG(pc.calificacion), 0)::numeric(3,2) as promedio_calificacion,
-        COUNT(pc.id) as total_resenas,
+        COALESCE(AVG(pc.resena), 0)::numeric(3,2) as promedio_calificacion,
+        COUNT(DISTINCT pc.id) as total_resenas,
         COUNT(DISTINCT pp.id) as total_ventas
       FROM producto p
       LEFT JOIN categoria c ON p.categoria_id = c.id
       LEFT JOIN producto_calificacion pc ON p.id = pc.producto_id
       LEFT JOIN pedido_producto pp ON p.id = pp.producto_id
-      WHERE p.activo = true
+      WHERE p.estado = true
       GROUP BY p.id, c.nombre
       HAVING COUNT(pc.id) >= 3
       ORDER BY promedio_calificacion DESC, total_resenas DESC
@@ -73,9 +74,10 @@ export class DatabaseService {
     
     try {
       const result = await pool.query(query, [limite]);
+      console.log(`✅ Ranking de calificaciones obtenido: ${result.rows.length} productos`);
       return result.rows;
     } catch (error) {
-      console.error('Error en obtenerRankingCalificaciones:', error);
+      console.error('❌ Error en obtenerRankingCalificaciones:', error);
       throw new Error('Error al obtener ranking de calificaciones');
     }
   }
@@ -92,22 +94,23 @@ export class DatabaseService {
         p.nombre,
         c.nombre as categoria,
         p.precio,
-        COUNT(pp.id) as veces_comprado,
-        MAX(ped.fecha_creacion) as ultima_compra
+        COUNT(DISTINCT pp.id) as veces_comprado,
+        MAX(ped.fecha_registro) as ultima_compra
       FROM producto p
       INNER JOIN categoria c ON p.categoria_id = c.id
       INNER JOIN pedido_producto pp ON p.id = pp.producto_id
       INNER JOIN pedido ped ON pp.pedido_id = ped.id
-      WHERE ped.usuario_id = $1
+      WHERE ped.cliente_id = $1
       GROUP BY p.id, c.nombre
       ORDER BY veces_comprado DESC, ultima_compra DESC
     `;
     
     try {
       const result = await pool.query(query, [userId]);
+      console.log(`✅ Historial de usuario ${userId}: ${result.rows.length} productos únicos`);
       return result.rows;
     } catch (error) {
-      console.error('Error en obtenerHistorialUsuario:', error);
+      console.error(`❌ Error en obtenerHistorialUsuario(${userId}):`, error);
       throw new Error('Error al obtener historial del usuario');
     }
   }
@@ -132,13 +135,13 @@ export class DatabaseService {
         p.precio,
         p.imagen_url,
         c.nombre as categoria,
-        COUNT(pp.id) as total_ventas,
-        COALESCE(AVG(pc.calificacion), 0)::numeric(3,2) as promedio_calificacion
+        COUNT(DISTINCT pp.id) as total_ventas,
+        COALESCE(AVG(pc.resena), 0)::numeric(3,2) as promedio_calificacion
       FROM producto p
       INNER JOIN categoria c ON p.categoria_id = c.id
       LEFT JOIN pedido_producto pp ON p.id = pp.producto_id
       LEFT JOIN producto_calificacion pc ON p.id = pc.producto_id
-      WHERE p.activo = true
+      WHERE p.estado = true
         AND c.nombre = ANY($1)
         ${excluirIds.length > 0 ? 'AND p.id != ALL($3)' : ''}
       GROUP BY p.id, c.nombre
@@ -152,9 +155,10 @@ export class DatabaseService {
         : [categorias, limite];
       
       const result = await pool.query(query, params);
+      console.log(`✅ Productos populares por categoría: ${result.rows.length} productos`);
       return result.rows;
     } catch (error) {
-      console.error('Error en obtenerProductosPopularesPorCategoria:', error);
+      console.error('❌ Error en obtenerProductosPopularesPorCategoria:', error);
       throw new Error('Error al obtener productos populares por categoría');
     }
   }
@@ -172,21 +176,25 @@ export class DatabaseService {
         c.nombre as categoria,
         p.precio,
         p.imagen_url,
-        COUNT(pp.id) as total_ventas
+        p.descripcion,
+        COUNT(DISTINCT pp.id) as total_ventas,
+        COALESCE(AVG(pc.resena), 0)::numeric(3,2) as promedio_calificacion
       FROM producto p
       LEFT JOIN categoria c ON p.categoria_id = c.id
       LEFT JOIN pedido_producto pp ON p.id = pp.producto_id
-      WHERE p.activo = true
+      LEFT JOIN producto_calificacion pc ON p.id = pc.producto_id
+      WHERE p.estado = true
       GROUP BY p.id, c.nombre
-      ORDER BY total_ventas DESC
+      ORDER BY total_ventas DESC, promedio_calificacion DESC
       LIMIT $1
     `;
     
     try {
       const result = await pool.query(query, [limite]);
+      console.log(`✅ Productos populares globales: ${result.rows.length} productos`);
       return result.rows;
     } catch (error) {
-      console.error('Error en obtenerProductosPopulares:', error);
+      console.error('❌ Error en obtenerProductosPopulares:', error);
       throw new Error('Error al obtener productos populares');
     }
   }
@@ -201,20 +209,23 @@ export class DatabaseService {
       SELECT 
         p.*,
         c.nombre as categoria,
-        COALESCE(AVG(pc.calificacion), 0)::numeric(3,2) as promedio_calificacion,
-        COUNT(pc.id) as total_resenas
+        COALESCE(AVG(pc.resena), 0)::numeric(3,2) as promedio_calificacion,
+        COUNT(DISTINCT pc.id) as total_resenas,
+        COUNT(DISTINCT pp.id) as total_ventas
       FROM producto p
       LEFT JOIN categoria c ON p.categoria_id = c.id
       LEFT JOIN producto_calificacion pc ON p.id = pc.producto_id
+      LEFT JOIN pedido_producto pp ON p.id = pp.producto_id
       WHERE p.id = $1
       GROUP BY p.id, c.nombre
     `;
     
     try {
       const result = await pool.query(query, [productoId]);
+      console.log(`✅ Producto ${productoId} obtenido: ${result.rows[0] ? 'encontrado' : 'no encontrado'}`);
       return result.rows[0] || null;
     } catch (error) {
-      console.error('Error en obtenerProductoPorId:', error);
+      console.error(`❌ Error en obtenerProductoPorId(${productoId}):`, error);
       throw new Error('Error al obtener información del producto');
     }
   }

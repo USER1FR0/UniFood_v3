@@ -1,6 +1,7 @@
-import { Injectable, NotFoundException, Inject } from '@nestjs/common';
+import { Injectable, NotFoundException, Inject, ConflictException } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { CreateVendedorDto, UpdateVendedorDto, Vendedor } from '../models/vendedor.model';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class VendedoresService {
@@ -27,17 +28,70 @@ export class VendedoresService {
   }
 
   async create(createVendedorDto: CreateVendedorDto): Promise<Vendedor> {
-    const { nombre, telefono, usuario_id, num_empleado, genero, edad,estatus, email } = createVendedorDto;
-    //const estatus = createVendedorDto.estatus ?? true;
-    
-    const result = await this.dataSource.query(
-      `INSERT INTO vendedor 
-       (nombre, telefono, usuario_id, num_empleado, genero, edad, email, estatus, fecha_registro) 
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
-      [nombre, telefono, usuario_id, num_empleado, genero, edad, email, estatus, new Date()]
+    const { 
+      correo_electronico, 
+      contrasena, 
+      nombre, 
+      telefono, 
+      num_empleado, 
+      genero, 
+      edad, 
+      estatus, 
+      email 
+    } = createVendedorDto;
+
+    // Verificar si el correo electrónico ya existe en la tabla usuario
+    const usuarioExistente = await this.dataSource.query(
+      'SELECT id FROM usuario WHERE correo_electronico = $1',
+      [correo_electronico]
     );
-    
-    return result[0] as Vendedor;
+
+    if (usuarioExistente.length > 0) {
+      throw new ConflictException('El correo electrónico ya está registrado');
+    }
+
+    // Hash de la contraseña
+    const hashedPassword = await bcrypt.hash(contrasena, 10);
+
+    // Iniciar transacción para asegurar consistencia
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      // 1. Crear usuario primero
+      const usuarioResult = await queryRunner.query(
+        `INSERT INTO usuario (correo_electronico, contrasena, rol) 
+         VALUES ($1, $2, $3) RETURNING id`,
+        [correo_electronico, hashedPassword, 'vendedor']
+      );
+
+      const usuarioId = usuarioResult[0].id;
+
+      // 2. Crear vendedor con el usuario_id del usuario recién creado
+      const result = await queryRunner.query(
+        `INSERT INTO vendedor 
+         (nombre, telefono, usuario_id, num_empleado, genero, edad, email, estatus, fecha_registro) 
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
+        [nombre, telefono, usuarioId, num_empleado, genero, edad, email, estatus, new Date()]
+      );
+
+      await queryRunner.commitTransaction();
+      
+      return result[0] as Vendedor;
+
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      
+      // Si es error de duplicado, lanzar excepción específica
+      if (error.code === '23505') { // Código de violación de unique constraint en PostgreSQL
+        throw new ConflictException('El correo electrónico o número de empleado ya está registrado');
+      }
+      
+      throw error;
+    } finally {
+      await queryRunner.release();
+    }
   }
 
   async update(id: number, updateVendedorDto: UpdateVendedorDto): Promise<Vendedor> {

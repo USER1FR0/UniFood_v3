@@ -89,19 +89,21 @@ export class RecomendacionService {
       where.activo = filtros.activo;
     }
 
-    // Filtrar solo recomendaciones vigentes
-    const ahora = new Date();
-    where.OR = [
-      { fecha_inicio: null, fecha_fin: null },
-      { fecha_inicio: { lte: ahora }, fecha_fin: { gte: ahora } },
-      { fecha_inicio: { lte: ahora }, fecha_fin: null },
-      { fecha_inicio: null, fecha_fin: { gte: ahora } },
-    ];
+    // Filtrar solo recomendaciones vigentes (solo si no se solicita ignorar fechas)
+    if (!filtros?.ignorar_fechas) {
+      const ahora = new Date();
+      where.OR = [
+        { fecha_inicio: null, fecha_fin: null },
+        { fecha_inicio: { lte: ahora }, fecha_fin: { gte: ahora } },
+        { fecha_inicio: { lte: ahora }, fecha_fin: null },
+        { fecha_inicio: null, fecha_fin: { gte: ahora } },
+      ];
+    }
 
     const recomendaciones = await this.prisma.recomendacion.findMany({
       where,
       orderBy: [{ prioridad: 'desc' }, { created_at: 'desc' }],
-      take: filtros?.limit || 10,
+      take: filtros?.limit || 100, // Límite aumentado para que el supervisor vea todas las recomendaciones
     });
 
     // Enriquecer con información del producto y métricas
@@ -283,59 +285,73 @@ export class RecomendacionService {
    * Generar recomendaciones automáticas (más vendidos)
    */
   async generarRecomendacionesMasVendidos(limite: number = 5): Promise<any[]> {
-    // Actualizar métricas de todos los productos activos
-    const productos = await this.prisma.producto.findMany({
-      where: { estado: true },
-      select: { id: true },
-    });
+    const axios = require('axios');
+    const CHATBOT_URL = 'http://localhost:6000/chatbot';
 
-    await Promise.all(
-      productos.map((p) => this.actualizarMetricasProducto(p.id)),
-    );
+    try {
+      // Obtener ranking del chatbot
+      const rankingVentas = await axios.get(`${CHATBOT_URL}/rankings/ventas`, {
+        params: { limit: limite },
+        timeout: 5000,
+      });
 
-    // Obtener productos más vendidos
-    const masVendidos = await this.prisma.metrica_producto.findMany({
-      where: { total_ventas: { gt: 0 } },
-      orderBy: { total_ventas: 'desc' },
-      take: limite,
-    });
+      if (!rankingVentas?.data?.exito || !rankingVentas.data.datos?.productos) {
+        throw new Error('Respuesta inválida del chatbot');
+      }
 
-    // Crear o actualizar recomendaciones
-    const recomendaciones = await Promise.all(
-      masVendidos.map(async (metrica, index) => {
-        // Verificar si ya existe una recomendación de este tipo para este producto
+      const productosChatbot = rankingVentas.data.datos.productos;
+      const recomendacionesCreadas: any[] = [];
+
+      for (let i = 0; i < productosChatbot.length; i++) {
+        const productoChatbot = productosChatbot[i];
+        
+        // Buscar recomendación existente
         const existente = await this.prisma.recomendacion.findFirst({
           where: {
-            producto_id: metrica.producto_id,
+            producto_id: productoChatbot.id_producto,
             tipo_recomendacion: TipoRecomendacion.MAS_VENDIDO,
           },
         });
 
+        const metadata = {
+          total_ventas: productoChatbot.total_ventas,
+          promedio_calificacion: productoChatbot.promedio_calificacion,
+          total_resenas: productoChatbot.total_resenas,
+          generado_por_chatbot: true,
+          timestamp_chatbot: new Date().toISOString(),
+        };
+
+        let recomendacion;
         if (existente) {
-          // Actualizar prioridad
-          return this.prisma.recomendacion.update({
+          recomendacion = await this.prisma.recomendacion.update({
             where: { id: existente.id },
             data: {
-              prioridad: limite - index,
+              prioridad: limite - i,
               activo: true,
+              metadata,
+              updated_at: new Date(),
             },
           });
         } else {
-          // Crear nueva
-          return this.prisma.recomendacion.create({
+          recomendacion = await this.prisma.recomendacion.create({
             data: {
-              producto_id: metrica.producto_id,
+              producto_id: productoChatbot.id_producto,
               tipo_recomendacion: TipoRecomendacion.MAS_VENDIDO,
-              prioridad: limite - index,
+              prioridad: limite - i,
               activo: true,
-              metadata: { total_ventas: metrica.total_ventas },
+              metadata, 
             },
           });
         }
-      }),
-    );
 
-    return recomendaciones;
+        recomendacionesCreadas.push(recomendacion);
+      }
+
+      return recomendacionesCreadas;
+    } catch (error) {
+      console.error('Error al generar recomendaciones con chatbot (Más Vendidos):', error.message);
+      throw new Error('Microservicio de chatbot no disponible. Por favor, verifica que esté corriendo en el puerto 6000.');
+    }
   }
 
   /**
@@ -344,58 +360,73 @@ export class RecomendacionService {
   async generarRecomendacionesMejorCalificados(
     limite: number = 5,
   ): Promise<any[]> {
-    // Actualizar métricas
-    const productos = await this.prisma.producto.findMany({
-      where: { estado: true },
-      select: { id: true },
-    });
+    const axios = require('axios');
+    const CHATBOT_URL = 'http://localhost:6000/chatbot';
 
-    await Promise.all(
-      productos.map((p) => this.actualizarMetricasProducto(p.id)),
-    );
+    try {
+      // Obtener ranking del chatbot
+      const rankingCalificaciones = await axios.get(`${CHATBOT_URL}/rankings/calificaciones`, {
+        params: { limit: limite },
+        timeout: 5000,
+      });
 
-    // Obtener mejor calificados (mínimo 3 calificaciones)
-    const mejorCalificados = await this.prisma.metrica_producto.findMany({
-      where: {
-        total_calificaciones: { gte: 3 },
-        calificacion_promedio: { gt: 0 },
-      },
-      orderBy: { calificacion_promedio: 'desc' },
-      take: limite,
-    });
+      if (!rankingCalificaciones?.data?.exito || !rankingCalificaciones.data.datos?.productos) {
+        throw new Error('Respuesta inválida del chatbot');
+      }
 
-    const recomendaciones = await Promise.all(
-      mejorCalificados.map(async (metrica, index) => {
+      const productosChatbot = rankingCalificaciones.data.datos.productos;
+      const recomendacionesCreadas: any[] = [];
+
+      for (let i = 0; i < productosChatbot.length; i++) {
+        const productoChatbot = productosChatbot[i];
+        
+        // Buscar recomendación existente
         const existente = await this.prisma.recomendacion.findFirst({
           where: {
-            producto_id: metrica.producto_id,
+            producto_id: productoChatbot.id_producto,
             tipo_recomendacion: TipoRecomendacion.MEJOR_CALIFICADO,
           },
         });
 
+        const metadata = {
+          promedio_calificacion: productoChatbot.promedio_calificacion,
+          total_resenas: productoChatbot.total_resenas,
+          total_ventas: productoChatbot.total_ventas,
+          generado_por_chatbot: true,
+          timestamp_chatbot: new Date().toISOString(),
+        };
+
+        let recomendacion;
         if (existente) {
-          return this.prisma.recomendacion.update({
+          recomendacion = await this.prisma.recomendacion.update({
             where: { id: existente.id },
             data: {
-              prioridad: limite - index,
+              prioridad: limite - i,
               activo: true,
+              metadata,
+              updated_at: new Date(),
             },
           });
         } else {
-          return this.prisma.recomendacion.create({
+          recomendacion = await this.prisma.recomendacion.create({
             data: {
-              producto_id: metrica.producto_id,
+              producto_id: productoChatbot.id_producto,
               tipo_recomendacion: TipoRecomendacion.MEJOR_CALIFICADO,
-              prioridad: limite - index,
+              prioridad: limite - i,
               activo: true,
-              metadata: { calificacion_promedio: metrica.calificacion_promedio },
+              metadata,
             },
           });
         }
-      }),
-    );
 
-    return recomendaciones;
+        recomendacionesCreadas.push(recomendacion);
+      }
+
+      return recomendacionesCreadas;
+    } catch (error) {
+      console.error('Error al generar recomendaciones con chatbot (Mejor Calificados):', error.message);
+      throw new Error('Microservicio de chatbot no disponible. Por favor, verifica que esté corriendo en el puerto 6000.');
+    }
   }
 
   // ============================================
@@ -490,6 +521,169 @@ export class RecomendacionService {
       inactivas,
       por_tipo,
     };
+  }
+
+  // ============================================
+  // MÉTODOS CON INTELIGENCIA ARTIFICIAL (CHATBOT)
+  // ============================================
+
+  /**
+   * Generar recomendaciones inteligentes usando el microservicio del chatbot
+   * Este método obtiene datos analíticos del chatbot y crea recomendaciones
+   */
+  async generarRecomendacionesInteligentes(
+    limite: number = 10,
+  ): Promise<{ masVendidos: any[]; mejorCalificados: any[] }> {
+    const axios = require('axios');
+    const CHATBOT_URL = 'http://localhost:6000/chatbot';
+
+    try {
+      // Obtener rankings del chatbot en paralelo
+      const [rankingVentas, rankingCalificaciones] = await Promise.all([
+        axios.get(`${CHATBOT_URL}/rankings/ventas`).catch(() => null),
+        axios.get(`${CHATBOT_URL}/rankings/calificaciones`).catch(() => null),
+      ]);
+
+      const recomendacionesCreadas: {
+        masVendidos: any[];
+        mejorCalificados: any[];
+      } = {
+        masVendidos: [],
+        mejorCalificados: [],
+      };
+
+      // Procesar productos más vendidos desde el chatbot
+      if (rankingVentas?.data?.exito && rankingVentas.data.datos?.productos) {
+        const productosChatbot = rankingVentas.data.datos.productos.slice(
+          0,
+          limite,
+        );
+
+        recomendacionesCreadas.masVendidos = await Promise.all(
+          productosChatbot.map(async (productoChatbot, index) => {
+            // Buscar recomendación existente
+            const existente = await this.prisma.recomendacion.findFirst({
+              where: {
+                producto_id: productoChatbot.id_producto,
+                tipo_recomendacion: TipoRecomendacion.MAS_VENDIDO,
+              },
+            });
+
+            const metadata = {
+              total_ventas: productoChatbot.total_ventas,
+              promedio_calificacion: productoChatbot.promedio_calificacion,
+              total_resenas: productoChatbot.total_resenas,
+              generado_por_chatbot: true,
+              timestamp_chatbot: new Date().toISOString(),
+            };
+
+            if (existente) {
+              return this.prisma.recomendacion.update({
+                where: { id: existente.id },
+                data: {
+                  prioridad: limite - index,
+                  activo: true,
+                  metadata: metadata,
+                },
+              });
+            } else {
+              return this.prisma.recomendacion.create({
+                data: {
+                  producto_id: productoChatbot.id_producto,
+                  tipo_recomendacion: TipoRecomendacion.MAS_VENDIDO,
+                  prioridad: limite - index,
+                  activo: true,
+                  metadata: metadata,
+                },
+              });
+            }
+          }),
+        );
+      }
+
+      // Procesar productos mejor calificados desde el chatbot
+      if (
+        rankingCalificaciones?.data?.exito &&
+        rankingCalificaciones.data.datos?.productos
+      ) {
+        const productosChatbot = rankingCalificaciones.data.datos.productos.slice(
+          0,
+          limite,
+        );
+
+        recomendacionesCreadas.mejorCalificados = await Promise.all(
+          productosChatbot.map(async (productoChatbot, index) => {
+            const existente = await this.prisma.recomendacion.findFirst({
+              where: {
+                producto_id: productoChatbot.id_producto,
+                tipo_recomendacion: TipoRecomendacion.MEJOR_CALIFICADO,
+              },
+            });
+
+            const metadata = {
+              promedio_calificacion: productoChatbot.promedio_calificacion,
+              total_resenas: productoChatbot.total_resenas,
+              total_ventas: productoChatbot.total_ventas,
+              generado_por_chatbot: true,
+              timestamp_chatbot: new Date().toISOString(),
+            };
+
+            if (existente) {
+              return this.prisma.recomendacion.update({
+                where: { id: existente.id },
+                data: {
+                  prioridad: limite - index,
+                  activo: true,
+                  metadata: metadata,
+                },
+              });
+            } else {
+              return this.prisma.recomendacion.create({
+                data: {
+                  producto_id: productoChatbot.id_producto,
+                  tipo_recomendacion: TipoRecomendacion.MEJOR_CALIFICADO,
+                  prioridad: limite - index,
+                  activo: true,
+                  metadata: metadata,
+                },
+              });
+            }
+          }),
+        );
+      }
+
+      console.log(
+        `✅ Recomendaciones inteligentes generadas: ${recomendacionesCreadas.masVendidos.length} más vendidos, ${recomendacionesCreadas.mejorCalificados.length} mejor calificados`,
+      );
+
+      return recomendacionesCreadas;
+    } catch (error) {
+      console.error('❌ Error al generar recomendaciones inteligentes:', error);
+      // Fallback a métodos locales si el chatbot no está disponible
+      console.log(
+        '⚠️  Usando generación local como fallback...',
+      );
+      const masVendidos =
+        await this.generarRecomendacionesMasVendidos(limite);
+      const mejorCalificados =
+        await this.generarRecomendacionesMejorCalificados(limite);
+      return { masVendidos, mejorCalificados };
+    }
+  }
+
+  /**
+   * Verificar si el microservicio del chatbot está disponible
+   */
+  async verificarChatbotDisponible(): Promise<boolean> {
+    const axios = require('axios');
+    try {
+      const response = await axios.get('http://localhost:6000/chatbot/health', {
+        timeout: 2000,
+      });
+      return response.data.estado === 'operativo';
+    } catch (error) {
+      return false;
+    }
   }
 }
 

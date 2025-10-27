@@ -4,12 +4,15 @@ import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../services/auth.service';
 import { ChatService } from '../../services/chat.service';
+import { PedidoService } from '../../services/pedido.service';
 import { ChatMessage, ChatResponse, ProductRecommendation } from '../../models/chat.model';
+import { ModalAgregarProductoComponent } from '../modal-agregar-producto/modal-agregar-producto.component';
+import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-chat',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ModalAgregarProductoComponent],
   templateUrl: './chat.component.html',
   styleUrls: ['./chat.component.scss']
 })
@@ -23,11 +26,16 @@ export class ChatComponent implements OnInit, OnDestroy {
   isConnected: boolean = false;
   recommendations: ProductRecommendation[] = [];
   showRecommendations: boolean = false;
+  
+  // Para el modal de agregar producto
+  mostrarModalAgregar: boolean = false;
+  productoParaAgregar: any = null;
 
   constructor(
     private http: HttpClient,
     private authService: AuthService,
-    private chatService: ChatService
+    private chatService: ChatService,
+    private pedidoService: PedidoService
   ) {}
 
   ngOnInit(): void {
@@ -269,6 +277,43 @@ export class ChatComponent implements OnInit, OnDestroy {
       error: (error) => {
         console.error('Error loading chat history:', error);
       }
+    });
+  }
+
+  // ========== MÉTODOS PARA AGREGAR AL CARRITO ==========
+
+  abrirModalAgregar(recommendation: ProductRecommendation): void {
+    // Convertir la recomendación a formato de producto
+    this.productoParaAgregar = {
+      id: recommendation.producto_id,
+      nombre: recommendation.nombre,
+      descripcion: recommendation.descripcion,
+      precio: recommendation.precio,
+      categoria: recommendation.categoria,
+      imagen_url: recommendation.imagen_url,
+      disponible: true
+    };
+    this.mostrarModalAgregar = true;
+  }
+
+  cerrarModalAgregar(): void {
+    this.mostrarModalAgregar = false;
+    this.productoParaAgregar = null;
+  }
+
+  agregarProductoAlCarrito(event: { producto: any; cantidad: number; detalles?: string }): void {
+    const { producto, cantidad, detalles } = event;
+    
+    this.pedidoService.agregarAlCarrito(producto, cantidad, detalles);
+    
+    Swal.fire({
+      icon: 'success',
+      title: '¡Agregado al carrito!',
+      text: `${cantidad} x ${producto.nombre}`,
+      timer: 2000,
+      showConfirmButton: false,
+      toast: true,
+      position: 'top-end'
     });
   }
 }
