@@ -89,6 +89,7 @@ export class RecomendacionController {
       ...filtros,
       incluir_producto: true,
       incluir_metricas: true,
+      ignorar_fechas: true, // El supervisor puede ver todas las recomendaciones, vigentes o no
     };
 
     return this.recomendacionService.obtenerRecomendaciones(filtrosCompletos);
@@ -201,6 +202,37 @@ export class RecomendacionController {
     @Param('productoId', ParseIntPipe) productoId: number,
   ) {
     return this.recomendacionService.actualizarMetricasProducto(productoId);
+  }
+
+  /**
+   * POST /unifood/api/recomendaciones/generar/inteligentes
+   * Generar recomendaciones usando IA del microservicio de chatbot
+   * Este endpoint usa el chatbot para obtener análisis más precisos
+   */
+  @Post('generar/inteligentes')
+  @HttpCode(HttpStatus.CREATED)
+  async generarRecomendacionesInteligentes(
+    @Query('limite', new ParseIntPipe({ optional: true })) limite?: number,
+  ) {
+    return this.recomendacionService.generarRecomendacionesInteligentes(
+      limite || 10,
+    );
+  }
+
+  /**
+   * GET /unifood/api/recomendaciones/chatbot/estado
+   * Verificar si el microservicio del chatbot está disponible
+   */
+  @Get('chatbot/estado')
+  async verificarChatbot() {
+    const disponible = await this.recomendacionService.verificarChatbotDisponible();
+    return {
+      chatbot_disponible: disponible, // ✅ Cambio de 'disponible' a 'chatbot_disponible'
+      mensaje: disponible
+        ? 'Microservicio de chatbot disponible'
+        : 'Microservicio de chatbot no disponible',
+      chatbot_url: 'http://localhost:6000',
+    };
   }
 }
 

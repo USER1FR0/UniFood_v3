@@ -30,7 +30,6 @@
             <div 
               *ngFor="let rec of message.recommendations" 
               class="recommendation-card-inline"
-              (click)="selectRecommendation(rec)"
             >
               <div class="recommendation-content-inline">
                 <h5>{{ rec.nombre }}</h5>
@@ -38,6 +37,24 @@
                 <div class="recommendation-price-inline">${{ rec.precio | number:'1.2-2' }}</div>
                 <div *ngIf="rec.categoria" class="recommendation-category-inline">
                   <i class="category-icon">🍽️</i> {{ rec.categoria }}
+                </div>
+                
+                <!-- Botones de acción -->
+                <div class="recommendation-actions">
+                  <button 
+                    class="btn-mas-info" 
+                    (click)="selectRecommendation(rec)"
+                    title="Más información"
+                  >
+                    <i class="fas fa-info-circle"></i> Más Info
+                  </button>
+                  <button 
+                    class="btn-agregar-carrito" 
+                    (click)="abrirModalAgregar(rec)"
+                    title="Agregar al carrito"
+                  >
+                    <i class="fas fa-shopping-cart"></i> Agregar
+                  </button>
                 </div>
               </div>
             </div>
@@ -92,3 +109,11 @@
     </button>
   </div>
 </div>
+
+<!-- Modal para agregar producto al carrito -->
+<app-modal-agregar-producto
+  [producto]="productoParaAgregar"
+  [mostrar]="mostrarModalAgregar"
+  (cerrar)="cerrarModalAgregar()"
+  (agregar)="agregarProductoAlCarrito($event)"
+></app-modal-agregar-producto>

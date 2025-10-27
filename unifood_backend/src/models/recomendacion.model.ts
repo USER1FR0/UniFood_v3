@@ -199,6 +199,11 @@ export class FiltrosRecomendacionDto {
   @IsBoolean({ message: 'incluir_metricas debe ser un booleano' })
   @IsOptional()
   incluir_metricas?: boolean;
+
+  @Type(() => Boolean)
+  @IsBoolean({ message: 'ignorar_fechas debe ser un booleano' })
+  @IsOptional()
+  ignorar_fechas?: boolean; // Para supervisores: ver todas las recomendaciones sin filtrar por vigencia
 }
 
 // ============================================
