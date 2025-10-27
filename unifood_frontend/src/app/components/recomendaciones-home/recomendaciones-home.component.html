@@ -1,0 +1,157 @@
+<div class="recomendaciones-container">
+  <!-- Banner de Ofertas Especiales -->
+  <div class="banner-ofertas">
+    <div class="banner-content">
+      <div class="banner-badge">
+        <i class="fas fa-bolt"></i>
+        OFERTA ESPECIAL
+      </div>
+      <h2 class="banner-titulo">¡Descuentos del día!</h2>
+      <p class="banner-subtitulo">Aprovecha nuestras promociones exclusivas</p>
+      <div class="banner-detalles">
+        <div class="detalle-item">
+          <i class="fas fa-percentage"></i>
+          <span>Hasta 30% OFF</span>
+        </div>
+        <div class="detalle-item">
+          <i class="fas fa-clock"></i>
+          <span>Válido hoy</span>
+        </div>
+        <div class="detalle-item">
+          <i class="fas fa-fire"></i>
+          <span>Productos seleccionados</span>
+        </div>
+      </div>
+    </div>
+    <div class="banner-decoration">
+      <div class="circle circle-1"></div>
+      <div class="circle circle-2"></div>
+      <div class="circle circle-3"></div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="cargando" class="loading-state">
+    <div class="spinner"></div>
+    <p>Cargando recomendaciones...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error && !cargando" class="error-state">
+    <i class="fas fa-exclamation-circle" style="font-size: 3rem; color: #E76F51; margin-bottom: 1rem;"></i>
+    <p>{{ error }}</p>
+    <button class="retry-btn" (click)="cargarRecomendaciones()">
+      <i class="fas fa-redo"></i>
+      Reintentar
+    </button>
+  </div>
+
+  <!-- Content -->
+  <div *ngIf="!cargando && !error" class="content">
+    
+    <!-- Iterar por cada tipo de recomendación -->
+    <div *ngFor="let tipoConfig of tiposRecomendacion" class="tipo-seccion">
+      <ng-container *ngIf="obtenerRecomendacionesTipo(tipoConfig.tipo).length > 0">
+        
+        <!-- Título de la sección con badge -->
+        <div class="seccion-header">
+          <div class="seccion-titulo">
+            <span class="badge-tipo">
+              <i class="fas {{ tipoConfig.icono }}"></i>
+            </span>
+            {{ tipoConfig.titulo }}
+          </div>
+        </div>
+
+        <!-- Grid de productos estilo e-commerce -->
+        <div class="productos-carrusel">
+          <div 
+            *ngFor="let rec of obtenerRecomendacionesTipo(tipoConfig.tipo)" 
+            class="producto-card"
+            (click)="onClickRecomendacion(rec)"
+            (mouseenter)="onVistaRecomendacion(rec)"
+          >
+            <!-- Imagen del producto con badges -->
+            <div class="producto-imagen">
+              <img 
+                [src]="obtenerImagenProducto(rec.producto)" 
+                [alt]="rec.producto?.nombre || 'Producto'"
+                (error)="onImageError($event)"
+                loading="lazy"
+              />
+              
+              <!-- Badge circular de precio (estilo Subway) -->
+              <div class="badge-precio-circular">
+                <span class="precio-numero">{{ extraerNumero(rec.producto?.precio) }}</span>
+                <span class="precio-moneda">MXN</span>
+              </div>
+
+              <!-- Badge de tipo (HOT, POPULAR, etc.) -->
+              <div class="badge-hot" *ngIf="tipoConfig.tipo === 'mas_vendido'">
+                HOT
+              </div>
+              <div class="badge-hot" style="background: #6BBF59;" *ngIf="tipoConfig.tipo === 'mejor_calificado'">
+                TOP
+              </div>
+
+              <!-- Badge de prioridad alta -->
+              <div *ngIf="rec.prioridad >= 4" class="badge-top">
+                <i class="fas fa-crown"></i> Destacado
+              </div>
+            </div>
+
+            <!-- Información del producto -->
+            <div class="producto-info">
+              <h4 class="producto-nombre">{{ rec.producto?.nombre }}</h4>
+              <p class="producto-descripcion">
+                {{ rec.producto?.descripcion || 'Delicioso producto preparado con ingredientes frescos' }}
+              </p>
+
+              <!-- Categoría -->
+              <div class="producto-categoria" *ngIf="rec.producto?.categoria">
+                <i class="fas fa-utensils"></i>
+                {{ rec.producto?.categoria?.nombre }}
+              </div>
+
+              <!-- Métricas -->
+              <div class="producto-metricas" *ngIf="rec.metricas">
+                <span class="metrica" *ngIf="rec.metricas.total_ventas > 0">
+                  <i class="fas fa-fire"></i>
+                  {{ rec.metricas.total_ventas }} vendidos
+                </span>
+                <span class="metrica" *ngIf="rec.metricas.calificacion_promedio > 0">
+                  <i class="fas fa-star star-icon"></i>
+                  {{ formatearCalificacion(rec.metricas.calificacion_promedio) }}
+                </span>
+              </div>
+
+              <!-- Precio grande -->
+              <div class="producto-precio">
+                {{ formatearPrecio(rec.producto?.precio || 0) }}
+              </div>
+
+              <!-- Botón de agregar -->
+              <button class="btn-agregar" (click)="onClickRecomendacion(rec); $event.stopPropagation()">
+                <i class="fas fa-shopping-cart"></i>
+                Agregar
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </ng-container>
+    </div>
+
+    <!-- Estado vacío -->
+    <div *ngIf="recomendaciones.length === 0" class="empty-state">
+      <i class="fas fa-box-open" style="font-size: 3rem; color: #7A8A8B; margin-bottom: 1rem;"></i>
+      <p>No hay recomendaciones disponibles en este momento</p>
+      <button class="retry-btn" (click)="cargarRecomendaciones()">
+        <i class="fas fa-sync-alt"></i>
+        Recargar
+      </button>
+    </div>
+
+  </div>
+</div>
+

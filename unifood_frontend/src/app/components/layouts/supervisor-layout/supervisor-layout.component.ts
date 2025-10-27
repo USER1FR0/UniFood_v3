@@ -51,5 +51,8 @@ export class SupervisorLayoutComponent {
     this.router.navigate(['/supervisor/producto']);
   }
 
+  irARecomendaciones(): void {
+    this.router.navigate(['/supervisor/recomendaciones']);
+  }
 
 }

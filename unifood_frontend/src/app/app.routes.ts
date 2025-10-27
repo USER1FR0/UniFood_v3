@@ -20,6 +20,8 @@ import { AreaVentaComponent } from './components/area-venta/area-venta.component
 import { CategoriaComponent } from './components/categoria/categoria.component';
 import { ProductoComponent } from './components/producto/producto.component';
 import { ClienteProductosComponent } from './components/cliente-productos/cliente-productos.component';
+import { RecomendacionesHomeComponent } from './components/recomendaciones-home/recomendaciones-home.component';
+import { SupervisorRecomendacionesComponent } from './components/supervisor-recomendaciones/supervisor-recomendaciones.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'lista-vendedores', pathMatch: 'full' },
@@ -38,6 +40,7 @@ export const routes: Routes = [
       { path: 'carrito', component: ClientePedidoComponent },
       { path: 'menu', component: MenuComponent },
       { path: 'productos', component: ClienteProductosComponent },
+      { path: 'recomendaciones', component: RecomendacionesHomeComponent },
     ],
   },
 
@@ -71,6 +74,7 @@ export const routes: Routes = [
       { path: 'dashboard', component: SupervisorDashboardComponent },
       {path: 'crear-area-venta', component: AreaVentaComponent},
       {path: 'producto', component: ProductoComponent},
+      {path: 'recomendaciones', component: SupervisorRecomendacionesComponent},
     ],
   },
 

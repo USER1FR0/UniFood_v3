@@ -12,6 +12,7 @@ import { ChatModule } from './modules/chat.module';
 import { AreaVentaModule } from './modules/area-venta.module';
 import { CategoriaModule } from './modules/categoria.module';
 import { ProductoModule } from './modules/producto.module';
+import { RecomendacionModule } from './modules/recomendacion.module';
 
 @Module({
   imports: [
@@ -27,7 +28,8 @@ import { ProductoModule } from './modules/producto.module';
     ChatModule,
     AreaVentaModule,
     CategoriaModule,
-    ProductoModule
+    ProductoModule,
+    RecomendacionModule,
   ],
   controllers: [AppController],
   providers: [AppService],
