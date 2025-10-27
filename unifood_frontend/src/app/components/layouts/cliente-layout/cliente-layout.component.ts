@@ -818,6 +818,10 @@ export class ClienteLayoutComponent implements OnInit, OnDestroy {
   irAPedidos(): void {
     this.router.navigate(['/cliente/pedidos']);
   }
+  irAProductos(): void {
+    this.router.navigate(['/cliente/productos']);
+  }
+
 
   abrirMenu() {
     this.menuAbierto = !this.menuAbierto;

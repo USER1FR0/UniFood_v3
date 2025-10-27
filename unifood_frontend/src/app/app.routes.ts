@@ -18,6 +18,8 @@ import { ChatComponent } from './components/chat/chat.component';
 import { ReportePedidoComponent } from './components/reporte-pedido/reporte-pedido.component';
 import { AreaVentaComponent } from './components/area-venta/area-venta.component';
 import { CategoriaComponent } from './components/categoria/categoria.component';
+import { ProductoComponent } from './components/producto/producto.component';
+import { ClienteProductosComponent } from './components/cliente-productos/cliente-productos.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'lista-vendedores', pathMatch: 'full' },
@@ -35,6 +37,7 @@ export const routes: Routes = [
       { path: '', redirectTo: 'carrito', pathMatch: 'full' },
       { path: 'carrito', component: ClientePedidoComponent },
       { path: 'menu', component: MenuComponent },
+      { path: 'productos', component: ClienteProductosComponent },
     ],
   },
 
@@ -51,6 +54,7 @@ export const routes: Routes = [
       { path: 'chat', component: ChatComponent },
       { path: 'reportes', component: ReportePedidoComponent },
       {path: 'crear-categoria', component: CategoriaComponent},
+      {path: 'producto', component: ProductoComponent},
     ],
   },
 
@@ -66,6 +70,7 @@ export const routes: Routes = [
       { path: 'reportes', component: ReportePedidoComponent },
       { path: 'dashboard', component: SupervisorDashboardComponent },
       {path: 'crear-area-venta', component: AreaVentaComponent},
+      {path: 'producto', component: ProductoComponent},
     ],
   },
 

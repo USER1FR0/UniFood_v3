@@ -1,0 +1,149 @@
+<div class="cliente-productos-container">
+  <!-- Header -->
+  <div class="header">
+    <h1>Nuestro Menú</h1>
+    <p>Descubre nuestras deliciosas opciones</p>
+    <!-- <button class="btn-debug" (click)="verificarDatos()" *ngIf="!loading">Debug Datos</button> -->
+  </div>
+
+  <!-- Filtros -->
+  <div class="filtros-section">
+    <div class="filtros-grid">
+      <!-- Búsqueda -->
+      <div class="filtro-group">
+        <label>Buscar producto</label>
+        <div class="search-box">
+          <i class="fas fa-search"></i>
+          <input type="text" 
+                 [(ngModel)]="terminoBusqueda" 
+                 (input)="aplicarFiltros()"
+                 placeholder="Nombre o descripción...">
+        </div>
+      </div>
+
+      <!-- Filtro por categoría -->
+      <div class="filtro-group">
+        <label>Categoría</label>
+        <select [(ngModel)]="categoriaSeleccionada" (change)="aplicarFiltros()">
+          <option value="">Todas las categorías</option>
+          <option *ngFor="let categoria of categorias" [value]="categoria.id">
+            {{ categoria.nombre }}
+          </option>
+        </select>
+      </div>
+
+      <!-- Filtro por área de venta -->
+      <div class="filtro-group">
+        <label>Área de venta</label>
+        <select [(ngModel)]="areaSeleccionada" (change)="aplicarFiltros()">
+          <option value="">Todas las áreas</option>
+          <option *ngFor="let area of areasVenta" [value]="area.id">
+            {{ area.area_venta }}
+          </option>
+        </select>
+      </div>
+
+      <!-- Botón limpiar -->
+      <div class="filtro-group">
+        <label>&nbsp;</label>
+        <button class="btn-secondary" (click)="limpiarFiltros()">
+          <i class="fas fa-times"></i>
+          Limpiar
+        </button>
+      </div>
+    </div>
+
+    <!-- Info de filtros activos -->
+    <div class="filtros-activos" *ngIf="categoriaSeleccionada || areaSeleccionada || terminoBusqueda">
+  <small>
+    Filtros activos: 
+    <span *ngIf="categoriaSeleccionada">
+      Categoría: {{ getCategoriaSeleccionadaNombre() }}
+    </span>
+    <span *ngIf="areaSeleccionada">
+      Área: {{ getAreaSeleccionadaNombre() }}
+    </span>
+    <span *ngIf="terminoBusqueda">
+      Búsqueda: "{{ terminoBusqueda }}"
+    </span>
+    - Mostrando {{ productosFiltrados.length }} de {{ productos.length }} productos
+  </small>
+</div>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="loading">
+    <i class="fas fa-spinner fa-spin"></i>
+    Cargando productos...
+  </div>
+
+  <!-- Error Message -->
+  <div *ngIf="errorMessage" class="error-message">
+    {{ errorMessage }}
+    <button class="btn-close" (click)="errorMessage = ''">×</button>
+  </div>
+
+  <!-- Productos Grid -->
+  <div class="productos-grid" *ngIf="!loading">
+    <div *ngFor="let producto of productosFiltrados" 
+         class="producto-card" 
+         (click)="abrirDetallesModal(producto)">
+      
+      <div class="producto-image">
+        <img [src]="producto.imagen_url || 'assets/images/placeholder-food.jpg'" 
+             [alt]="producto.nombre"
+             (error)="producto.imagen_url = 'assets/images/placeholder-food.jpg'">
+        <div class="producto-badge" *ngIf="producto.calorias">
+          {{ producto.calorias }} cal
+        </div>
+        <div class="producto-categoria-badge">
+          {{ getNombreCategoria(producto.categoria_id) }}
+        </div>
+      </div>
+      
+      <div class="producto-content">
+        <div class="producto-header">
+          <h3 class="producto-title">{{ producto.nombre }}</h3>
+          <span class="producto-precio">${{ producto.precio }}</span>
+        </div>
+        
+        <p class="producto-description">{{ producto.descripcion || 'Sin descripción' }}</p>
+        
+        <div class="producto-meta">
+          <div class="meta-item">
+            <i class="fas fa-clock"></i>
+            <span>{{ producto.tiempo_preparacion }} min</span>
+          </div>
+          <div class="meta-item">
+            <i class="fas fa-store"></i>
+            <span>{{ getNombreAreaVenta(producto.area_venta_id) }}</span>
+          </div>
+        </div>
+
+        <div class="producto-actions">
+          <button class="btn-add-cart" (click)="$event.stopPropagation(); agregarAlCarrito(producto, $event)">
+            <i class="fas fa-cart-plus"></i>
+            Agregar al carrito
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="productosFiltrados.length === 0 && !loading" class="empty-state">
+      <i class="fas fa-search"></i>
+      <h3>No se encontraron productos</h3>
+      <p>Intenta con otros filtros o términos de búsqueda</p>
+      <div class="debug-info" *ngIf="productos.length > 0">
+        <small>
+          Hay {{ productos.length }} productos disponibles, pero ninguno coincide con los filtros aplicados.
+        </small>
+      </div>
+      <button class="btn-primary" (click)="limpiarFiltros()">
+        Mostrar todos los productos
+      </button>
+    </div>
+  </div>
+
+  <!-- Modal de Detalles (mantener igual que antes) -->
+  <!-- ... -->
+</div>

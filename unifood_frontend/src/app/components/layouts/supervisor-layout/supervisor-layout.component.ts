@@ -44,6 +44,12 @@ export class SupervisorLayoutComponent {
   irAVendedores(): void{
     this.router.navigate(['/supervisor/lista-vendedores']);
   }
+   irAreaVenta(): void{
+    this.router.navigate(['/supervisor/crear-area-venta']);
+  }
+   irAProducto(): void {
+    this.router.navigate(['/supervisor/producto']);
+  }
 
 
 }

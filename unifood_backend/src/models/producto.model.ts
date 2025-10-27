@@ -30,7 +30,7 @@ export class CreateProductoDto {
   @IsNumber()
   tiempo_preparacion: number;
 
-  @IsObject()
+  @IsArray()
   @IsOptional()
   ingredientes?: any;
 
@@ -75,7 +75,7 @@ export class UpdateProductoDto {
   @IsOptional()
   tiempo_preparacion?: number;
 
-  @IsObject()
+  @IsArray()
   @IsOptional()
   ingredientes?: any;
 

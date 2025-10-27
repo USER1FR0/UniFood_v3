@@ -351,6 +351,13 @@ export class VendedorLayoutComponent implements OnInit, OnDestroy {
     this.router.navigate(['/vendedor/lista-vendedores']);
   }
 
+  irACategorias(): void {
+    this.router.navigate(['/vendedor/crear-categoria']);
+  }
+  irAProducto(): void {
+    this.router.navigate(['/vendedor/producto']);
+  }
+
   irAPedidos(): void {
     this.router.navigate(['/vendedor/pedidos']);
   }

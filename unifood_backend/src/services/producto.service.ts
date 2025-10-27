@@ -44,7 +44,7 @@ export class ProductoService {
     const result = await this.dataSource.query(
       `INSERT INTO producto 
        (nombre, descripcion, precio, imagen_url, categoria_id, area_venta_id, 
-        estado, tiempo_preparacion, ingredientes, calorias, vendedorFK) 
+        estado, tiempo_preparacion, ingredientes, calorias, "vendedorFK") 
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *`,
       [
         nombre,
@@ -55,7 +55,7 @@ export class ProductoService {
         area_venta_id,
         estado ?? true,
         tiempo_preparacion,
-        ingredientes,
+        ingredientes ? JSON.stringify(ingredientes) : null, // CONVERTIR A JSON
         calorias,
         vendedorFK
       ]
@@ -121,7 +121,7 @@ export class ProductoService {
     
     if (updateProductoDto.ingredientes !== undefined) {
       fields.push(`ingredientes = $${paramCount}`);
-      values.push(JSON.stringify(updateProductoDto.ingredientes));
+      values.push(updateProductoDto.ingredientes ? JSON.stringify(updateProductoDto.ingredientes) : null); // CONVERTIR A JSON
       paramCount++;
     }
     
@@ -132,7 +132,7 @@ export class ProductoService {
     }
     
     if (updateProductoDto.vendedorFK !== undefined) {
-      fields.push(`vendedorFK = $${paramCount}`);
+      fields.push(`"vendedorFK" = $${paramCount}`);
       values.push(updateProductoDto.vendedorFK);
       paramCount++;
     }
