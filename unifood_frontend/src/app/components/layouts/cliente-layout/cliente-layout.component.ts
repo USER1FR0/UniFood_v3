@@ -20,7 +20,7 @@ import { ClientePedidoComponent } from '../../cliente-pedido/cliente-pedido.comp
 
 @Component({
   selector: 'app-cliente-layout',
-  imports: [CommonModule, RouterOutlet, FormsModule, ChatFloatComponent, ClientePedidoComponent, RouterLink, RouterLinkActive],
+  imports: [CommonModule, RouterOutlet, FormsModule, ChatFloatComponent, ClientePedidoComponent],
   templateUrl: './cliente-layout.component.html',
   styleUrls: ['./cliente-layout.component.scss'],
 })
