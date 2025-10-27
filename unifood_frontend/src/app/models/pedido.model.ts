@@ -22,10 +22,26 @@ export interface AreaVenta {
   area_venta: string;
 }
 
+export interface Usuario {
+  id: number;
+  correo_electronico: string;
+  rol: string;
+}
+
+export interface Vendedor {
+  id: number;
+  nombre_completo: string;
+  telefono: string;
+  area_venta_id: number;
+  usuario?: Usuario;
+  area_venta?: AreaVenta;
+}
+
 export interface Cliente {
   id: number;
   nombre_completo: string;
   telefono: string;
+  usuario?: Usuario;
 }
 
 // ========== CARRITO ==========
@@ -61,8 +77,17 @@ export interface Pedido {
   pedido_estado?: PedidoEstado | null;
   pedido_productos: PedidoProducto[];
   pagos: Pago[];
+  producto_calificaciones?: ProductoCalificacion[];
 }
 
+export interface ProductoCalificacion {
+  id: number;
+  pedido_id: number;
+  producto_id: number;
+  resena: number;
+  comentario?: string;
+  producto?: Producto;
+}
 export interface PedidoProducto {
   id: number;
   pedido_id: number;
@@ -86,6 +111,7 @@ export interface Pago {
   pago_estado_id: number;
   fecha: Date;
   pago_metodo?: PagoMetodo;
+  pago_estado?: PagoEstado;
 }
 
 export interface PagoMetodo {
@@ -100,6 +126,11 @@ export interface CrearPedidoDto {
   detalles_pedido?: string;
   area_venta_id: number;
   metodo_pago: 'efectivo' | 'tarjeta';
+  datos_tarjeta?: {
+    numero: string;
+    cvv: string;
+    expiracion: string;
+  };
 }
 
 export interface ProductoPedidoDto {
@@ -137,4 +168,51 @@ export interface AgregarCarritoDto {
   producto_id: number;
   cantidad: number;
   detalles?: string;
+}
+
+// Modelos para reportes
+export interface FiltrosReporte {
+  fecha_inicio?: string;
+  fecha_fin?: string;
+  pago_metodo_id?: number;
+  pedido_estado_id?: number;
+  area_venta_id?: number;
+}
+
+export interface OpcionesReporte {
+  incluir_nombre_cliente: boolean;
+  incluir_correo_cliente: boolean;
+  incluir_telefono_cliente: boolean;
+  incluir_detalles_pedido: boolean;
+}
+
+export interface OpcionesTicket {
+  incluir_descripcion_producto: boolean;
+  incluir_detalles_producto: boolean;
+  incluir_calificaciones: boolean;
+}
+
+export interface CatalogoMetodoPago {
+  id: number;
+  pago_metodo: string;
+}
+
+export interface CatalogoEstadoPedido {
+  id: number;
+  estado: string;
+}
+
+export interface CatalogoAreaVenta {
+  id: number;
+  area_venta: string;
+}
+
+export interface ReporteResponse {
+  pedidos: Pedido[];
+  totalVentas: number;
+}
+
+export interface PagoEstado {
+  id: number;
+  pago_estado: string;
 }

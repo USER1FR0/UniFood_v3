@@ -29,6 +29,7 @@ export class ClienteLayoutComponent implements OnInit, OnDestroy {
   pedidosActivos: Pedido[] = [];
   pedidoSeleccionado: Pedido | null = null;
   mostrarListaPedidos = false;
+  menuAbierto = false;
 
   //Estado pago
   estaPagado: boolean = false;
@@ -43,6 +44,8 @@ export class ClienteLayoutComponent implements OnInit, OnDestroy {
   cvv: string = '';
   calificaciones: number[] = [];
   comentarios: string[] = [];
+
+  datosTemporalesPedido: any = null;
 
   private subscriptions: Subscription[] = [];
   private pollingInterval: any;
@@ -59,7 +62,7 @@ export class ClienteLayoutComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     const usuario = this.authService.obtenerUsuario();
-    this.nombreCliente = usuario?.correo.split('@')[0] || 'Cliente';
+    this.nombreCliente = usuario?.nombre_completo || 'Cliente';
 
     // Suscribirse al carrito
     this.subscriptions.push(
@@ -77,6 +80,11 @@ export class ClienteLayoutComponent implements OnInit, OnDestroy {
     // Escuchar actualizaciones
     this.escucharWebSockets();
 
+    window.addEventListener('abrirModalPago', () => {
+      this.ngZone.run(() => {
+        this.abrirModalPagoDesdeCarrito();
+      });
+    });
     // Polling de respaldo cada 15 segundos
     /*this.pollingInterval = setInterval(() => {
       if (this.pedidosActivos) {
@@ -106,7 +114,7 @@ export class ClienteLayoutComponent implements OnInit, OnDestroy {
         }
       },
       error: (err) => {
-        console.error('❌ Error al obtener pedidos activos:', err);
+        //console.error('Error al obtener pedidos activos:', err);
         this.pedidosActivos = [];
       },
     });
@@ -117,17 +125,17 @@ export class ClienteLayoutComponent implements OnInit, OnDestroy {
     this.subscriptions.push(
       this.wsService.onPedidoCreado().subscribe((pedido) => {
         this.ngZone.run(() => {
-          console.log('🆕 Nuevo pedido creado:', pedido);
+          //console.log('Nuevo pedido creado:', pedido);
 
           const index = this.pedidosActivos.findIndex(
             (p) => p.id === pedido.id
           );
           if (index === -1) {
             this.pedidosActivos.push(pedido);
-            console.log('✅ Pedido agregado a la lista:', pedido.codigo);
+            //console.log('Pedido agregado a la lista:', pedido.codigo);
           } else {
             this.pedidosActivos[index] = pedido;
-            console.log('🔁 Pedido actualizado en la lista:', pedido.codigo);
+            //console.log('Pedido actualizado en la lista:', pedido.codigo);
           }
 
           // Asegurarse de estar suscrito al nuevo pedido
@@ -151,7 +159,7 @@ export class ClienteLayoutComponent implements OnInit, OnDestroy {
     // Actualizar pedido
     this.subscriptions.push(
       this.wsService.onActualizarPedido().subscribe((pedido) => {
-        console.log('🔄 Pedido actualizado (cliente):', pedido);
+        //console.log('Pedido actualizado (cliente):', pedido);
 
         const index = this.pedidosActivos.findIndex((p) => p.id === pedido.id);
         if (index !== -1) {
@@ -201,7 +209,7 @@ export class ClienteLayoutComponent implements OnInit, OnDestroy {
       `,
             confirmButtonText: 'Ir a recoger',
             confirmButtonColor: '#5B9A97',
-          });
+          }).then((result) => this.abrirSeguimiento());
         }
       })
     );
@@ -235,8 +243,8 @@ export class ClienteLayoutComponent implements OnInit, OnDestroy {
     this.subscriptions.push(
       this.wsService.onPedidoRechazado().subscribe((pedido) => {
         this.ngZone.run(() => {
-          // 👈 fuerza detección de cambios
-          console.log('🚨 Pedido rechazado recibido en cliente:', pedido);
+          //fuerza detección de cambios
+          //console.log('Pedido rechazado recibido en cliente:', pedido);
 
           this.pedidosActivos = this.pedidosActivos.filter(
             (p) => p.id !== pedido.id
@@ -248,15 +256,16 @@ export class ClienteLayoutComponent implements OnInit, OnDestroy {
           }
 
           this.reproducirSonido();
-
-          const motivo =
+          let motivo =
             pedido.detalles_pedido?.replace('RECHAZADO: ', '') ||
             'Sin motivo especificado';
 
           Swal.fire({
             icon: 'error',
             title: 'Pedido rechazado',
-            html: `<p>Tu pedido fue rechazado por el vendedor.</p><p><strong>Motivo:</strong> ${motivo}</p>`,
+            html: `<p>Tu pedido fue rechazado por el vendedor.</p><p><strong>Motivo:</strong> ${motivo}</p>
+                <p>Si tu pago fue con tarjeta, el reembolso se vera reflejado al instante</p>
+            `,
             confirmButtonColor: '#5B9A97',
           }).then(() => {
             this.verificarPedidosActivos();
@@ -269,7 +278,7 @@ export class ClienteLayoutComponent implements OnInit, OnDestroy {
     this.subscriptions.push(
       this.wsService.onPedidoEntregado().subscribe((pedido) => {
         this.reproducirSonido();
-        console.log('🎉 Pedido entregado:', pedido);
+        //console.log('Pedido entregado:', pedido);
 
         // Buscar y actualizar el pedido en el array
         const index = this.pedidosActivos.findIndex((p) => p.id === pedido.id);
@@ -316,6 +325,24 @@ export class ClienteLayoutComponent implements OnInit, OnDestroy {
     );
   }
 
+  abrirModalPagoDesdeCarrito(): void {
+    const datosStr = localStorage.getItem('pedido_temporal');
+    if (!datosStr) return;
+
+    const datos = JSON.parse(datosStr);
+    this.datosTemporalesPedido = datos;
+
+    this.pedidoSeleccionado = {
+      total_pedido: datos.areaSeleccionada.total,
+      codigo: 'NUEVO',
+    } as any;
+
+    this.mostrarModalPago = true;
+
+    // Limpiar localStorage
+    localStorage.removeItem('pedido_temporal');
+  }
+
   abrirSeguimiento(): void {
     this.verificarPedidosActivos();
     if (this.pedidosActivos.length === 1) {
@@ -359,7 +386,7 @@ export class ClienteLayoutComponent implements OnInit, OnDestroy {
     this.pedidosActivos.push(pedido);
     this.pedidoSeleccionado = pedido;
     this.wsService.suscribirPedido(pedido.id);
-    console.log('Pedido creado cliente layout: ', pedido);
+    //console.log('Pedido creado cliente layout: ', pedido);
 
     const pagoPendiente = pedido.pagos?.find(
       (p) => p.pago_metodo_id === 1 && p.pago_estado_id === 2
@@ -453,61 +480,90 @@ export class ClienteLayoutComponent implements OnInit, OnDestroy {
   }
 
   procesarPago(): void {
-    if (!this.pedidoSeleccionado) {
-      Swal.fire('Error', 'No hay pedido seleccionado', 'error');
-      return;
-    }
-
-    const pagoPendiente = this.pedidoSeleccionado.pagos?.find(
-      (p) => p.pago_metodo_id === 1 && p.pago_estado_id === 2
-    );
-
-    if (!pagoPendiente) {
+    if (!this.numeroTarjeta || !this.cvv || !this.expiracion) {
       Swal.fire({
-        icon: 'error',
-        title: 'Error',
-        text: 'No hay un pago pendiente con tarjeta para este pedido',
+        icon: 'warning',
+        title: 'Campos incompletos',
+        text: 'Por favor completa todos los datos de la tarjeta',
         confirmButtonColor: '#5B9A97',
       });
       return;
     }
 
-    if (
-      !this.numeroTarjeta ||
-      this.numeroTarjeta.replace(/\s/g, '').length < 13
-    ) {
-      Swal.fire({
-        icon: 'error',
-        title: 'Tarjeta inválida',
-        text: 'Ingresa un número de tarjeta válido',
-        confirmButtonColor: '#5B9A97',
-      });
-      return;
+    // Verificar si es pedido nuevo o existente
+    if (this.datosTemporalesPedido) {
+      this.crearPedidoConTarjeta();
+    } else {
+      this.procesarPagoPendiente();
     }
+  }
 
-    if (!this.cvv || this.cvv.length < 3) {
-      Swal.fire({
-        icon: 'error',
-        title: 'CVV inválido',
-        text: 'Ingresa un CVV válido (3 o 4 dígitos)',
-        confirmButtonColor: '#5B9A97',
-      });
-      return;
-    }
+  crearPedidoConTarjeta(): void {
+    Swal.fire({
+      title: 'Procesando...',
+      html: 'Creando pedido y procesando pago',
+      allowOutsideClick: false,
+      didOpen: () => {
+        Swal.showLoading();
+      },
+    });
 
-    if (!this.expiracion || !/^\d{2}\/\d{2}$/.test(this.expiracion)) {
-      Swal.fire({
-        icon: 'error',
-        title: 'Fecha inválida',
-        text: 'Ingresa la fecha en formato MM/AA',
-        confirmButtonColor: '#5B9A97',
-      });
-      return;
-    }
+    const datos = this.datosTemporalesPedido;
+    const productos = datos.areaSeleccionada.items.map((item: any) => ({
+      producto_id: item.producto.id,
+      cantidad: item.cantidad,
+      precio_unitario: item.producto.precio,
+      detalles_producto: item.detalles || undefined,
+    }));
+
+    const dto: any = {
+      productos,
+      detalles_pedido: datos.detallesPedido || undefined,
+      area_venta_id: datos.areaSeleccionada.area_venta_id,
+      metodo_pago: 'tarjeta',
+      datos_tarjeta: {
+        numero: this.numeroTarjeta.replace(/\s/g, ''),
+        cvv: this.cvv,
+        expiracion: this.expiracion,
+      },
+    };
+
+    this.pedidoService.crearPedido(dto).subscribe({
+      next: (pedido) => {
+        const areaId = datos.areaSeleccionada.area_venta_id;
+        this.pedidoService.limpiarItemsPorArea(areaId);
+
+        localStorage.setItem('carrito_limpiado', areaId.toString());
+
+        this.cerrarModalPago();
+        this.datosTemporalesPedido = null;
+
+        Swal.fire({
+          icon: 'success',
+          title: '¡Pedido creado y pagado!',
+          text: `Tu pedido #${pedido.codigo} ha sido registrado`,
+          confirmButtonColor: '#5B9A97',
+        });
+
+        this.verificarPedidosActivos();
+      },
+      error: (err) => {
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: err.error?.message || 'No se pudo procesar el pedido',
+          confirmButtonColor: '#5B9A97',
+        });
+      },
+    });
+  }
+
+  procesarPagoPendiente(): void {
+    // Mantener tu código existente para pedidos ya creados
+    if (!this.pedidoSeleccionado) return;
 
     Swal.fire({
       title: 'Procesando pago...',
-      html: 'Por favor espera mientras procesamos tu pago',
       allowOutsideClick: false,
       didOpen: () => {
         Swal.showLoading();
@@ -524,17 +580,14 @@ export class ClienteLayoutComponent implements OnInit, OnDestroy {
 
     this.pedidoService.procesarPago(this.pedidoSeleccionado.id, dto).subscribe({
       next: () => {
-        this.mostrarModalPago = false;
-        this.numeroTarjeta = '';
-        this.expiracion = '';
-        this.cvv = '';
+        this.cerrarModalPago();
         Swal.fire('¡Pago exitoso!', 'Tu pago ha sido procesado', 'success');
         this.verificarPedidosActivos();
         this.mostrarModalSeguimiento = true;
       },
       error: (err) => {
         Swal.fire(
-          'Error en el pago',
+          'Error',
           err.error.message || 'No se pudo procesar el pago',
           'error'
         );
@@ -624,7 +677,7 @@ export class ClienteLayoutComponent implements OnInit, OnDestroy {
         });
       })
       .catch((err) => {
-        console.error('Error al enviar calificaciones:', err);
+        //console.error('Error al enviar calificaciones:', err);
         Swal.fire({
           icon: 'error',
           title: 'Error',
@@ -640,6 +693,7 @@ export class ClienteLayoutComponent implements OnInit, OnDestroy {
     this.numeroTarjeta = '';
     this.expiracion = '';
     this.cvv = '';
+    this.datosTemporalesPedido = null; //Agregar
   }
 
   cerrarModalSeguimiento(): void {
@@ -725,12 +779,12 @@ export class ClienteLayoutComponent implements OnInit, OnDestroy {
         const audio = this.audioPendiente.nativeElement;
         audio.currentTime = 0; // Reiniciar el audio
         audio.play().catch((err) => {
-          console.warn('⚠️ No se pudo reproducir el sonido:', err);
-          //this.reproducirSonidoAlternativo();
+          //console.warn('No se pudo reproducir el sonido:', err);
+          this.reproducirSonidoAlternativo();
         });
       }
     } catch (error) {
-      console.error('❌ Error en reproducirSonido:', error);
+      console.error('Error en reproducirSonido:', error);
     }
   }
 
@@ -759,5 +813,19 @@ export class ClienteLayoutComponent implements OnInit, OnDestroy {
     } catch (e) {
       console.error('No se pudo reproducir sonido alternativo:', e);
     }
+  }
+
+  irAPedidos(): void {
+    this.router.navigate(['/cliente/pedidos']);
+  }
+  irAProductos(): void {
+    this.router.navigate(['/cliente/productos']);
+  }
+  irARecomendaciones(): void {
+    this.router.navigate(['/cliente/recomendaciones']);
+  }
+
+  abrirMenu() {
+    this.menuAbierto = !this.menuAbierto;
   }
 }

@@ -24,7 +24,7 @@ export class SupervisorRecomendacionesComponent implements OnInit {
   resumen: ResumenRecomendaciones | null = null;
   estadisticas: Map<number, EstadisticasInteraccion> = new Map();
   
-  cargando = false; // ⚠️ Cambiar de true a false
+  cargando = false;
   error: string | null = null;
   mensaje: string | null = null;
 
@@ -116,6 +116,7 @@ export class SupervisorRecomendacionesComponent implements OnInit {
     this.recomendacionService.obtenerEstadisticas(id).subscribe({
       next: (stats) => {
         this.estadisticas.set(id, stats);
+        this.cdr.markForCheck();
       },
       error: (error) => {
         console.error('Error al cargar estadísticas:', error);

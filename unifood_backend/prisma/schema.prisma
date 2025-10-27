@@ -200,6 +200,7 @@ enum accion_enum {
   ACTUALIZADO
   ELIMINADO
 }
+
 model registro_chat {
   id               Int      @id @default(autoincrement())
   usuario_id       Int

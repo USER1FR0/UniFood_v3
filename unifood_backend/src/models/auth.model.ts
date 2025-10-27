@@ -24,10 +24,27 @@ export interface LoginResponse {
   token: string;
   usuario: {
     id: number;
-    id_rol: number | null;  // ← Agrega esta línea
+    id_rol: number | null;
     correo: string;
     rol: string;
+    nombre_completo?: string;
+    telefono?: string;
+    area_venta_id?: number;
+    area_venta?: {
+      id: number;
+      area_venta: string;
+    };
   };
+}
+
+export interface JwtPayload {
+  id: number;
+  id_rol: number | null;
+  correo: string;
+  rol: string;
+  nombre_completo?: string;
+  telefono?: string;
+  area_venta_id?: number;
 }
 
 export interface Usuario {

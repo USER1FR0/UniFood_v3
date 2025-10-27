@@ -1,26 +1,20 @@
-import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { Pool } from 'pg';
 
-@Module({
-  imports: [
-    ConfigModule.forRoot({
-      isGlobal: true,
-    }),
+export const pool = new Pool({
+  connectionString: process.env.DB_URI,
+  // 🔥 PROBAR SIN SSL PRIMERO
+});
 
-    TypeOrmModule.forRootAsync({
-      imports: [ConfigModule],
-      inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
-        type: 'postgres',
-        url: config.get<string>('DB_URI'),
-        autoLoadEntities: true,
-        synchronize: true,
-        ssl: {
-          rejectUnauthorized: false,
-        },
-      }),
-    }),
-  ],
-})
-export class DatabaseConfig {}
+pool.on('error', (err) => {
+  console.error('❌ Error inesperado en el pool de BD:', err);
+  process.exit(-1);
+});
+
+// Probar conexión
+pool.query('SELECT NOW()', (err, res) => {
+  if (err) {
+    console.error('❌ Error al conectar con la BD:', err.message);
+  } else {
+    console.log('✅ Microservicio de Pagos conectado a la BD');
+  }
+});

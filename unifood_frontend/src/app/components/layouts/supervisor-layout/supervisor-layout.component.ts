@@ -1,27 +1,20 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router, RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../../services/auth.service';
-import { CommonModule } from '@angular/common';
 import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-supervisor-layout',
-  standalone: true,
-  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [RouterOutlet],
   templateUrl: './supervisor-layout.component.html',
-  styleUrls: ['./supervisor-layout.component.scss'],
+  styleUrl: './supervisor-layout.component.scss',
 })
-export class SupervisorLayoutComponent implements OnInit {
-  nombreSupervisor: string = '';
+export class SupervisorLayoutComponent {
+  constructor(private authService: AuthService, private router: Router) {}
+  menuAbierto=false;
 
-  constructor(
-    private authService: AuthService,
-    private router: Router
-  ) {}
-
-  ngOnInit(): void {
-    const usuario = this.authService.obtenerUsuario();
-    this.nombreSupervisor = usuario?.correo.split('@')[0] || 'Supervisor';
+  abrirMenu(){
+    this.menuAbierto = !this.menuAbierto;
   }
 
   logout(): void {
@@ -39,5 +32,27 @@ export class SupervisorLayoutComponent implements OnInit {
       }
     });
   }
-}
 
+  irAReportes(): void {
+    this.router.navigate(['/supervisor/reportes']);
+  }
+
+  irADashboard(): void {
+    this.router.navigate(['/supervisor/dashboard']);
+  }
+
+  irAVendedores(): void{
+    this.router.navigate(['/supervisor/lista-vendedores']);
+  }
+   irAreaVenta(): void{
+    this.router.navigate(['/supervisor/crear-area-venta']);
+  }
+   irAProducto(): void {
+    this.router.navigate(['/supervisor/producto']);
+  }
+
+  irARecomendaciones(): void {
+    this.router.navigate(['/supervisor/recomendaciones']);
+  }
+
+}

@@ -9,6 +9,9 @@ import { authModule } from './modules/auth.module';
 import { PrismaModule } from './modules/prisma.module';
 import { PedidosModule } from './modules/pedido.module';
 import { ChatModule } from './modules/chat.module';
+import { AreaVentaModule } from './modules/area-venta.module';
+import { CategoriaModule } from './modules/categoria.module';
+import { ProductoModule } from './modules/producto.module';
 import { RecomendacionModule } from './modules/recomendacion.module';
 
 @Module({
@@ -23,6 +26,9 @@ import { RecomendacionModule } from './modules/recomendacion.module';
     PrismaModule,
     PedidosModule,
     ChatModule,
+    AreaVentaModule,
+    CategoriaModule,
+    ProductoModule,
     RecomendacionModule,
   ],
   controllers: [AppController],

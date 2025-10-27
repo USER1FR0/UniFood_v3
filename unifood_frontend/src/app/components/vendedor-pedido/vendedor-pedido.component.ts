@@ -64,7 +64,7 @@ export class VendedorPedidoComponent implements OnInit, OnDestroy {
       next: (pedidos) => {
         this.pedidosPendientes = pedidos;
       },
-      error: (err) => console.error('Error al cargar pendientes:', err),
+      error: (err) => console.error('Error al cargar pedidos w pendientes:', err),
     });
 
     // Cargar en proceso
@@ -82,7 +82,7 @@ export class VendedorPedidoComponent implements OnInit, OnDestroy {
         this.cargando = false;
       },
       error: (err) => {
-        console.error('Error al cargar listos:', err);
+        //console.error('Error al cargar listos:', err);
         this.cargando = false;
       },
     });
@@ -90,10 +90,8 @@ export class VendedorPedidoComponent implements OnInit, OnDestroy {
 
   escucharWebSockets(): void {
     // Nuevo pedido
-    // Nuevo pedido
     this.subscriptions.push(
       this.wsService.onNuevoPedido().subscribe((pedido) => {
-        console.log('🆕 Nuevo pedido recibido:', pedido);
 
         // Verificar que no exista ya en la lista
         const existe = this.pedidosPendientes.some((p) => p.id === pedido.id);
@@ -147,12 +145,11 @@ export class VendedorPedidoComponent implements OnInit, OnDestroy {
         const audio = this.audioPendiente.nativeElement;
         audio.currentTime = 0; // Reiniciar el audio
         audio.play().catch((err) => {
-          console.warn('⚠️ No se pudo reproducir el sonido:', err);
           this.reproducirSonidoAlternativo();
         });
       }
     } catch (error) {
-      console.error('❌ Error en reproducirSonido:', error);
+      console.error('Error en reproducirSonido:', error);
     }
   }
 
@@ -184,7 +181,6 @@ export class VendedorPedidoComponent implements OnInit, OnDestroy {
   }
 
   actualizarPedidoEnLista(pedido: Pedido): void {
-    console.log('🔄 Actualizando pedido en lista:', pedido);
 
     // Eliminar de todas las listas
     this.eliminarPedidoDeListas(pedido.id);
@@ -192,16 +188,19 @@ export class VendedorPedidoComponent implements OnInit, OnDestroy {
     // Agregar a la lista correspondiente según estado
     if (pedido.pedido_estado_id === 1) {
       this.pedidosPendientes.unshift(pedido); // Agregar al inicio
+      return;
     } else if (pedido.pedido_estado_id === 2) {
       this.pedidosEnProceso.unshift(pedido);
+      return;
     } else if (pedido.pedido_estado_id === 3) {
       this.pedidosListos.unshift(pedido);
+      return;
     } else if (pedido.pedido_estado_id === 4) {
       // Entregado - eliminar de todas las listas
-      console.log('✅ Pedido entregado, eliminado de listas');
+      return;
     } else if (pedido.pedido_estado_id === 5 || pedido.pedido_estado_id === 6) {
       // Cancelado o rechazado - eliminar de todas las listas
-      console.log('❌ Pedido cancelado/rechazado, eliminado de listas');
+      return;
     }
   }
 
@@ -340,11 +339,12 @@ export class VendedorPedidoComponent implements OnInit, OnDestroy {
 
   abrirDetalles(pedido: Pedido): void {
 
-    let metodoPago = '';
+    let metodoPago = 'N/A';
+    //console.log('Pedido Actual',pedido);
 
     if (pedido.pagos?.find((p) => p.pago_metodo_id === 1)) {
       metodoPago = 'Tarjeta';
-    }else{
+    }else if(pedido.pagos?.find((p) => p.pago_metodo_id === 2)){
       metodoPago = 'Efectivo';
     }
     // Este método debe llamar al método del layout padre
@@ -393,6 +393,12 @@ export class VendedorPedidoComponent implements OnInit, OnDestroy {
   }
 
   abrirRechazar(pedido: Pedido): void {
+    let motivo = "Tu reembolso se vera reflejado en tu cuenta."
+    let isReembolso = false;
+
+    if(pedido.pagos.some((p)=> p.pago_metodo_id === 1)){
+      isReembolso = true;
+    }
     Swal.fire({
       title: 'Rechazar pedido',
       input: 'textarea',
@@ -404,6 +410,8 @@ export class VendedorPedidoComponent implements OnInit, OnDestroy {
       confirmButtonColor: '#E76F51',
     }).then((result) => {
       if (result.isConfirmed && result.value) {
+
+
         this.pedidoService
           .rechazarPedido(pedido.id, { motivo: result.value })
           .subscribe({
@@ -431,11 +439,28 @@ export class VendedorPedidoComponent implements OnInit, OnDestroy {
     });
   }
 
+  verificarMetodoPago(pedido: Pedido):boolean{
+    // true: tarjeta
+    //false: efectivo
+    return pedido.pagos?.some((p) => p.pago_metodo_id === 1);
+  }
+
   abrirEntregar(pedido: Pedido): void {
-    this.estaPagado = pedido.pagos.some((p) => p.pago_estado_id === 1);
+    this.estaPagado = this.verificarMetodoPago(pedido);
 
     if (this.estaPagado) {
-      this.confirmarEntrega(pedido, 1, undefined);
+      Swal.fire({
+        title: 'Pedido listo para entrega?',
+        //html: `<p style="font-size: 1.2rem;"><strong>Total: $${pedido.total_pedido}</strong></p><p>¿Ya cobraste al cliente?</p>`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Sí,listo.',
+        cancelButtonText: 'No',
+        confirmButtonColor: '#5B9A97',
+      }).then((result)=>{
+        this.confirmarEntrega(pedido,1, Number(pedido.total_pedido));
+      })
+      //this.confirmarEntrega(pedido, 1, undefined);
     } else {
       Swal.fire({
         title: 'Cobrar en efectivo',
@@ -512,7 +537,6 @@ export class VendedorPedidoComponent implements OnInit, OnDestroy {
     // Actualizar pedidos cada 30 segundos como respaldo
     this.pollingInterval = setInterval(() => {
       if (!this.cargando) {
-        console.log('🔄 Actualizando pedidos (polling)...');
         this.cargarPedidos();
       }
     }, 300000); // 30 segundos

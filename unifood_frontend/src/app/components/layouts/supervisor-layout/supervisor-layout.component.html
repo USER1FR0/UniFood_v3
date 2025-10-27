@@ -3,36 +3,34 @@
   <header class="header">
     <div class="header-content">
       <div class="logo">
-        <h1>UniFood - Panel Supervisor</h1>
+        <h1>UniFood</h1>
+        <span class="area-badge">Area de supervision</span>
       </div>
 
       <div class="header-actions">
-        <!-- Botón Recomendaciones -->
-        <button
-          class="btn-recomendaciones"
-          routerLink="/supervisor/recomendaciones"
-          routerLinkActive="active"
-          title="Gestionar recomendaciones"
-        >
-          <i class="fas fa-chart-line"></i>
-          <span>Recomendaciones</span>
-        </button>
-
-        <!-- Usuario -->
         <div class="user-menu">
-          <span class="user-name">{{ nombreSupervisor }}</span>
-          <span class="user-role">Supervisor</span>
-          <button class="btn-logout" (click)="logout()">
-            <i class="fas fa-sign-out-alt"></i>
-          </button>
+          <span class="user-name"> Supervisor </span>
+          <div class="menu-container">
+            <button class="btn-menu" (click)="abrirMenu()">
+              <i class="fas fa-bars"></i>
+            </button>
+
+            <div class="dropdown-menu" [class.open]="menuAbierto">
+              <button (click)="irADashboard()"><i class="fas fa-chart-simple"></i>&af; Dashboard</button>
+              <button (click)="irAVendedores()"><i class ="fas fa-users"></i>&af; Vendedores</button>
+              <button (click)="irAreaVenta()"><i class ="fas fa-store"></i>&af; Areas de Venta</button>
+              <button (click)="irAProducto()"><i class ="fas fa-utensils"></i>&af; Productos</button>
+              <button (click)="irARecomendaciones()"><i class ="fas fa-star"></i>&af; Recomendaciones</button>
+              <button (click)="irAReportes()"><i class ="fas fa-receipt"></i>&af; Reportes</button>
+              <button (click)="logout()"><i class="fas fa-sign-out-alt"></i>&af; Cerrar sesión</button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   </header>
-
   <!-- Contenido principal -->
   <main class="main-content">
     <router-outlet></router-outlet>
   </main>
 </div>
-

@@ -15,6 +15,11 @@ import { VendedorLayoutComponent } from './components/layouts/vendedor-layout/ve
 import { SupervisorLayoutComponent } from './components/layouts/supervisor-layout/supervisor-layout.component';
 import { SupervisorDashboardComponent } from './components/supervisor-dashboard/supervisor-dashboard.component';
 import { ChatComponent } from './components/chat/chat.component';
+import { ReportePedidoComponent } from './components/reporte-pedido/reporte-pedido.component';
+import { AreaVentaComponent } from './components/area-venta/area-venta.component';
+import { CategoriaComponent } from './components/categoria/categoria.component';
+import { ProductoComponent } from './components/producto/producto.component';
+import { ClienteProductosComponent } from './components/cliente-productos/cliente-productos.component';
 import { RecomendacionesHomeComponent } from './components/recomendaciones-home/recomendaciones-home.component';
 import { SupervisorRecomendacionesComponent } from './components/supervisor-recomendaciones/supervisor-recomendaciones.component';
 
@@ -29,10 +34,12 @@ export const routes: Routes = [
   {
     path: 'cliente',
     canActivate: [clienteGuard],
-    component: ClienteLayoutComponent, 
+    component: ClienteLayoutComponent,
     children: [
       { path: '', redirectTo: 'carrito', pathMatch: 'full' },
       { path: 'carrito', component: ClientePedidoComponent },
+      { path: 'menu', component: MenuComponent },
+      { path: 'productos', component: ClienteProductosComponent },
       { path: 'recomendaciones', component: RecomendacionesHomeComponent },
     ],
   },
@@ -41,13 +48,16 @@ export const routes: Routes = [
   {
     path: 'vendedor',
     canActivate: [vendedorGuard],
-    component: VendedorLayoutComponent, 
+    component: VendedorLayoutComponent,
     children: [
       { path: '', redirectTo: 'pedidos', pathMatch: 'full' },
       { path: 'pedidos', component: VendedorPedidoComponent },
       { path: 'lista-vendedores', component: ListaVendedoresComponent },
-       { path: 'borrar', component: BorrarComponent },
-       {path: 'chat', component: ChatComponent},
+      { path: 'borrar', component: BorrarComponent },
+      { path: 'chat', component: ChatComponent },
+      { path: 'reportes', component: ReportePedidoComponent },
+      {path: 'crear-categoria', component: CategoriaComponent},
+      {path: 'producto', component: ProductoComponent},
     ],
   },
 
@@ -55,11 +65,16 @@ export const routes: Routes = [
   {
     path: 'supervisor',
     canActivate: [supervisorGuard],
-    component: SupervisorLayoutComponent, 
+    component: SupervisorLayoutComponent,
     children: [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+      { path: 'lista-vendedores', component: ListaVendedoresComponent },
+      {path: 'crear-vendedor', component: CrearVendedorComponent},
+      { path: 'reportes', component: ReportePedidoComponent },
       { path: 'dashboard', component: SupervisorDashboardComponent },
-      { path: 'recomendaciones', component: SupervisorRecomendacionesComponent },
+      {path: 'crear-area-venta', component: AreaVentaComponent},
+      {path: 'producto', component: ProductoComponent},
+      {path: 'recomendaciones', component: SupervisorRecomendacionesComponent},
     ],
   },
 

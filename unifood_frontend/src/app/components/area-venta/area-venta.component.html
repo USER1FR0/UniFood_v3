@@ -1,0 +1,294 @@
+<div class="areas-venta-container">
+  <div class="areas-venta-card">
+    <!-- Header -->
+    <div class="areas-venta-header">
+      <h1>Gestión de Áreas de Venta</h1>
+      <p>Administra las áreas de venta disponibles en el sistema</p>
+    </div>
+
+    <!-- Botón Agregar -->
+    <div class="acciones-container">
+      <button class="btn-agregar" (click)="abrirModalCrear()">
+        <span class="icono">+</span>
+        Nueva Área de Venta
+      </button>
+    </div>
+
+    <!-- Estados de carga, error y vacío -->
+    <div *ngIf="cargando" class="estado-carga">
+      <div class="spinner"></div>
+      <p>Cargando áreas de venta...</p>
+    </div>
+
+    <div *ngIf="error && !cargando" class="estado-error">
+      <p>{{ error }}</p>
+      <button class="btn-reintentar" (click)="cargarAreasVenta()">
+        Reintentar
+      </button>
+    </div>
+
+    <div *ngIf="!cargando && !error && areasVenta.length === 0" class="estado-vacio">
+      <div class="icono-vacio">🏪</div>
+      <h3>No hay áreas de venta registradas</h3>
+      <p>Comienza agregando tu primera área de venta al sistema</p>
+      <button class="btn-agregar-primero" (click)="abrirModalCrear()">
+        Agregar Primera Área
+      </button>
+    </div>
+
+    <!-- Lista de Áreas de Venta -->
+    <div *ngIf="!cargando && !error && areasVenta.length > 0" class="lista-areas-venta">
+      <div *ngFor="let area of areasVenta" class="area-card">
+        <div class="area-header">
+          <div class="avatar">
+            {{ area.area_venta.charAt(0).toUpperCase() }}
+          </div>
+          <div class="area-info">
+            <h3 class="nombre">{{ area.area_venta }}</h3>
+            <p class="descripcion">{{ area.descripcion || 'Sin descripción' }}</p>
+          </div>
+          <div class="area-status">
+            <span 
+              class="estatus" 
+              [class.estatus-activo]="area.status" 
+              [class.estatus-inactivo]="!area.status"
+            >
+              {{ area.status ? 'Activo' : 'Inactivo' }}
+            </span>
+            <span 
+              class="estado-horario" 
+              [class.abierta]="area.status && estaAbierta(area)"
+              [class.cerrada]="area.status && !estaAbierta(area)"
+            >
+              {{ area.status ? (estaAbierta(area) ? '🟢 Abierta' : '🔴 Cerrada') : '❌ Inactiva' }}
+            </span>
+          </div>
+        </div>
+
+        <div class="area-detalles">
+          <div class="detalle-item">
+            <span class="icono">🕒</span>
+            <span class="texto">{{ getHorarioCompleto(area) }}</span>
+          </div>
+          <div class="detalle-item">
+            <span class="icono">📅</span>
+            <span class="texto">Registrado: {{ area.fecha_registro | date:'dd/MM/yyyy' }}</span>
+          </div>
+        </div>
+
+        <div class="area-acciones">
+          <button class="btn-editar" (click)="abrirModalEditar(area)">
+            <span class="icono">✏️</span>
+            Editar
+          </button>
+          <button 
+            class="btn-estatus" 
+            (click)="cambiarStatusAreaVenta(area)"
+            [title]="area.status ? 'Desactivar área' : 'Activar área'"
+          >
+            <span class="icono">{{ area.status ? '⏸️' : '▶️' }}</span>
+            {{ area.status ? 'Desactivar' : 'Activar' }}
+          </button>
+          <button class="btn-eliminar" (click)="eliminarAreaVenta(area)">
+            <span class="icono">🗑️</span>
+            Eliminar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Crear Área de Venta -->
+  <div *ngIf="mostrarModalCrear" class="modal-overlay" (click)="cerrarModales()">
+    <div class="modal-container" (click)="$event.stopPropagation()">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h2>Nueva Área de Venta</h2>
+          <button class="btn-cerrar" (click)="cerrarModales()">×</button>
+        </div>
+
+        <form class="area-form" (ngSubmit)="crearAreaVenta()">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="nombre">Nombre del Área *</label>
+              <input
+                type="text"
+                id="nombre"
+                [(ngModel)]="nuevaAreaVenta.area_venta"
+                name="area_venta"
+                placeholder="Ej: Cocina Principal, Barra de Bebidas..."
+                required
+              >
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="descripcion">Descripción</label>
+            <textarea
+              id="descripcion"
+              [(ngModel)]="nuevaAreaVenta.descripcion"
+              name="descripcion"
+              placeholder="Describe el propósito de esta área de venta..."
+              rows="3"
+            ></textarea>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="horarioApertura">Horario de Apertura</label>
+              <input
+                type="time"
+                id="horarioApertura"
+                [(ngModel)]="nuevaAreaVenta.horario_apertura"
+                name="horario_apertura"
+              >
+            </div>
+
+            <div class="form-group">
+              <label for="horarioCierre">Horario de Cierre</label>
+              <input
+                type="time"
+                id="horarioCierre"
+                [(ngModel)]="nuevaAreaVenta.horario_cierre"
+                name="horario_cierre"
+              >
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Estado Inicial</label>
+            <div class="estatus-options">
+              <label class="estatus-option">
+                <input
+                  type="radio"
+                  [(ngModel)]="nuevaAreaVenta.status"
+                  name="statusCrear"
+                  [value]="true"
+                >
+                <span class="radio-custom"></span>
+                <span class="estatus-text activo">Activo</span>
+              </label>
+              <label class="estatus-option">
+                <input
+                  type="radio"
+                  [(ngModel)]="nuevaAreaVenta.status"
+                  name="statusCrear"
+                  [value]="false"
+                >
+                <span class="radio-custom"></span>
+                <span class="estatus-text inactivo">Inactivo</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="btn-cancelar" (click)="cerrarModales()" [disabled]="procesando">
+              Cancelar
+            </button>
+            <button type="submit" class="btn-actualizar" [disabled]="procesando || !nuevaAreaVenta.area_venta">
+              <span *ngIf="procesando" class="spinner-mini"></span>
+              {{ procesando ? 'Creando...' : 'Crear Área' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Editar Área de Venta -->
+  <div *ngIf="mostrarModalEditar && areaVentaSeleccionada" class="modal-overlay" (click)="cerrarModales()">
+    <div class="modal-container" (click)="$event.stopPropagation()">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h2>Editar Área de Venta</h2>
+          <button class="btn-cerrar" (click)="cerrarModales()">×</button>
+        </div>
+
+        <form class="area-form" (ngSubmit)="actualizarAreaVenta()">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="nombreEditar">Nombre del Área *</label>
+              <input
+                type="text"
+                id="nombreEditar"
+                [(ngModel)]="areaVentaEditada.area_venta"
+                name="area_venta"
+                placeholder="Ej: Cocina Principal, Barra de Bebidas..."
+                required
+              >
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="descripcionEditar">Descripción</label>
+            <textarea
+              id="descripcionEditar"
+              [(ngModel)]="areaVentaEditada.descripcion"
+              name="descripcion"
+              placeholder="Describe el propósito de esta área de venta..."
+              rows="3"
+            ></textarea>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="horarioAperturaEditar">Horario de Apertura</label>
+              <input
+                type="time"
+                id="horarioAperturaEditar"
+                [(ngModel)]="areaVentaEditada.horario_apertura"
+                name="horario_apertura"
+              >
+            </div>
+
+            <div class="form-group">
+              <label for="horarioCierreEditar">Horario de Cierre</label>
+              <input
+                type="time"
+                id="horarioCierreEditar"
+                [(ngModel)]="areaVentaEditada.horario_cierre"
+                name="horario_cierre"
+              >
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Estado</label>
+            <div class="estatus-options">
+              <label class="estatus-option">
+                <input
+                  type="radio"
+                  [(ngModel)]="areaVentaEditada.status"
+                  name="statusEditar"
+                  [value]="true"
+                >
+                <span class="radio-custom"></span>
+                <span class="estatus-text activo">Activo</span>
+              </label>
+              <label class="estatus-option">
+                <input
+                  type="radio"
+                  [(ngModel)]="areaVentaEditada.status"
+                  name="statusEditar"
+                  [value]="false"
+                >
+                <span class="radio-custom"></span>
+                <span class="estatus-text inactivo">Inactivo</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="btn-cancelar" (click)="cerrarModales()" [disabled]="procesando">
+              Cancelar
+            </button>
+            <button type="submit" class="btn-actualizar" [disabled]="procesando">
+              <span *ngIf="procesando" class="spinner-mini"></span>
+              {{ procesando ? 'Actualizando...' : 'Actualizar Área' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

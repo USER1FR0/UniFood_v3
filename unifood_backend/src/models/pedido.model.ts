@@ -6,9 +6,24 @@ import {
   IsOptional,
   ValidateNested,
   IsEnum,
-  Min
+  Min,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+
+// Datos de tarjeta si el metodo de pago es tarjeta
+export class DatosTarjetaDto {
+  @IsString()
+  @IsNotEmpty()
+  numero: string;
+
+  @IsString()
+  @IsNotEmpty()
+  cvv: string;
+
+  @IsString()
+  @IsNotEmpty()
+  expiracion: string; // MM/AA
+}
 
 // DTO para crear un pedido
 export class CrearPedidoDto {
@@ -28,6 +43,11 @@ export class CrearPedidoDto {
   @IsEnum(['efectivo', 'tarjeta'])
   @IsNotEmpty()
   metodo_pago: 'efectivo' | 'tarjeta';
+
+  @ValidateNested()
+  @Type(() => DatosTarjetaDto)
+  @IsOptional()
+  datos_tarjeta?: DatosTarjetaDto;
 }
 
 // Productos de un pedido
@@ -49,22 +69,7 @@ export class ProductoPedidoDto {
   detalles_producto?: string;
 }
 
-// Datos de tarjeta si el metodo de pago es tarjeta
-export class DatosTarjetaDto {
-  @IsString()
-  @IsNotEmpty()
-  numero: string;
-
-  @IsString()
-  @IsNotEmpty()
-  cvv: string;
-
-  @IsString()
-  @IsNotEmpty()
-  expiracion: string; // MM/AA
-}
-
-//PAgo con tarjeta 
+//PAgo con tarjeta
 export class ProcesarPagoTarjetaDto {
   @ValidateNested()
   @Type(() => DatosTarjetaDto)
@@ -130,4 +135,46 @@ export class AgregarCarritoDto {
   @IsString()
   @IsOptional()
   detalles?: string;
+}
+
+//Modelos para la generacion de reportes cawn
+// ORM
+//dTO para los filtros del reporte
+// DTO para filtros de reporte
+export interface FiltrosReporteDto {
+  fecha_inicio?: string;
+  fecha_fin?: string;
+  pago_metodo_id?: number;
+  pedido_estado_id?: number;
+  area_venta_id?: number;
+}
+
+//Para el reporte general
+export interface OpcionesReporteDto {
+  incluir_nombre_cliente?: boolean;
+  incluir_correo_cliente?: boolean;
+  incluir_telefono_cliente?: boolean;
+  incluir_detalles_pedido?: boolean;
+}
+
+//Para cada pedido individual
+export interface OpcionesTicketDto {
+  incluir_descripcion_producto?: boolean;
+  incluir_detalles_producto?: boolean;
+  incluir_calificaciones?: boolean;
+}
+
+export interface CatalogoMetodoPago {
+  id: number;
+  pago_metodo: string;
+}
+
+export interface CatalogoEstadoPedido {
+  id: number;
+  estado: string;
+}
+
+export interface CatalogoAreaVenta {
+  id: number;
+  area_venta: string;
 }

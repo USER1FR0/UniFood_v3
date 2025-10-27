@@ -21,6 +21,7 @@ import { RecomendacionesHomeComponent } from '../recomendaciones-home/recomendac
 })
 export class ClientePedidoComponent implements OnInit {
   @Output() pedidoCreado = new EventEmitter<Pedido>();
+  @Output() solicitarModalPago = new EventEmitter<any>();
 
   carritosPorArea: CarritoPorArea[] = [];
   areaSeleccionada: CarritoPorArea | null = null;
@@ -44,6 +45,16 @@ export class ClientePedidoComponent implements OnInit {
 
   ngOnInit(): void {
     this.cargarCarrito();
+
+    this.pedidoService.itemsCarrito$.subscribe((items)=>{
+      if (this.carritosPorArea.length > 0 && items.length === 0) {
+      this.areaSeleccionada = null;
+      this.metodoPagoSeleccionado = null;
+      this.detallesPedido = '';
+    }
+
+    this.cargarCarrito();
+    });
   }
 
   cargarCarrito(): void {
@@ -51,12 +62,6 @@ export class ClientePedidoComponent implements OnInit {
 
     if (this.carritosPorArea.length === 0) {
       this.areaSeleccionada = null;
-      Swal.fire({
-        icon: 'info',
-        title: 'Carrito vacío',
-        text: 'Agrega productos para continuar',
-        confirmButtonColor: '#5B9A97',
-      });
       return;
     } else if (this.carritosPorArea.length === 1) {
       this.areaSeleccionada = this.carritosPorArea[0];
@@ -121,17 +126,61 @@ export class ClientePedidoComponent implements OnInit {
       return;
     }
 
-    // Validar microservicio si es pago con tarjeta
-    if (this.metodoPagoSeleccionado === 'tarjeta') {
-      this.validarMicroservicioPagos();
+    if (this.detallesPedido.length > 80) {
+      Swal.fire(
+        'Advertencia',
+        'Los detalles exceden el limite permitido',
+        'warning'
+      );
       return;
     }
 
-    // Si es efectivo, continuar normalmente
-    this.crearPedidoDirecto();
+    // Validar microservicio si es pago con tarjeta
+    if (this.metodoPagoSeleccionado === 'tarjeta') {
+      this.validarYAbrirModalPago();
+    } else {
+      // Si es efectivo, crear pedido directamente
+      this.crearPedidoDirecto();
+    }
   }
 
-  validarMicroservicioPagos(): void {
+  validarYAbrirModalPago(): void {
+    Swal.fire({
+      title: 'Validando...',
+      text: 'Verificando disponibilidad del servicio de pagos',
+      allowOutsideClick: false,
+      didOpen: () => {
+        Swal.showLoading();
+      },
+    });
+
+    this.pedidoService.verificarMicroservicioPagos().subscribe({
+      next: (disponible) => {
+        Swal.close();
+        if (disponible) {
+          //  Guardar datos temporales en localStorage
+          localStorage.setItem(
+            'pedido_temporal',
+            JSON.stringify({
+              areaSeleccionada: this.areaSeleccionada!,
+              detallesPedido: this.detallesPedido,
+            })
+          );
+
+          //Disparar evento personalizado del navegador
+          window.dispatchEvent(new CustomEvent('abrirModalPago'));
+        } else {
+          this.mostrarErrorMicroservicio();
+        }
+      },
+      error: () => {
+        Swal.close();
+        this.mostrarErrorMicroservicio();
+      },
+    });
+  }
+
+ /* validarMicroservicioPagos(): void {
     Swal.fire({
       title: 'Validando...',
       text: 'Verificando disponibilidad del servicio de pagos',
@@ -152,25 +201,16 @@ export class ClientePedidoComponent implements OnInit {
         }
       },
       error: (err) => {
-        console.error('❌ Error al validar microservicio:', err);
+        console.error('Error al validar microservicio:', err);
         Swal.close();
         this.mostrarErrorMicroservicio();
       },
     });
-  }
+  }*/
 
   crearPedidoDirecto(): void {
     if (!this.areaSeleccionada) {
       Swal.fire('Error', 'No hay área seleccionada', 'error');
-      return;
-    }
-
-    if (this.detallesPedido.length > 80) {
-      Swal.fire(
-        'Advertencia',
-        'Los detalles exceden el limite permitido',
-        'warning'
-      );
       return;
     }
 

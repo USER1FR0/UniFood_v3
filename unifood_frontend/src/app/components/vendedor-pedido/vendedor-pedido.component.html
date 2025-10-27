@@ -304,7 +304,7 @@
             <div class="nota-pago">
               <i
                 class="fas"
-                [ngClass]="estaPagado ? 'fa-credit-card' : 'fa-money-bill-wave'"
+                [ngClass]="verificarMetodoPago(pedido) ? 'fa-credit-card' : 'fa-money-bill-wave'"
               ></i>
             </div>
             <!--div

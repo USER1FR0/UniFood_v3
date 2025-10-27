@@ -13,7 +13,7 @@ export const clienteGuard: CanActivateFn = (route, state) => {
 
   const usuario = authService.obtenerUsuario();
   if (usuario?.rol !== 'cliente') {
-    router.navigate(['/vendedor']);
+    router.navigate(['/login']);
     return false;
   }
 

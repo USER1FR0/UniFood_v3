@@ -1,0 +1,301 @@
+<div class="productos-container">
+  <!-- Header -->
+  <div class="header">
+    <h1>Gestión de Productos</h1>
+    <button class="btn-primary" (click)="abrirCrearModal()">
+      <i class="fas fa-plus"></i>
+      Nuevo Producto
+    </button>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="loading">
+    <i class="fas fa-spinner fa-spin"></i>
+    Cargando productos...
+  </div>
+
+  <!-- Error Message -->
+  <div *ngIf="errorMessage" class="error-message">
+    {{ errorMessage }}
+    <button class="btn-close" (click)="errorMessage = ''">×</button>
+  </div>
+
+  <!-- Productos Grid -->
+  <div class="productos-grid" *ngIf="!loading">
+    <div *ngFor="let producto of productos" class="producto-card">
+      <div class="producto-image">
+        <img [src]="producto.imagen_url || 'assets/images/placeholder-food.jpg'" [alt]="producto.nombre">
+        <div class="producto-status" [class.active]="producto.estado" [class.inactive]="!producto.estado">
+          {{ producto.estado ? 'Activo' : 'Inactivo' }}
+        </div>
+      </div>
+
+      <div class="producto-content">
+        <h3 class="producto-title">{{ producto.nombre }}</h3>
+        <p class="producto-description">{{ producto.descripcion || 'Sin descripción' }}</p>
+
+        <div class="producto-details">
+          <div class="detail-item">
+            <i class="fas fa-dollar-sign"></i>
+            <span>${{ producto.precio }}</span>
+          </div>
+          <div class="detail-item">
+            <i class="fas fa-clock"></i>
+            <span>{{ producto.tiempo_preparacion }} min</span>
+          </div>
+          <div class="detail-item" *ngIf="producto.calorias">
+            <i class="fas fa-fire"></i>
+            <span>{{ producto.calorias }} cal</span>
+          </div>
+
+          <div class="detail-item" *ngIf="producto.ingredientes && producto.ingredientes.length > 0">
+            <i class="fas fa-list"></i>
+            <span>{{ producto.ingredientes.length }} ingredientes</span>
+          </div>
+
+
+        </div>
+
+        <div class="producto-actions">
+          <button class="btn-edit" (click)="abrirEditarModal(producto)">
+            <i class="fas fa-edit"></i>
+          </button>
+          <button class="btn-toggle" [class.inactive]="!producto.estado" (click)="toggleEstado(producto)">
+            <i [class]="producto.estado ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
+          </button>
+          <button class="btn-delete" (click)="eliminarProducto(producto.id)">
+            <i class="fas fa-trash"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="productos.length === 0" class="empty-state">
+      <i class="fas fa-utensils"></i>
+      <h3>No hay productos registrados</h3>
+      <p>Comienza agregando tu primer producto</p>
+      <button class="btn-primary" (click)="abrirCrearModal()">
+        Crear Producto
+      </button>
+    </div>
+  </div>
+
+  <!-- Modal Crear Producto -->
+  <div *ngIf="showCreateModal" class="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>Crear Nuevo Producto</h2>
+        <button class="btn-close" (click)="cerrarCrearModal()">×</button>
+      </div>
+
+      <div class="modal-body">
+        <form (ngSubmit)="crearProducto()" #crearForm="ngForm">
+          <div class="form-group">
+            <label for="nombre">Nombre *</label>
+            <input type="text" id="nombre" name="nombre" [(ngModel)]="nuevoProducto.nombre" required>
+          </div>
+
+          <div class="form-group">
+            <label for="descripcion">Descripción</label>
+            <textarea id="descripcion" name="descripcion" [(ngModel)]="nuevoProducto.descripcion" rows="3"></textarea>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="precio">Precio *</label>
+              <input type="number" id="precio" name="precio" [(ngModel)]="nuevoProducto.precio" required min="0"
+                step="0.01">
+            </div>
+
+            <div class="form-group">
+              <label for="tiempo_preparacion">Tiempo Preparación (min) *</label>
+              <input type="number" id="tiempo_preparacion" name="tiempo_preparacion"
+                [(ngModel)]="nuevoProducto.tiempo_preparacion" required min="0">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="categoria">Categoría</label>
+              <select id="categoria" name="categoria_id" [(ngModel)]="nuevoProducto.categoria_id">
+                <option value="">Seleccionar categoría</option>
+                <option *ngFor="let categoria of categorias" [value]="categoria.id">
+                  {{ categoria.nombre }}
+                </option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="area_venta">Área de Venta</label>
+              <select id="area_venta" name="area_venta_id" [(ngModel)]="nuevoProducto.area_venta_id">
+                <option value="">Seleccionar área</option>
+                <option *ngFor="let area of areasVenta" [value]="area.id">
+                  {{ area.area_venta }}
+                </option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="calorias">Calorías</label>
+              <input type="number" id="calorias" name="calorias" [(ngModel)]="nuevoProducto.calorias" min="0">
+            </div>
+
+            <div class="form-group">
+              <label for="imagen_url">URL de Imagen</label>
+              <input type="url" id="imagen_url" name="imagen_url" [(ngModel)]="nuevoProducto.imagen_url">
+            </div>
+          </div>
+          <!-- Sección de Ingredientes -->
+          <div class="form-group">
+            <label>Ingredientes</label>
+            <div class="ingredientes-container">
+              <div class="ingredientes-input">
+                <input type="text" [(ngModel)]="nuevoIngrediente" name="nuevoIngrediente"
+                  placeholder="Agregar ingrediente" (keyup.enter)="agregarIngrediente()">
+                <button type="button" class="btn-small" (click)="agregarIngrediente()">
+                  <i class="fas fa-plus"></i>
+                </button>
+              </div>
+
+              <div class="ingredientes-list"
+                *ngIf="nuevoProducto.ingredientes && nuevoProducto.ingredientes.length > 0">
+                <div class="ingrediente-item" *ngFor="let ingrediente of nuevoProducto.ingredientes; let i = index">
+                  <span>{{ ingrediente }}</span>
+                  <button type="button" class="btn-remove" (click)="eliminarIngrediente(i)">
+                    <i class="fas fa-times"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="btn-secondary" (click)="cerrarCrearModal()">
+              Cancelar
+            </button>
+            <button type="submit" class="btn-primary" [disabled]="!crearForm.form.valid">
+              Crear Producto
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Editar Producto -->
+  <div *ngIf="showEditModal" class="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>Editar Producto</h2>
+        <button class="btn-close" (click)="cerrarEditarModal()">×</button>
+      </div>
+
+      <div class="modal-body">
+        <form (ngSubmit)="actualizarProducto()">
+          <div class="form-group">
+            <label for="editNombre">Nombre</label>
+            <input type="text" id="editNombre" name="nombre" [(ngModel)]="productoEditando.nombre">
+          </div>
+
+          <div class="form-group">
+            <label for="editDescripcion">Descripción</label>
+            <textarea id="editDescripcion" name="descripcion" [(ngModel)]="productoEditando.descripcion"
+              rows="3"></textarea>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="editPrecio">Precio</label>
+              <input type="number" id="editPrecio" name="precio" [(ngModel)]="productoEditando.precio" min="0"
+                step="0.01">
+            </div>
+
+            <div class="form-group">
+              <label for="editTiempo">Tiempo Preparación (min)</label>
+              <input type="number" id="editTiempo" name="tiempo_preparacion"
+                [(ngModel)]="productoEditando.tiempo_preparacion" min="0">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="editCategoria">Categoría</label>
+              <select id="editCategoria" name="categoria_id" [(ngModel)]="productoEditando.categoria_id">
+                <option value="">Seleccionar categoría</option>
+                <option *ngFor="let categoria of categorias" [value]="categoria.id">
+                  {{ categoria.nombre }}
+                </option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="editAreaVenta">Área de Venta</label>
+              <select id="editAreaVenta" name="area_venta_id" [(ngModel)]="productoEditando.area_venta_id">
+                <option value="">Seleccionar área</option>
+                <option *ngFor="let area of areasVenta" [value]="area.id">
+                  {{ area.area_venta }}
+                </option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="editCalorias">Calorías</label>
+              <input type="number" id="editCalorias" name="calorias" [(ngModel)]="productoEditando.calorias" min="0">
+            </div>
+
+            <!-- Sección de Ingredientes -->
+            <div class="form-group">
+              <label>Ingredientes</label>
+              <div class="ingredientes-container">
+                <div class="ingredientes-input">
+                  <input type="text" [(ngModel)]="editIngrediente" name="editIngrediente"
+                    placeholder="Agregar ingrediente" (keyup.enter)="agregarIngredienteEditar()">
+                  <button type="button" class="btn-small" (click)="agregarIngredienteEditar()">
+                    <i class="fas fa-plus"></i>
+                  </button>
+                </div>
+
+                <div class="ingredientes-list"
+                  *ngIf="productoEditando.ingredientes && productoEditando.ingredientes.length > 0">
+                  <div class="ingrediente-item"
+                    *ngFor="let ingrediente of productoEditando.ingredientes; let i = index">
+                    <span>{{ ingrediente }}</span>
+                    <button type="button" class="btn-remove" (click)="eliminarIngredienteEditar(i)">
+                      <i class="fas fa-times"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="editImagen">URL de Imagen</label>
+              <input type="url" id="editImagen" name="imagen_url" [(ngModel)]="productoEditando.imagen_url">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="checkbox-label">
+              <input type="checkbox" name="estado" [(ngModel)]="productoEditando.estado">
+              <span class="checkmark"></span>
+              Producto activo
+            </label>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="btn-secondary" (click)="cerrarEditarModal()">
+              Cancelar
+            </button>
+            <button type="submit" class="btn-primary">
+              Actualizar Producto
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

@@ -278,22 +278,22 @@ $hot-red: #E76F51;
     text-transform: uppercase;
     letter-spacing: 1px;
 
-.badge-tipo {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    background: $primary;
-    color: white;
-    box-shadow: 0 3px 12px rgba($primary, 0.35);
-    transition: all 0.3s ease;
+    .badge-tipo {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: $primary;
+      color: white;
+      box-shadow: 0 3px 12px rgba($primary, 0.35);
+      transition: all 0.3s ease;
 
-    i {
-      font-size: 1.3rem;
+      i {
+        font-size: 1.3rem;
+      }
     }
-  }
   }
 }
 
@@ -694,3 +694,4 @@ $hot-red: #E76F51;
 .producto-card:nth-child(4) { animation-delay: 0.2s; }
 .producto-card:nth-child(5) { animation-delay: 0.25s; }
 .producto-card:nth-child(6) { animation-delay: 0.3s; }
+
