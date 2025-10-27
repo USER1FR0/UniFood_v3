@@ -15,7 +15,7 @@ import { RecomendacionesHomeComponent } from '../recomendaciones-home/recomendac
 
 @Component({
   selector: 'app-cliente-pedido',
-  imports: [CommonModule, FormsModule, RecomendacionesHomeComponent],
+  imports: [CommonModule, FormsModule],
   templateUrl: './cliente-pedido.component.html',
   styleUrls: ['./cliente-pedido.component.scss'],
 })
