@@ -3,8 +3,8 @@
     <i class="fas fa-sign-out-alt"></i>
   </!--button-->
 
-  <!-- Recomendaciones del día -->
-  <div class="recomendaciones-section">
+  <!-- Recomendaciones del día (solo si no están ocultas) -->
+  <div class="recomendaciones-section" *ngIf="!ocultarRecomendaciones">
     <app-recomendaciones-home></app-recomendaciones-home>
   </div>
 
@@ -227,77 +227,6 @@
     </div>
     <h3>Tu carrito está vacío</h3>
     <p>Agrega productos para continuar</p>
-  </div>
-</div>
-
-
-<!-- Modal de pueba para agregar al carrito w-->
- <!-- Botón flotante para abrir modal de prueba -->
-<button class="btn-test-carrito" (click)="mostrarModalTest = true" title="Probar Carrito">
-  <i class="fas fa-flask"> Test Carrito</i>
-</button>
-
-
-<!-- Modal de Prueba del Carrito -->
-<div class="modal-overlay" *ngIf="mostrarModalTest" (click)="mostrarModalTest = false">
-  <div class="modal-container modal-test" (click)="$event.stopPropagation()">
-    <div class="modal-header">
-      <h2><i class="fas fa-flask"></i> Probar Carrito</h2>
-      <button class="btn-close" (click)="mostrarModalTest = false">
-        <i class="fas fa-times"></i>
-      </button>
-    </div>
-
-    <div class="modal-body">
-      <div class="form-group">
-        <label>ID del Producto:</label>
-        <input 
-          type="number" 
-          [(ngModel)]="testProductoId" 
-          placeholder="Ej: 1"
-          class="form-control">
-      </div>
-
-      <div class="form-group">
-        <label>Cantidad:</label>
-        <input 
-          type="number" 
-          [(ngModel)]="testCantidad" 
-          placeholder="Ej: 2"
-          class="form-control"
-          min="1">
-      </div>
-
-      <div class="form-group">
-        <label>Detalles (opcional):</label>
-        <textarea 
-          [(ngModel)]="testDetalles" 
-          placeholder="Ej: Sin cebolla, extra queso"
-          class="form-control"
-          rows="3"></textarea>
-      </div>
-
-      <div class="resultado-test" *ngIf="resultadoTest">
-        <div class="alert" [class.success]="!errorTest" [class.error]="errorTest">
-          <i class="fas" [class.fa-check-circle]="!errorTest" [class.fa-times-circle]="errorTest"></i>
-          <div class="alert-content">
-            <strong>{{ errorTest ? 'Error' : 'Éxito' }}</strong>
-            <p>{{ resultadoTest }}</p>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="modal-footer">
-      <button class="btn btn-secondary" (click)="mostrarModalTest = false">
-        Cerrar
-      </button>
-      <button class="btn btn-primary" (click)="probarAgregarCarrito()" [disabled]="procesandoTest">
-        <i class="fas fa-spinner fa-spin" *ngIf="procesandoTest"></i>
-        <i class="fas fa-plus" *ngIf="!procesandoTest"></i>
-        {{ procesandoTest ? 'Agregando...' : 'Agregar al Carrito' }}
-      </button>
-    </div>
   </div>
 </div>
 

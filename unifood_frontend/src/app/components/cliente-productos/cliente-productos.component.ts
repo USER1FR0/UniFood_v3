@@ -2,16 +2,19 @@ import { Component,OnInit } from '@angular/core';
 import { ProductoService } from '../../services/producto.service';
 import { CategoriaService } from '../../services/categoria.service';
 import { AreaVentaService } from '../../services/area-venta.service';
+import { PedidoService } from '../../services/pedido.service';
 import { Producto } from '../../models/producto.model';
 import { Categoria } from '../../models/categoria.model';
 import { AreaVenta } from '../../models/area-venta.model';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ModalAgregarProductoComponent } from '../modal-agregar-producto/modal-agregar-producto.component';
+import Swal from 'sweetalert2';
 
 
 @Component({
   selector: 'app-cliente-productos',
-  imports: [CommonModule,FormsModule],
+  imports: [CommonModule, FormsModule, ModalAgregarProductoComponent],
   templateUrl: './cliente-productos.component.html',
   styleUrl: './cliente-productos.component.scss'
 })
@@ -30,13 +33,18 @@ export class ClienteProductosComponent implements OnInit {
   productoSeleccionado: Producto | null = null;
   showDetailModal = false;
   
+  // Modal agregar al carrito
+  productoParaAgregar: any = null;
+  mostrarModalAgregar = false;
+  
   loading = false;
   errorMessage = '';
 
   constructor(
     private productoService: ProductoService,
     private categoriaService: CategoriaService,
-    private areaVentaService: AreaVentaService
+    private areaVentaService: AreaVentaService,
+    private pedidoService: PedidoService
   ) {}
 
   ngOnInit() {
@@ -162,14 +170,47 @@ export class ClienteProductosComponent implements OnInit {
     this.productoSeleccionado = null;
   }
 
-  // Carrito (placeholder)
+  // Abrir modal para agregar al carrito
   agregarAlCarrito(producto: Producto, event?: Event) {
     if (event) {
       event.stopPropagation();
     }
-    console.log('Agregando al carrito:', producto);
-    // TODO: Implementar lógica del carrito
-    alert(`¡${producto.nombre} agregado al carrito!`);
+    this.productoParaAgregar = producto;
+    this.mostrarModalAgregar = true;
+  }
+
+  // Cerrar modal de agregar
+  cerrarModalAgregar(): void {
+    this.mostrarModalAgregar = false;
+    this.productoParaAgregar = null;
+  }
+
+  // Procesar adición al carrito con cantidad y detalles
+  procesarAgregarAlCarrito(datos: { producto: any; cantidad: number; detalles?: string }): void {
+    this.pedidoService.agregarAlCarritoDesdeApi(datos.producto.id, datos.cantidad, datos.detalles).subscribe({
+      next: (response) => {
+        Swal.fire({
+          icon: 'success',
+          title: '¡Agregado!',
+          text: `${datos.cantidad}x ${datos.producto.nombre} agregado al carrito`,
+          timer: 1500,
+          showConfirmButton: false,
+          position: 'top-end',
+          toast: true
+        });
+      },
+      error: (error) => {
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: error.error?.message || 'No se pudo agregar el producto',
+          timer: 2000,
+          showConfirmButton: false,
+          position: 'top-end',
+          toast: true
+        });
+      }
+    });
   }
 
   // Helper para ingredientes

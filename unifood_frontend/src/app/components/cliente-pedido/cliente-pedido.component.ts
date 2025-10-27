@@ -1,4 +1,4 @@
-import { Component, OnInit, Output, EventEmitter } from '@angular/core';
+import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
 import { PedidoService } from '../../services/pedido.service';
 import {
   CarritoPorArea,
@@ -20,6 +20,7 @@ import { RecomendacionesHomeComponent } from '../recomendaciones-home/recomendac
   styleUrls: ['./cliente-pedido.component.scss'],
 })
 export class ClientePedidoComponent implements OnInit {
+  @Input() ocultarRecomendaciones: boolean = false; // Nuevo input para ocultar recomendaciones
   @Output() pedidoCreado = new EventEmitter<Pedido>();
   @Output() solicitarModalPago = new EventEmitter<any>();
 
@@ -28,15 +29,6 @@ export class ClientePedidoComponent implements OnInit {
   metodoPagoSeleccionado: 'efectivo' | 'tarjeta' | null = null;
   detallesPedido: string = '';
   procesando: boolean = false;
-
-  // Variables para el test de agregar al carrito
-  mostrarModalTest = false;
-  testProductoId: number = 1;
-  testCantidad: number = 1;
-  testDetalles: string = '';
-  resultadoTest: string = '';
-  errorTest: boolean = false;
-  procesandoTest: boolean = false;
 
   constructor(
     private pedidoService: PedidoService,
@@ -297,50 +289,5 @@ export class ClientePedidoComponent implements OnInit {
         this.authService.logout();
       }
     });
-  }
-
-  // Método para probar agregar al carrito
-  probarAgregarCarrito(): void {
-    if (!this.testProductoId || this.testCantidad < 1) {
-      this.errorTest = true;
-      this.resultadoTest =
-        'Por favor ingresa un ID de producto válido y una cantidad mayor a 0';
-      return;
-    }
-
-    this.procesandoTest = true;
-    this.resultadoTest = '';
-
-    this.pedidoService
-      .agregarAlCarritoDesdeApi(
-        this.testProductoId,
-        this.testCantidad,
-        this.testDetalles || undefined
-      )
-      .subscribe({
-        next: (response) => {
-          this.procesandoTest = false;
-          this.errorTest = false;
-          this.resultadoTest = `✅ ${response.producto.nombre} agregado correctamente. Precio: $${response.producto.precio}`;
-
-          // Recargar el carrito
-          this.cargarCarrito();
-
-          // Limpiar campos
-          setTimeout(() => {
-            this.testProductoId = 1;
-            this.testCantidad = 1;
-            this.testDetalles = '';
-          }, 2000);
-        },
-        error: (err) => {
-          this.procesandoTest = false;
-          this.errorTest = true;
-          this.resultadoTest =
-            err.error?.message ||
-            'Error al agregar el producto. Verifica que el ID exista y esté activo.';
-          console.error('Error:', err);
-        },
-      });
   }
 }

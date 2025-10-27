@@ -36,11 +36,11 @@ export const routes: Routes = [
     canActivate: [clienteGuard],
     component: ClienteLayoutComponent,
     children: [
-      { path: '', redirectTo: 'carrito', pathMatch: 'full' },
+      { path: '', redirectTo: 'recomendaciones', pathMatch: 'full' },
+      { path: 'recomendaciones', component: RecomendacionesHomeComponent },
       { path: 'carrito', component: ClientePedidoComponent },
       { path: 'menu', component: MenuComponent },
       { path: 'productos', component: ClienteProductosComponent },
-      { path: 'recomendaciones', component: RecomendacionesHomeComponent },
     ],
   },
 

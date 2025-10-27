@@ -16,10 +16,11 @@ import { Subscription } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ChatFloatComponent } from '../../chat-float/chat-float.component';
+import { ClientePedidoComponent } from '../../cliente-pedido/cliente-pedido.component';
 
 @Component({
   selector: 'app-cliente-layout',
-  imports: [CommonModule, RouterOutlet, FormsModule, ChatFloatComponent, RouterLink, RouterLinkActive],
+  imports: [CommonModule, RouterOutlet, FormsModule, ChatFloatComponent, ClientePedidoComponent, RouterLink, RouterLinkActive],
   templateUrl: './cliente-layout.component.html',
   styleUrls: ['./cliente-layout.component.scss'],
 })
@@ -30,6 +31,7 @@ export class ClienteLayoutComponent implements OnInit, OnDestroy {
   pedidoSeleccionado: Pedido | null = null;
   mostrarListaPedidos = false;
   menuAbierto = false;
+  mostrarModalCarrito = false;
 
   //Estado pago
   estaPagado: boolean = false;
@@ -816,13 +818,27 @@ export class ClienteLayoutComponent implements OnInit, OnDestroy {
   }
 
   irAPedidos(): void {
+    this.menuAbierto = false;
     this.router.navigate(['/cliente/pedidos']);
   }
+  
   irAProductos(): void {
+    this.menuAbierto = false;
     this.router.navigate(['/cliente/productos']);
   }
+  
   irARecomendaciones(): void {
+    this.menuAbierto = false;
     this.router.navigate(['/cliente/recomendaciones']);
+  }
+
+  irACarrito(): void {
+    this.menuAbierto = false;
+    this.mostrarModalCarrito = true;
+  }
+
+  cerrarModalCarrito(): void {
+    this.mostrarModalCarrito = false;
   }
 
   abrirMenu() {

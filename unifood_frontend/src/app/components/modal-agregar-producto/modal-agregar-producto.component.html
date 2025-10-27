@@ -1,0 +1,106 @@
+<!-- Overlay del Modal -->
+<div class="modal-overlay" *ngIf="mostrar && producto" (click)="cerrarModal()">
+  <div class="modal-contenido" (click)="$event.stopPropagation()">
+    <!-- Botón cerrar -->
+    <button class="btn-cerrar" (click)="cerrarModal()" title="Cerrar">
+      <i class="fas fa-times"></i>
+    </button>
+
+    <div class="modal-body">
+      <!-- Imagen del producto -->
+      <div class="producto-imagen-container">
+        <img 
+          [src]="obtenerImagenProducto(producto)" 
+          [alt]="producto.nombre"
+          [title]="producto.nombre"
+          (error)="onImageError($event)"
+          class="producto-imagen"
+        />
+      </div>
+
+      <!-- Información del producto -->
+      <div class="producto-info">
+        <h2 class="producto-nombre">{{ producto.nombre }}</h2>
+        
+        <div class="producto-categoria" *ngIf="producto.categoria || producto.categoria_id">
+          <i class="fas fa-utensils"></i>
+          {{ producto.categoria?.nombre || 'Categoría' }}
+        </div>
+
+        <p class="producto-descripcion">{{ producto.descripcion || 'Delicioso producto preparado con ingredientes frescos' }}</p>
+
+        <!-- Ingredientes -->
+        <div class="ingredientes" *ngIf="getIngredientesArray(producto.ingredientes).length > 0">
+          <h4><i class="fas fa-leaf"></i> Ingredientes:</h4>
+          <div class="ingredientes-lista">
+            <span *ngFor="let ingrediente of getIngredientesArray(producto.ingredientes)" class="ingrediente-tag">
+              {{ ingrediente }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Precio -->
+        <div class="producto-precio">
+          <span class="precio-label">Precio unitario:</span>
+          <span class="precio-valor">{{ formatearPrecio(producto.precio) }}</span>
+        </div>
+
+        <!-- Selector de cantidad -->
+        <div class="cantidad-selector">
+          <label>Cantidad:</label>
+          <div class="cantidad-controles">
+            <button 
+              class="btn-cantidad" 
+              (click)="decrementarCantidad()"
+              [disabled]="cantidad <= 1"
+              title="Disminuir cantidad"
+            >
+              <i class="fas fa-minus"></i>
+            </button>
+            <input 
+              type="number" 
+              [(ngModel)]="cantidad" 
+              min="1" 
+              class="cantidad-input"
+              [title]="'Cantidad: ' + cantidad"
+              [attr.aria-label]="'Cantidad: ' + cantidad"
+              readonly
+            />
+            <button 
+              class="btn-cantidad" 
+              (click)="incrementarCantidad()"
+              title="Aumentar cantidad"
+            >
+              <i class="fas fa-plus"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Detalles adicionales -->
+        <div class="detalles-adicionales">
+          <label for="detalles">Notas especiales (opcional):</label>
+          <textarea 
+            id="detalles"
+            [(ngModel)]="detalles" 
+            placeholder="Ej: Sin cebolla, extra salsa..."
+            rows="3"
+            class="detalles-textarea"
+          ></textarea>
+        </div>
+
+        <!-- Subtotal y botón agregar -->
+        <div class="modal-footer">
+          <div class="subtotal">
+            <span class="subtotal-label">Subtotal:</span>
+            <span class="subtotal-valor">{{ formatearPrecio(calcularSubtotal()) }}</span>
+          </div>
+          <button class="btn-agregar-carrito" (click)="agregarAlCarrito()">
+            <i class="fas fa-shopping-cart"></i>
+            Agregar al Carrito
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+

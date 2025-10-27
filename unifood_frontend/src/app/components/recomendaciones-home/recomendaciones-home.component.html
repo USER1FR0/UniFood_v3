@@ -131,9 +131,9 @@
               </div>
 
               <!-- Botón de agregar -->
-              <button class="btn-agregar" (click)="onClickRecomendacion(rec); $event.stopPropagation()">
+              <button class="btn-agregar" (click)="agregarAlCarrito(rec, $event)">
                 <i class="fas fa-shopping-cart"></i>
-                Agregar
+                Agregar al Carrito
               </button>
             </div>
           </div>
@@ -153,5 +153,13 @@
     </div>
 
   </div>
+
+  <!-- Modal de Agregar al Carrito -->
+  <app-modal-agregar-producto
+    [producto]="productoParaAgregar"
+    [mostrar]="mostrarModalAgregar"
+    (cerrar)="cerrarModalAgregar()"
+    (agregar)="procesarAgregarAlCarrito($event)"
+  ></app-modal-agregar-producto>
 </div>
 

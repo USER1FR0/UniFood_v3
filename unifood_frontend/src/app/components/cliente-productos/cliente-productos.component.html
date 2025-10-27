@@ -144,6 +144,11 @@
     </div>
   </div>
 
-  <!-- Modal de Detalles (mantener igual que antes) -->
-  <!-- ... -->
+  <!-- Modal de Agregar al Carrito -->
+  <app-modal-agregar-producto
+    [producto]="productoParaAgregar"
+    [mostrar]="mostrarModalAgregar"
+    (cerrar)="cerrarModalAgregar()"
+    (agregar)="procesarAgregarAlCarrito($event)"
+  ></app-modal-agregar-producto>
 </div>

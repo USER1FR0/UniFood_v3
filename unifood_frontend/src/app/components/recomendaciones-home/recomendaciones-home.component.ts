@@ -2,16 +2,20 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { RecomendacionService } from '../../services/recomendacion.service';
+import { PedidoService } from '../../services/pedido.service';
+import { ModalAgregarProductoComponent } from '../modal-agregar-producto/modal-agregar-producto.component';
+import { Producto } from '../../models/producto.model';
 import {
   Recomendacion,
   TipoRecomendacion,
   TipoInteraccion,
 } from '../../models/recomendacion.model';
+import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-recomendaciones-home',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, ModalAgregarProductoComponent],
   templateUrl: './recomendaciones-home.component.html',
   styleUrls: ['./recomendaciones-home.component.scss'],
 })
@@ -21,6 +25,11 @@ export class RecomendacionesHomeComponent implements OnInit, OnDestroy {
   cargando = false;
   error: string | null = null;
   private refreshInterval: any;
+
+  // Modal agregar al carrito
+  productoParaAgregar: any = null;
+  recomendacionSeleccionada: Recomendacion | null = null;
+  mostrarModalAgregar = false;
 
   // Placeholder SVG embebido para productos sin imagen
   readonly placeholderImage = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300'%3E%3Crect fill='%235B9A97' width='400' height='300'/%3E%3Cg fill='%23FFFFFF' opacity='0.3'%3E%3Cpath d='M200 80c-33.1 0-60 26.9-60 60s26.9 60 60 60 60-26.9 60-60-26.9-60-60-60zm0 100c-22.1 0-40-17.9-40-40s17.9-40 40-40 40 17.9 40 40-17.9 40-40 40z'/%3E%3Cpath d='M200 120c-11 0-20 9-20 20s9 20 20 20 20-9 20-20-9-20-20-20zm0 30c-5.5 0-10-4.5-10-10s4.5-10 10-10 10 4.5 10 10-4.5 10-10 10z'/%3E%3Ccircle cx='160' cy='120' r='8'/%3E%3Ccircle cx='240' cy='120' r='8'/%3E%3Cpath d='M200 160c-16.5 0-30 13.5-30 30h10c0-11 9-20 20-20s20 9 20 20h10c0-16.5-13.5-30-30-30z'/%3E%3C/g%3E%3Ctext x='200' y='260' font-family='Arial, sans-serif' font-size='24' fill='%23FFFFFF' text-anchor='middle' font-weight='bold'%3EUniFood%3C/text%3E%3C/svg%3E`;
@@ -55,6 +64,7 @@ export class RecomendacionesHomeComponent implements OnInit, OnDestroy {
 
   constructor(
     private recomendacionService: RecomendacionService,
+    private pedidoService: PedidoService,
     private router: Router
   ) {}
 
@@ -239,6 +249,78 @@ export class RecomendacionesHomeComponent implements OnInit, OnDestroy {
     if (event.target.src !== this.placeholderImage) {
       event.target.src = this.placeholderImage;
     }
+  }
+
+  /**
+   * Abrir modal para agregar producto al carrito
+   */
+  agregarAlCarrito(recomendacion: Recomendacion, event?: Event): void {
+    if (event) {
+      event.stopPropagation();
+    }
+
+    const producto = recomendacion.producto;
+    if (!producto) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Producto no disponible',
+        timer: 2000,
+        showConfirmButton: false,
+        position: 'top-end',
+        toast: true
+      });
+      return;
+    }
+
+    this.productoParaAgregar = producto;
+    this.recomendacionSeleccionada = recomendacion;
+    this.mostrarModalAgregar = true;
+  }
+
+  /**
+   * Cerrar modal de agregar
+   */
+  cerrarModalAgregar(): void {
+    this.mostrarModalAgregar = false;
+    this.productoParaAgregar = null;
+    this.recomendacionSeleccionada = null;
+  }
+
+  /**
+   * Procesar adición al carrito con cantidad y detalles
+   */
+  procesarAgregarAlCarrito(datos: { producto: any; cantidad: number; detalles?: string }): void {
+    if (this.recomendacionSeleccionada) {
+      // Registrar interacción de agregar al carrito
+      this.registrarInteraccion(this.recomendacionSeleccionada.id, TipoInteraccion.AGREGADO_CARRITO);
+    }
+
+    // Agregar al carrito
+    this.pedidoService.agregarAlCarritoDesdeApi(datos.producto.id, datos.cantidad, datos.detalles).subscribe({
+      next: (response) => {
+        Swal.fire({
+          icon: 'success',
+          title: '¡Agregado!',
+          text: `${datos.cantidad}x ${datos.producto.nombre} agregado al carrito`,
+          timer: 1500,
+          showConfirmButton: false,
+          position: 'top-end',
+          toast: true
+        });
+      },
+      error: (error) => {
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: error.error?.message || 'No se pudo agregar el producto',
+          timer: 2000,
+          showConfirmButton: false,
+          position: 'top-end',
+          toast: true
+        });
+      }
+    });
   }
 }
 

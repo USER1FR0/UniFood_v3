@@ -2,8 +2,8 @@
   
   <!-- Header -->
   <div class="header">
-    <h1>📊 Gestión de Recomendaciones</h1>
-    <p class="subtitle">Administra y monitorea las recomendaciones de productos</p>
+    <h1>Gestión de Recomendaciones</h1>
+    <p class="subtitle">Panel de control para administración y análisis de recomendaciones</p>
   </div>
 
   <!-- Notificaciones -->
@@ -25,24 +25,24 @@
       <div class="card">
         <div class="card-icon">📦</div>
         <div class="card-content">
-          <h3>{{ resumen.total_recomendaciones }}</h3>
           <p>Total</p>
+          <h3>{{ resumen.total_recomendaciones }}</h3>
         </div>
       </div>
 
       <div class="card activas">
         <div class="card-icon">✅</div>
         <div class="card-content">
-          <h3>{{ resumen.activas }}</h3>
           <p>Activas</p>
+          <h3>{{ resumen.activas }}</h3>
         </div>
       </div>
 
       <div class="card inactivas">
         <div class="card-icon">❌</div>
         <div class="card-content">
-          <h3>{{ resumen.inactivas }}</h3>
           <p>Inactivas</p>
+          <h3>{{ resumen.inactivas }}</h3>
         </div>
       </div>
     </div>
@@ -54,14 +54,14 @@
         [class.active]="vistaActual === 'lista'"
         (click)="cambiarVista('lista')"
       >
-        📋 Lista de Recomendaciones
+        Lista de Recomendaciones
       </button>
       <button 
         class="tab" 
         [class.active]="vistaActual === 'estadisticas'"
         (click)="cambiarVista('estadisticas')"
       >
-        📈 Estadísticas
+        Estadísticas y Análisis
       </button>
     </div>
 
@@ -70,13 +70,13 @@
       
       <!-- Acciones rápidas -->
       <div class="acciones-rapidas">
-        <h3>⚡ Acciones Rápidas</h3>
+        <h3>Generación Automática</h3>
         <div class="botones">
           <button class="btn btn-primary" (click)="generarMasVendidos()">
-            🔥 Generar Más Vendidos
+            Generar Más Vendidos
           </button>
           <button class="btn btn-success" (click)="generarMejorCalificados()">
-            ⭐ Generar Mejor Calificados
+            Generar Mejor Calificados
           </button>
         </div>
       </div>
@@ -203,7 +203,7 @@
 
     <!-- Vista Estadísticas -->
     <div *ngIf="vistaActual === 'estadisticas'" class="vista-estadisticas">
-      <h3>📈 Estadísticas de Interacciones</h3>
+      <h3>Análisis de Interacciones</h3>
       
       <div *ngIf="estadisticas.size === 0" class="empty-state">
         <p>Selecciona una recomendación de la lista para ver sus estadísticas</p>

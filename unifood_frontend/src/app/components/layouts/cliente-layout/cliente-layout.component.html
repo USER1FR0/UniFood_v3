@@ -13,6 +13,16 @@
       </!--button-->
 
       <div class="header-actions">
+        <!-- Botón Carrito -->
+        <button
+          class="btn-icon btn-cart"
+          (click)="irACarrito()"
+          title="Ver carrito"
+        >
+          <i class="fas fa-shopping-cart"></i>
+          <span class="badge-count" *ngIf="cantidadCarrito > 0">{{ cantidadCarrito }}</span>
+        </button>
+
         <!-- Botón seguimiento -->
         <button
           class="btn-icon"
@@ -33,9 +43,10 @@
             </button>
 
             <div class="dropdown-menu" [class.open]="menuAbierto">
-              <button (click)="irAPedidos()"><i class="fas fa-receipt"></i>&af; Pedidos</button>
-              <button (click)="irAProductos()"><i class="fas fa-utensils"></i>&af; Productos</button>
-              <button (click)="irARecomendaciones()"><i class="fas fa-star"></i>&af; Recomendaciones</button>
+              <button (click)="irARecomendaciones()"><i class="fas fa-star"></i>&af; Inicio</button>
+              <button (click)="irAProductos()"><i class="fas fa-utensils"></i>&af; Menú de Productos</button>
+              <button (click)="irACarrito()"><i class="fas fa-shopping-cart"></i>&af; Mi Carrito</button>
+              <button (click)="irAPedidos()"><i class="fas fa-receipt"></i>&af; Mis Pedidos</button>
               <button (click)="logout()"><i class="fas fa-sign-out-alt"></i>&af; Cerrar sesión</button>
             </div>
           </div>
@@ -486,6 +497,16 @@
           </button>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- Modal de Carrito -->
+  <div class="modal-carrito-overlay" *ngIf="mostrarModalCarrito" (click)="cerrarModalCarrito()">
+    <div class="modal-carrito-contenido" (click)="$event.stopPropagation()">
+      <button class="btn-cerrar-modal-carrito" (click)="cerrarModalCarrito()" title="Cerrar carrito">
+        <i class="fas fa-times"></i>
+      </button>
+      <app-cliente-pedido [ocultarRecomendaciones]="true"></app-cliente-pedido>
     </div>
   </div>
 
