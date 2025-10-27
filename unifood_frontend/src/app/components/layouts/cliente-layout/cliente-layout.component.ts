@@ -328,6 +328,9 @@ export class ClienteLayoutComponent implements OnInit, OnDestroy {
   }
 
   abrirModalPagoDesdeCarrito(): void {
+    // Cerrar el modal del carrito primero
+    this.mostrarModalCarrito = false;
+    
     const datosStr = localStorage.getItem('pedido_temporal');
     if (!datosStr) return;
 

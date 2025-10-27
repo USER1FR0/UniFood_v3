@@ -189,8 +189,14 @@ $danger: #E76F51;
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: 1100;
   animation: fadeIn 0.3s;
+  
+  // Modal de pago debe estar por encima de todo
+  &:has(.modal-pago) {
+    z-index: 1200;
+    background: rgba(0, 0, 0, 0.7);
+  }
 }
 
 @keyframes fadeIn {
