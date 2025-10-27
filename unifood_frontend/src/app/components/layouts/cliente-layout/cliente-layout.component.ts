@@ -20,7 +20,7 @@ import { ClientePedidoComponent } from '../../cliente-pedido/cliente-pedido.comp
 
 @Component({
   selector: 'app-cliente-layout',
-  imports: [CommonModule, RouterOutlet, FormsModule, ChatFloatComponent, ClientePedidoComponent, RouterLink, RouterLinkActive],
+  imports: [CommonModule, RouterOutlet, FormsModule, ChatFloatComponent, ClientePedidoComponent],
   templateUrl: './cliente-layout.component.html',
   styleUrls: ['./cliente-layout.component.scss'],
 })
@@ -819,7 +819,7 @@ export class ClienteLayoutComponent implements OnInit, OnDestroy {
 
   irAPedidos(): void {
     this.menuAbierto = false;
-    this.router.navigate(['/cliente/pedidos']);
+    this.abrirSeguimiento()
   }
   
   irAProductos(): void {
@@ -834,7 +834,7 @@ export class ClienteLayoutComponent implements OnInit, OnDestroy {
 
   irACarrito(): void {
     this.menuAbierto = false;
-    this.mostrarModalCarrito = true;
+    this.router.navigate(['/cliente/carrito']);
   }
 
   cerrarModalCarrito(): void {
