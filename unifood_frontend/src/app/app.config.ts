@@ -19,6 +19,7 @@ import { AuthService } from './services/auth.service';
 import { PedidoService } from './services/pedido.service';
 import { WebsocketService } from './services/websocket.service';
 
+
 export const appConfig: ApplicationConfig = {
   providers: [
      provideRouter(

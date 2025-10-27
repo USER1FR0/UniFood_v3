@@ -3,24 +3,33 @@ export interface Vendedor {
   nombre: string;
   telefono: string;
   usuario_id: number;
-  num_empleado: number;  // Cambiado de numEmpleado
+  num_empleado: number;
   genero: string;
   edad: number;
   email: string;
-  estatus: string;       // Cambiado de boolean a string
+  estatus: string;
   fecha_registro: Date;
+  usuario?: {
+    id: number;
+    correo_electronico: string;
+    rol: string;
+  };
 }
 
-// Para crear - usar snake_case
+// Para crear - ahora incluye campos de usuario
 export interface CreateVendedorRequest {
+  // Campos de usuario
+  correo_electronico: string;
+  contrasena: string;
+
+  // Campos de vendedor
   nombre: string;
   telefono: string;
-  usuario_id: number;
-  num_empleado: number;  // Cambiado
+  num_empleado: number;
   genero: string;
   edad: number;
   email: string;
-  estatus: string;       // Cambiado
+  estatus?: string;
 }
 
 // Para actualizar
@@ -28,10 +37,9 @@ export interface UpdateVendedorRequest {
   nombre?: string;
   telefono?: string;
   usuario_id?: number;
-  num_empleado?: number; // Cambiado
+  num_empleado?: number;
   genero?: string;
   edad?: number;
   email?: string;
-  estatus?: string;      // Cambiado
+  estatus?: string;
 }
-

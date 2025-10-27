@@ -74,7 +74,7 @@ export class RecomendacionesHomeComponent implements OnInit, OnDestroy {
     // Auto-refresh cada 30 segundos para detectar cambios del supervisor
     this.refreshInterval = setInterval(() => {
       this.cargarRecomendaciones();
-    }, 30000);
+    }, 300000);
   }
 
   ngOnDestroy(): void {

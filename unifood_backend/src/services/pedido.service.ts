@@ -125,14 +125,6 @@ export class PedidosService {
           },
         });
 
-        // Enviar SMS de confirmación
-        if (pedidoCompleto?.cliente && pedidoCompleto.cliente.telefono) {
-          await this.comunicacionClient.enviarPedidoRecibido(
-            pedidoCompleto.cliente.telefono,
-            pedidoCompleto.id,
-          );
-        }
-
         // Notificar por WebSocket
         this.pedidoGateway.notificarNuevoPedidoCliente(pedidoCompleto);
         this.pedidoGateway.notificarNuevoPedido(pedidoCompleto);
@@ -182,11 +174,6 @@ export class PedidosService {
           },
         },
       });
-
-      // Enviar SMS de confirmación
-      if (pedido.cliente && pedido.cliente.telefono) {
-        await this.comunicacionClient.enviarPedidoRecibido(pedido.cliente.telefono, pedido.id);
-      }
 
       // Notificar por WebSocket
       this.pedidoGateway.notificarNuevoPedidoCliente(pedido);
@@ -259,11 +246,6 @@ export class PedidosService {
       },
     });
 
-    // Enviar SMS de confirmación
-    if (pedido.cliente && pedido.cliente.telefono) {
-      await this.comunicacionClient.enviarPedidoRecibido(pedido.cliente.telefono, pedido.id);
-    }
-
     // Notificar por WebSocket a vendedores del área
     this.pedidoGateway.notificarNuevoPedidoCliente(pedido);
     this.pedidoGateway.notificarNuevoPedido(pedido);
@@ -319,9 +301,7 @@ export class PedidosService {
 
     // Si tiene pago con tarjeta, solicitar reembolso
     if (pedido.pagos.find((p) => p.pago_metodo_id === 1)) {
-      const pagoTarjeta = pedido.pagos.find(
-        (p) => p.pago_metodo_id === 1,
-      );
+      const pagoTarjeta = pedido.pagos.find((p) => p.pago_metodo_id === 1);
 
       if (pagoTarjeta) {
         await this.pagosClient.reembolsarPago(pagoTarjeta.id, 'Pedido cancelado por el cliente');
@@ -334,9 +314,7 @@ export class PedidosService {
       }
     } else {
       // Si solo está pendiente, simplemente cancelarlo siendo pago en efectivo
-      const pagoPendiente = pedido.pagos.find(
-        (p) => (p.pago_metodo_id === 2),
-      );
+      const pagoPendiente = pedido.pagos.find((p) => p.pago_metodo_id === 2);
 
       if (pagoPendiente) {
         await this.prisma.pago.update({
@@ -356,10 +334,6 @@ export class PedidosService {
       },
     });
 
-    // Notificar
-    if (pedido.cliente) {
-      await this.comunicacionClient.enviarPedidoCancelado(pedido.cliente.telefono, pedidoId);
-    }
     this.pedidoGateway.notificarCambioPedido(pedidoActualizado);
 
     return { mensaje: 'Pedido cancelado exitosamente' };
@@ -463,13 +437,6 @@ export class PedidosService {
       include: { cliente: true, pagos: true, pedido_productos: { include: { producto: true } } },
     });
 
-    // Notificar al cliente
-    if (pedidoActualizado.cliente) {
-      await this.comunicacionClient.enviarPedidoAceptado(
-        pedidoActualizado.cliente.telefono,
-        pedidoId,
-      );
-    }
     this.pedidoGateway.notificarCambioPedido(pedidoActualizado);
 
     return pedidoActualizado;
@@ -487,9 +454,7 @@ export class PedidosService {
 
     // Si tiene pago con tarjeta COMPLETADO, solicitar reembolso
     if (pedido.pagos.find((p) => p.pago_metodo_id === 1)) {
-      const pagoTarjeta = pedido.pagos.find(
-        (p) => p.pago_metodo_id === 1,
-      );
+      const pagoTarjeta = pedido.pagos.find((p) => p.pago_metodo_id === 1);
 
       if (pagoTarjeta) {
         await this.pagosClient.reembolsarPago(pagoTarjeta.id, `Pedido rechazado: ${dto.motivo}`);
@@ -502,9 +467,7 @@ export class PedidosService {
       }
     } else {
       // Si solo está pendiente, simplemente cancelarlo
-      const pagoPendiente = pedido.pagos.find(
-        (p) => (p.pago_metodo_id === 2),
-      );
+      const pagoPendiente = pedido.pagos.find((p) => p.pago_metodo_id === 2);
 
       if (pagoPendiente) {
         await this.prisma.pago.update({
@@ -526,15 +489,6 @@ export class PedidosService {
         pedido_productos: { include: { producto: true } },
       },
     });
-
-    // Notificar al cliente
-    if (pedido.cliente) {
-      await this.comunicacionClient.enviarPedidoRechazado(
-        pedido.cliente.telefono,
-        pedidoId,
-        dto.motivo,
-      );
-    }
 
     this.pedidoGateway.notificarPedidoRechazado(pedidoActualizado);
 
@@ -569,8 +523,15 @@ export class PedidosService {
     });
 
     // Notificar al cliente que puede recoger (SMS)
-    if (pedidoActualizado.cliente) {
-      await this.comunicacionClient.enviarPedidoListo(pedidoActualizado.cliente.telefono, pedidoId);
+    if (
+      pedidoActualizado.cliente &&
+      pedidoActualizado.cliente?.telefono &&
+      pedidoActualizado.area_venta
+    ) {
+      await this.comunicacionClient.enviarSmsPedidoListo(
+        pedidoActualizado.cliente.telefono,
+        pedidoActualizado.area_venta.area_venta,
+      );
     }
     this.pedidoGateway.notificarPedidoListo(pedidoActualizado);
 
