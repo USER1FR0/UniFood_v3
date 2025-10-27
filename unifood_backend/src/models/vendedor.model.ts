@@ -1,14 +1,19 @@
 import { IsString, IsEmail, IsNumber, IsBoolean, IsDate, IsOptional } from 'class-validator';
 
 export class CreateVendedorDto {
+  // Campos de usuario
+  @IsEmail()
+  correo_electronico: string;
+
+  @IsString()
+  contrasena: string;
+
+  // Campos vendedor
   @IsString()
   nombre: string;
 
   @IsString()
   telefono: string;
-
-  @IsNumber()
-  usuario_id: number;
 
   @IsNumber()
   num_empleado: number;
@@ -60,6 +65,7 @@ export class UpdateVendedorDto {
   @IsOptional()
   estatus?: string;
 }
+
 // Interface para tipar los resultados
 export interface Vendedor {
   id: number;
