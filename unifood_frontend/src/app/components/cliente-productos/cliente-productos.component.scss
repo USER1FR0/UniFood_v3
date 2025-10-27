@@ -166,6 +166,7 @@
   line-height: 1.4;
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -358,10 +359,6 @@
   }
 }
 
-// Estados y utilidades (reutilizar del componente anterior)
-.loading, .error-message, .empty-state, .modal-overlay, .modal, .modal-header, .btn-close, .btn-primary, .btn-secondary {
-  // ... (mantener los mismos estilos del componente anterior)
-}
 
 // Responsive
 @media (max-width: 1024px) {

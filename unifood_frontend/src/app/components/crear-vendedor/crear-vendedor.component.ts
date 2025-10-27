@@ -5,17 +5,17 @@ import { VendedoresService } from '../../services/vendedores.service';
 import { CreateVendedorRequest } from '../../models/vendedor.model';
 import Swal from 'sweetalert2';
 import { CommonModule } from '@angular/common';
-import { HttpClientModule } from '@angular/common/http';
 
 @Component({
   selector: 'app-crear-vendedor',
-  imports: [CommonModule, HttpClientModule,FormsModule, ReactiveFormsModule],
+  imports:[CommonModule,FormsModule,ReactiveFormsModule],
   templateUrl: './crear-vendedor.component.html',
   styleUrls: ['./crear-vendedor.component.scss']
 })
 export class CrearVendedorComponent implements OnInit {
   vendedorForm: FormGroup;
   cargando: boolean = false;
+  mostrarContrasena: boolean = false;
   generos: string[] = ['Masculino', 'Femenino', 'Otro'];
 
   constructor(
@@ -28,11 +28,21 @@ export class CrearVendedorComponent implements OnInit {
 
   ngOnInit() {}
 
-  /**
-   * Crear el formulario reactivo con validaciones
-   */
   createForm(): FormGroup {
     return this.fb.group({
+      // Campos de usuario
+      correo_electronico: ['', [
+        Validators.required,
+        Validators.email,
+        Validators.pattern(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/)
+      ]],
+      contrasena: ['', [
+        Validators.required,
+        Validators.minLength(6),
+        Validators.maxLength(100)
+      ]],
+      
+      // Campos de vendedor
       nombre: ['', [
         Validators.required,
         Validators.minLength(2),
@@ -58,26 +68,19 @@ export class CrearVendedorComponent implements OnInit {
         Validators.min(18),
         Validators.max(100)
       ]],
-      usuario_id: ['', [
-        Validators.required,
-        Validators.min(1)
-      ]],
-      estatus: ['', Validators.required]
+      estatus: ['Activo', Validators.required]
     });
   }
 
-  /**
-   * Getters para acceder fácilmente a los controles del formulario
-   */
   get f(): { [key: string]: AbstractControl } {
     return this.vendedorForm.controls;
   }
 
-  /**
-   * Enviar el formulario para crear el vendedor
-   */
+  togglePasswordVisibility(): void {
+    this.mostrarContrasena = !this.mostrarContrasena;
+  }
+
   onSubmit(): void {
-    // Marcar todos los campos como touched para mostrar errores
     if (this.vendedorForm.invalid) {
       Object.keys(this.vendedorForm.controls).forEach(key => {
         this.vendedorForm.get(key)?.markAsTouched();
@@ -88,27 +91,27 @@ export class CrearVendedorComponent implements OnInit {
         title: 'Formulario incompleto',
         text: 'Por favor completa todos los campos requeridos correctamente',
         confirmButtonColor: '#52a7a3',
+        confirmButtonText: 'Entendido'
       });
       return;
     }
 
     this.cargando = true;
 
-    const estatusString = this.vendedorForm.value.estatus === 'true' ? 'Activo' : 'Inactivo';
     const vendedorData: CreateVendedorRequest = {
-      
+      // Campos de usuario
+      correo_electronico: this.vendedorForm.value.correo_electronico.toLowerCase().trim(),
+      contrasena: this.vendedorForm.value.contrasena,
+
+      // Campos de vendedor
       nombre: this.vendedorForm.value.nombre.trim(),
       telefono: this.vendedorForm.value.telefono,
       email: this.vendedorForm.value.email.toLowerCase().trim(),
       num_empleado: Number(this.vendedorForm.value.num_empleado),
       genero: this.vendedorForm.value.genero,
       edad: Number(this.vendedorForm.value.edad),
-      usuario_id: Number(this.vendedorForm.value.usuario_id),
-      estatus: estatusString
-      
-      
+      estatus: this.vendedorForm.value.estatus
     };
-    
 
     this.vendedoresService.createVendedor(vendedorData).subscribe({
       next: (vendedorCreado) => {
@@ -117,10 +120,17 @@ export class CrearVendedorComponent implements OnInit {
         Swal.fire({
           icon: 'success',
           title: '¡Éxito!',
-          text: `Vendedor "${vendedorCreado.nombre}" creado correctamente`,
+          html: `
+            <div style="text-align: left;">
+              <p><strong>Vendedor creado correctamente:</strong></p>
+              <p>📝 <strong>Nombre:</strong> ${vendedorCreado.nombre}</p>
+              <p>📧 <strong>Email:</strong> ${vendedorCreado.email}</p>
+              <p>👤 <strong>Usuario:</strong> ${vendedorData.correo_electronico}</p>
+              <p>🆔 <strong>N° Empleado:</strong> ${vendedorCreado.num_empleado}</p>
+            </div>
+          `,
           confirmButtonColor: '#52a7a3',
-          timer: 2000,
-          showConfirmButton: false
+          confirmButtonText: 'Continuar'
         }).then(() => {
           this.router.navigate(['/vendedores']);
         });
@@ -130,13 +140,12 @@ export class CrearVendedorComponent implements OnInit {
         
         let mensaje = 'Error al crear el vendedor';
         
-        // Mensajes específicos según el tipo de error
-        if (error.message.includes('número de empleado')) {
+        if (error.message.includes('correo electrónico')) {
+          mensaje = 'Ya existe un usuario con ese correo electrónico';
+        } else if (error.message.includes('número de empleado')) {
           mensaje = 'Ya existe un vendedor con ese número de empleado';
-        } else if (error.message.includes('email')) {
-          mensaje = 'Ya existe un vendedor con ese email';
         } else if (error.message.includes('conectar')) {
-          mensaje = 'No se pudo conectar con el servidor';
+          mensaje = 'No se pudo conectar con el servidor. Verifica tu conexión.';
         } else {
           mensaje = error.message;
         }
@@ -146,34 +155,33 @@ export class CrearVendedorComponent implements OnInit {
           title: 'Error',
           text: mensaje,
           confirmButtonColor: '#52a7a3',
+          confirmButtonText: 'Entendido'
         });
       }
     });
   }
 
-  /**
-   * Cancelar y volver a la lista
-   */
   onCancel(): void {
-    Swal.fire({
-      title: '¿Cancelar?',
-      text: 'Los datos no guardados se perderán',
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#52a7a3',
-      cancelButtonColor: '#6c757d',
-      confirmButtonText: 'Sí, cancelar',
-      cancelButtonText: 'Seguir editando'
-    }).then((result) => {
-      if (result.isConfirmed) {
-        this.router.navigate(['/vendedores']);
-      }
-    });
+    if (this.vendedorForm.dirty) {
+      Swal.fire({
+        title: '¿Cancelar registro?',
+        text: 'Los datos no guardados se perderán',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#52a7a3',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Sí, cancelar',
+        cancelButtonText: 'Seguir editando'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          this.router.navigate(['/vendedores']);
+        }
+      });
+    } else {
+      this.router.navigate(['/vendedores']);
+    }
   }
 
-  /**
-   * Limpiar el formulario
-   */
   onClear(): void {
     Swal.fire({
       title: '¿Limpiar formulario?',
@@ -187,23 +195,18 @@ export class CrearVendedorComponent implements OnInit {
     }).then((result) => {
       if (result.isConfirmed) {
         this.vendedorForm.reset({
-          estatus: true
+          estatus: 'Activo'
         });
+        this.mostrarContrasena = false;
       }
     });
   }
 
-  /**
-   * Validar campo específico
-   */
   isValidField(field: string): boolean {
     const control = this.vendedorForm.get(field);
     return control ? (control.invalid && (control.dirty || control.touched)) : false;
   }
 
-  /**
-   * Obtener mensaje de error para un campo
-   */
   getErrorMessage(field: string): string {
     const control = this.vendedorForm.get(field);
     
@@ -211,7 +214,7 @@ export class CrearVendedorComponent implements OnInit {
 
     if (control.errors['required']) {
       return 'Este campo es requerido';
-    } else if (control.errors['email']) {
+    } else if (control.errors['email'] || control.errors['pattern']) {
       return 'Formato de email inválido';
     } else if (control.errors['minlength']) {
       return `Mínimo ${control.errors['minlength'].requiredLength} caracteres`;
