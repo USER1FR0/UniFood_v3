@@ -16,6 +16,8 @@ import { SupervisorLayoutComponent } from './components/layouts/supervisor-layou
 import { SupervisorDashboardComponent } from './components/supervisor-dashboard/supervisor-dashboard.component';
 import { ChatComponent } from './components/chat/chat.component';
 import { ReportePedidoComponent } from './components/reporte-pedido/reporte-pedido.component';
+import { AreaVentaComponent } from './components/area-venta/area-venta.component';
+import { CategoriaComponent } from './components/categoria/categoria.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'lista-vendedores', pathMatch: 'full' },
@@ -48,6 +50,7 @@ export const routes: Routes = [
       { path: 'borrar', component: BorrarComponent },
       { path: 'chat', component: ChatComponent },
       { path: 'reportes', component: ReportePedidoComponent },
+      {path: 'crear-categoria', component: CategoriaComponent},
     ],
   },
 
@@ -59,8 +62,10 @@ export const routes: Routes = [
     children: [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
       { path: 'lista-vendedores', component: ListaVendedoresComponent },
+      {path: 'crear-vendedor', component: CrearVendedorComponent},
       { path: 'reportes', component: ReportePedidoComponent },
       { path: 'dashboard', component: SupervisorDashboardComponent },
+      {path: 'crear-area-venta', component: AreaVentaComponent},
     ],
   },
 
