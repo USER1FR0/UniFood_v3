@@ -364,7 +364,12 @@ git commit -m "feat(pedidos): agregar validación de stock antes de crear pedido
 
 ## 📚 Documentación Adicional
 
-Aun no hay ...
+[Actividad_1_Unidad_2_ArquitecturaSoftware (2).pdf](https://github.com/user-attachments/files/23195039/Actividad_1_Unidad_2_ArquitecturaSoftware.2.pdf)
+
+[Actividad_2_Unidad_2_ArquitecturaSoftware (1).pdf](https://github.com/user-attachments/files/23195041/Actividad_2_Unidad_2_ArquitecturaSoftware.1.pdf)
+
+### Presentacion propuesta proyecto
+https://www.canva.com/design/DAG23Kq2wTM/9lxYq0FvM7pDP0zwtK7h3Q/view?utm_content=DAG23Kq2wTM&utm_campaign=designshare&utm_medium=link2&utm_source=uniquelinks&utlId=hdf4ed411a1
 
 ---
 
